@@ -1,0 +1,26 @@
+name: csv-export-shape tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run csv-export-shape suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run csv-export-shape test suite
+        run: bunx vitest run src/lib/__tests__/csv-export-shape.test.ts --reporter=verbose

@@ -1,0 +1,2 @@
+ALTER TABLE public.responses ADD COLUMN IF NOT EXISTS preview_bypass boolean NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS responses_preview_bypass_idx ON public.responses (preview_bypass) WHERE preview_bypass = true;
