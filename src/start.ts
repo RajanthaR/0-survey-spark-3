@@ -2,6 +2,19 @@ import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import {
+  applySecurityHeaders,
+  createCspNonce,
+  readInitialLang,
+} from "@/lib/security-headers.server";
+
+const securityMiddleware = createMiddleware().server(async ({ next, request }) => {
+  const nonce = createCspNonce();
+  const initialLang = readInitialLang(request.headers.get("cookie"));
+  const result = await next({ context: { nonce, initialLang } });
+  applySecurityHeaders(result.response.headers, nonce);
+  return result;
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -19,6 +32,6 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [securityMiddleware, errorMiddleware],
   functionMiddleware: [attachSupabaseAuth],
 }));

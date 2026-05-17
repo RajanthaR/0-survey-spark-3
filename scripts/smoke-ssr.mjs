@@ -25,6 +25,36 @@ function fail(route, reason, extra = "") {
   return false;
 }
 
+function checkSecurityHeaders(route, res) {
+  const expected = [
+    ["strict-transport-security", /max-age=/i],
+    ["permissions-policy", /camera=\(\)/i],
+    ["referrer-policy", /^strict-origin-when-cross-origin$/i],
+    ["x-content-type-options", /^nosniff$/i],
+    ["x-frame-options", /^DENY$/i],
+  ];
+
+  for (const [header, pattern] of expected) {
+    const value = res.headers.get(header) ?? "";
+    if (!pattern.test(value)) {
+      return fail(route, `missing/invalid ${header}`, value || "(missing)");
+    }
+  }
+
+  const csp = res.headers.get("content-security-policy") ?? "";
+  if (!csp) return fail(route, "missing content-security-policy");
+  if (!res.headers.get("content-security-policy-report-only")) {
+    return fail(route, "missing content-security-policy-report-only");
+  }
+  if (!/script-src[^;]*'nonce-[^']+'/.test(csp)) {
+    return fail(route, "CSP script-src missing nonce", csp);
+  }
+  if (/script-src[^;]*'unsafe-inline'/.test(csp)) {
+    return fail(route, "CSP script-src still allows unsafe-inline", csp);
+  }
+  return true;
+}
+
 async function check(route) {
   const url = `${BASE}${route}`;
   let res;
@@ -33,6 +63,8 @@ async function check(route) {
   } catch (e) {
     return fail(route, "fetch threw", String(e));
   }
+
+  if (!checkSecurityHeaders(route, res)) return false;
 
   // Allow redirects (e.g. /admin -> /login)
   if (res.status >= 300 && res.status < 400) {
