@@ -266,15 +266,23 @@ const Ctx = createContext<I18nCtx>({
 });
 
 const TOUCHED_KEY = "eip.lang.touched";
+const LANG_KEY = "eip.lang";
 
-export function I18nProvider({ children }: { children: ReactNode }) {
+function writeLangCookie(l: Lang) {
+  document.cookie = `${LANG_KEY}=${encodeURIComponent(l)}; path=/; max-age=31536000; samesite=lax`;
+}
+
+export function I18nProvider({
+  children,
+  initialLang = "en",
+}: {
+  children: ReactNode;
+  initialLang?: Lang;
+}) {
   const [lang, setLangState] = useState<Lang>(() => {
-    if (typeof window === "undefined") return "en";
-    // Read from the global set by the pre-hydration script in __root, then
-    // fall back to localStorage for older sessions.
-    const w = window as Window & { __eipLang?: string };
-    const stored = w.__eipLang ?? window.localStorage.getItem("eip.lang");
-    return stored && LANGS.some((l) => l.code === stored) ? (stored as Lang) : "en";
+    if (typeof window === "undefined") return initialLang;
+    const stored = window.localStorage.getItem(LANG_KEY);
+    return stored && LANGS.some((l) => l.code === stored) ? (stored as Lang) : initialLang;
   });
   const [langTouched, setLangTouched] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -284,8 +292,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const setLang = (l: Lang) => {
     setLangState(l);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("eip.lang", l);
+      window.localStorage.setItem(LANG_KEY, l);
       window.localStorage.setItem(TOUCHED_KEY, "1");
+      writeLangCookie(l);
       document.documentElement.lang = l;
     }
     setLangTouched(true);
@@ -299,7 +308,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
     setLangState(l);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("eip.lang", l);
+      window.localStorage.setItem(LANG_KEY, l);
+      writeLangCookie(l);
       document.documentElement.lang = l;
     }
   };
