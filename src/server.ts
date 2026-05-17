@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { assertProductionSecurityConfig } from "./lib/security-headers.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -75,8 +76,13 @@ function describeRequest(request: Request): string {
   }
 }
 
+function envRecord(env: unknown): Record<string, unknown> {
+  return env && typeof env === "object" ? (env as Record<string, unknown>) : {};
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    assertProductionSecurityConfig({ ...process.env, ...envRecord(env) });
     const requestLabel = describeRequest(request);
     const startedAt = Date.now();
     try {

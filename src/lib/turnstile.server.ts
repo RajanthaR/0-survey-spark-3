@@ -1,14 +1,13 @@
+import { getGlobalStartContext } from "@tanstack/start-client-core";
 import { getClientIp } from "@/lib/rate-limit.server";
 
 /**
  * Cloudflare Turnstile server-side token verification.
  *
  * Behaviour matrix:
- *   1. `TURNSTILE_SECRET` is unset                     → fail-open (allow + warn).
- *      This is intentional so dev / preview without the secret keeps working
- *      and so a misconfigured production deploy never silently locks out
- *      every respondent. The warning shows up in server logs so the gap is
- *      noticed.
+ *   1. `TURNSTILE_SECRET` is unset                     → dev fail-open (allow + warn).
+ *      Production boot guards reject deploys without the secret; this branch
+ *      keeps local development and previews usable while provisioning.
  *   2. `TURNSTILE_SECRET` is set + token missing       → reject (HTTP 4xx-style throw).
  *   3. `TURNSTILE_SECRET` is set + siteverify fails    → reject with the
  *      first error code Cloudflare returned, e.g. `invalid-input-response`,
@@ -21,6 +20,7 @@ import { getClientIp } from "@/lib/rate-limit.server";
  */
 
 const SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+type StartContextWithEnv = { cloudflareEnv?: Record<string, unknown> };
 
 interface SiteverifyResponse {
   success: boolean;
@@ -40,18 +40,28 @@ export class TurnstileVerificationError extends Error {
   }
 }
 
+function envString(key: string): string | undefined {
+  try {
+    const context = getGlobalStartContext() as StartContextWithEnv | undefined;
+    const value = context?.cloudflareEnv?.[key] ?? process.env[key];
+    return typeof value === "string" ? value : undefined;
+  } catch {
+    return process.env[key];
+  }
+}
+
 export async function verifyTurnstile(
   token: string | undefined | null,
   opts?: { bypassRequested?: boolean },
 ): Promise<void> {
-  const secret = process.env.TURNSTILE_SECRET;
+  const secret = envString("TURNSTILE_SECRET");
   // Internal preview/dev escape hatch. The client can request a bypass from
   // the consent panel's "Continue anyway" button, but we only honour it when
   // the deploy explicitly opts in via `ALLOW_TURNSTILE_BYPASS=true`. This
   // env var is never set in production — it exists so internal testers on
   // preview can validate the rest of the flow when Cloudflare rejects them
   // (e.g. shared corporate IP, headless browser).
-  if (opts?.bypassRequested && process.env.ALLOW_TURNSTILE_BYPASS === "true") {
+  if (opts?.bypassRequested && envString("ALLOW_TURNSTILE_BYPASS") === "true") {
     console.warn(
       "[turnstile] bypass honoured (ALLOW_TURNSTILE_BYPASS=true). Do NOT enable in production.",
     );
@@ -59,7 +69,7 @@ export async function verifyTurnstile(
   }
   if (!secret) {
     // Fail-open: keep the survey usable while the secret is being provisioned.
-    console.warn("[turnstile] TURNSTILE_SECRET is not set — skipping verification (fail-open).");
+    console.warn("[turnstile] dev fail-open: install TURNSTILE_SECRET to exercise the real flow");
     return;
   }
 
