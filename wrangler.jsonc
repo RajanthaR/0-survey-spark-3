@@ -4,4 +4,8 @@
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  "durable_objects": {
+    "bindings": [{ "name": "RATE_LIMIT", "class_name": "RateLimitDO" }],
+  },
+  "migrations": [{ "tag": "v1", "new_classes": ["RateLimitDO"] }],
 }

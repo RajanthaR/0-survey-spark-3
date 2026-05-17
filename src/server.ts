@@ -3,9 +3,13 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { assertProductionSecurityConfig } from "./lib/security-headers.server";
+export { RateLimitDO } from "./lib/rate-limit.do";
 
 type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
+  fetch: (
+    request: Request,
+    opts?: { context?: Record<string, unknown> },
+  ) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -87,7 +91,9 @@ export default {
     const startedAt = Date.now();
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const response = await handler.fetch(request, {
+        context: { cloudflareEnv: env, cloudflareContext: ctx },
+      });
       const normalized = await normalizeCatastrophicSsrResponse(response);
       if (normalized.status >= 500) {
         console.error(

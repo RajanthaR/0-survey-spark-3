@@ -25,17 +25,17 @@ function lockoutResponse(retrySec: number) {
   });
 }
 
-export function adminLoginGuardImpl(data: AdminGuardData, ip = getClientIp()) {
+export async function adminLoginGuardImpl(data: AdminGuardData, ip = getClientIp()) {
   const key = `${data.email}|${ip}`;
   if (data.outcome === "check") {
-    const snapshot = peekRateLimit(key, ADMIN_LOGIN_LIMIT);
+    const snapshot = await peekRateLimit(key, ADMIN_LOGIN_LIMIT);
     if (snapshot.tokens < 1) {
       throw lockoutResponse(snapshot.retrySec);
     }
     return { ok: true };
   }
 
-  rateLimit(key, ADMIN_LOGIN_LIMIT);
+  await rateLimit(key, ADMIN_LOGIN_LIMIT);
   return { ok: true };
 }
 
@@ -66,7 +66,7 @@ export async function adminPasswordSignInImpl(
 ): Promise<{
   session: Pick<Session, "access_token" | "refresh_token" | "expires_at" | "token_type">;
 }> {
-  adminLoginGuardImpl({ email: data.email, outcome: "check" }, ip);
+  await adminLoginGuardImpl({ email: data.email, outcome: "check" }, ip);
 
   const auth = createServerAuthClient();
   const { data: result, error } = await auth.auth.signInWithPassword({
@@ -76,7 +76,7 @@ export async function adminPasswordSignInImpl(
 
   if (error || !result.session) {
     try {
-      adminLoginGuardImpl({ email: data.email, outcome: "fail" }, ip);
+      await adminLoginGuardImpl({ email: data.email, outcome: "fail" }, ip);
     } catch {
       throw lockoutResponse(ADMIN_LOGIN_LIMIT.windowMs / ADMIN_LOGIN_LIMIT.capacity / 1000);
     }

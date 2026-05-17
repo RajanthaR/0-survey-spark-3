@@ -11,32 +11,42 @@ beforeEach(() => {
 });
 
 describe("adminLoginGuardImpl", () => {
-  it("locks out checks after 5 failed sign-in reports for the same email and IP", () => {
+  it("locks out checks after 5 failed sign-in reports for the same email and IP", async () => {
     for (let i = 0; i < 5; i += 1) {
-      expect(adminLoginGuardImpl({ email, outcome: "fail" }, ip)).toEqual({ ok: true });
+      await expect(adminLoginGuardImpl({ email, outcome: "fail" }, ip)).resolves.toEqual({
+        ok: true,
+      });
     }
 
-    expect(() => adminLoginGuardImpl({ email, outcome: "check" }, ip)).toThrow(Response);
+    await expect(adminLoginGuardImpl({ email, outcome: "check" }, ip)).rejects.toBeInstanceOf(
+      Response,
+    );
   });
 
-  it("does not consume capacity when checking", () => {
+  it("does not consume capacity when checking", async () => {
     for (let i = 0; i < 10; i += 1) {
-      expect(adminLoginGuardImpl({ email, outcome: "check" }, ip)).toEqual({ ok: true });
+      await expect(adminLoginGuardImpl({ email, outcome: "check" }, ip)).resolves.toEqual({
+        ok: true,
+      });
     }
 
     for (let i = 0; i < 5; i += 1) {
-      expect(adminLoginGuardImpl({ email, outcome: "fail" }, ip)).toEqual({ ok: true });
+      await expect(adminLoginGuardImpl({ email, outcome: "fail" }, ip)).resolves.toEqual({
+        ok: true,
+      });
     }
-    expect(() => adminLoginGuardImpl({ email, outcome: "check" }, ip)).toThrow(Response);
+    await expect(adminLoginGuardImpl({ email, outcome: "check" }, ip)).rejects.toBeInstanceOf(
+      Response,
+    );
   });
 
-  it("tracks different IPs independently", () => {
+  it("tracks different IPs independently", async () => {
     for (let i = 0; i < 5; i += 1) {
-      adminLoginGuardImpl({ email, outcome: "fail" }, ip);
+      await adminLoginGuardImpl({ email, outcome: "fail" }, ip);
     }
 
-    expect(adminLoginGuardImpl({ email, outcome: "check" }, "203.0.113.11")).toEqual({
-      ok: true,
-    });
+    await expect(adminLoginGuardImpl({ email, outcome: "check" }, "203.0.113.11")).resolves.toEqual(
+      { ok: true },
+    );
   });
 });
