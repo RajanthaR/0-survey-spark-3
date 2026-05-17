@@ -1,11 +1,21 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitForTests, peekRateLimit, rateLimit } from "@/lib/rate-limit.server";
 
 const cfg = { name: "unit", capacity: 1, windowMs: 60_000 };
 
 beforeEach(() => {
+  // Pin the clock so the contract on `tokens` after exhaustion is
+  // deterministic — without fake timers, the few microseconds between
+  // `rateLimit` and `peekRateLimit` accrue a fractional refill that
+  // makes `expect(tokens).toBe(0)` flake.
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-05-17T00:00:00Z"));
   __resetRateLimitForTests();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("rateLimit fallback", () => {
