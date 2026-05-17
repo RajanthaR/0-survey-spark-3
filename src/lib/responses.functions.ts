@@ -13,7 +13,8 @@ function assertAnswersSize(answers: unknown) {
 }
 
 async function assertNotCompleted(resumeToken: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { createAdminClient } = await import("@/integrations/supabase/client.server");
+  const supabaseAdmin = createAdminClient("responses.assertNotCompleted");
   const { data, error } = await supabaseAdmin
     .from("responses")
     .select("status")
@@ -61,11 +62,12 @@ const SaveInput = z.object({
 export const saveAnswers = createServerFn({ method: "POST" })
   .inputValidator((data) => SaveInput.parse(data))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { createAdminClient } = await import("@/integrations/supabase/client.server");
     const { getClientIp, rateLimit } = await import("@/lib/rate-limit.server");
-    rateLimit(getClientIp(), { name: "saveAnswers", capacity: 120, windowMs: 60 * 1000 });
+    await rateLimit(getClientIp(), { name: "saveAnswers", capacity: 120, windowMs: 60 * 1000 });
     assertAnswersSize(data.answers);
     await assertNotCompleted(data.resumeToken);
+    const supabaseAdmin = createAdminClient("responses.saveAnswers");
     const update: Record<string, unknown> = {
       answers: data.answers,
       progress_pct: data.progressPct,
@@ -94,11 +96,16 @@ const CompleteInput = z.object({
 export const completeResponse = createServerFn({ method: "POST" })
   .inputValidator((data) => CompleteInput.parse(data))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { createAdminClient } = await import("@/integrations/supabase/client.server");
     const { getClientIp, rateLimit } = await import("@/lib/rate-limit.server");
-    rateLimit(getClientIp(), { name: "completeResponse", capacity: 10, windowMs: 10 * 60 * 1000 });
+    await rateLimit(getClientIp(), {
+      name: "completeResponse",
+      capacity: 10,
+      windowMs: 10 * 60 * 1000,
+    });
     assertAnswersSize(data.answers);
     await assertNotCompleted(data.resumeToken);
+    const supabaseAdmin = createAdminClient("responses.completeResponse");
     // Rotate resume_token on completion so any leaked URL is invalidated.
     const rotatedToken = crypto.randomUUID().replace(/-/g, "");
     const { error } = await supabaseAdmin
@@ -123,9 +130,14 @@ const ResumeInput = z.object({
 export const resumeResponse = createServerFn({ method: "POST" })
   .inputValidator((data) => ResumeInput.parse(data))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { createAdminClient } = await import("@/integrations/supabase/client.server");
     const { getClientIp, rateLimit } = await import("@/lib/rate-limit.server");
-    rateLimit(getClientIp(), { name: "resumeResponse", capacity: 60, windowMs: 10 * 60 * 1000 });
+    await rateLimit(getClientIp(), {
+      name: "resumeResponse",
+      capacity: 60,
+      windowMs: 10 * 60 * 1000,
+    });
+    const supabaseAdmin = createAdminClient("responses.resumeResponse");
     const { data: row, error } = await supabaseAdmin
       .from("responses")
       .select("id, survey_slug, language, status, answers, progress_pct, consent")

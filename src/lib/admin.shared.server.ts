@@ -10,7 +10,7 @@
  * No behavior change vs. the pre-split file — line-for-line move.
  */
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createAdminClient } from "@/integrations/supabase/client.server";
 import { SURVEYS } from "@/surveys";
 import { isValidCompletedResponse } from "@/lib/survey-logic";
 import { pickText } from "@/lib/i18n";
@@ -23,7 +23,12 @@ import type { ResponseRow } from "@/lib/responses-csv";
 import { CRC32_INIT, crc32Update, crc32Hex, crc32OfBytes, utf8 } from "@/lib/checksum";
 import { createHash } from "node:crypto";
 
+function adminClient() {
+  return createAdminClient("admin.shared");
+}
+
 export async function assertAdmin(userId: string) {
+  const supabaseAdmin = adminClient();
   const { data, error } = await supabaseAdmin
     .from("user_roles")
     .select("role")
@@ -40,6 +45,7 @@ export const localizedExportSchema = z.object({
 });
 
 export async function fetchSurveyResponseRows(surveySlug: string) {
+  const supabaseAdmin = adminClient();
   const PAGE = 500;
   const list: Record<string, unknown>[] = [];
   for (let page = 0; page < 200; page += 1) {
@@ -558,7 +564,7 @@ export async function buildFilteredExportRows(data: z.infer<typeof filteredExpor
   const PAGE = 500;
   const list: Record<string, unknown>[] = [];
   for (let page = 0; page < 400; page += 1) {
-    let q = supabaseAdmin
+    let q = adminClient()
       .from("responses")
       .select(
         "id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers",

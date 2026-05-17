@@ -8,7 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createAdminClient } from "@/integrations/supabase/client.server";
 import { SURVEYS } from "@/surveys";
 import {
   buildExportColumns,
@@ -33,6 +33,10 @@ import {
   assembleZipBundle,
 } from "@/lib/admin.shared.server";
 
+function adminClient() {
+  return createAdminClient("admin.exports");
+}
+
 export const exportCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { surveySlug: string }) =>
@@ -40,6 +44,7 @@ export const exportCsv = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
 
     // Batched fetch — Postgres-side pagination so we can export beyond the
     // 1000-row default Supabase cap without loading everything in one query.
@@ -147,6 +152,7 @@ export const exportAllValidCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
 
     // Pull every completed response, paginated past the 1000-row cap.
     const PAGE = 500;
@@ -254,6 +260,7 @@ export const streamAllValidCsv = createServerFn({ method: "POST" })
   .inputValidator((input: StreamAllValidInput) => StreamAllValidInputSchema.parse(input))
   .handler(async function* ({ context, data }) {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
     const opts = data ?? {};
     // Stamp every server log with the requestId so admins can grep
     // worker logs by the value the UI shows them.
@@ -299,6 +306,7 @@ export const streamAllValidXlsx = createServerFn({ method: "POST" })
   .inputValidator((input: StreamAllValidInput) => StreamAllValidInputSchema.parse(input))
   .handler(async function* ({ context, data }) {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
     const opts = data ?? {};
     const requestId =
       opts.requestId ??
@@ -470,6 +478,7 @@ export const exportFilteredCsv = createServerFn({ method: "POST" })
   .inputValidator((d: FilteredExportInput) => filteredExportSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
 
     const built = await buildFilteredExportRows(data);
 
@@ -565,6 +574,7 @@ export const exportZipBundle = createServerFn({ method: "POST" })
   .inputValidator((d: FilteredExportInput) => filteredExportSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
 
     const effectiveStatus: "completed" | "in_progress" | "all" = data.validOnly
       ? "completed"

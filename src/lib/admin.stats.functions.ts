@@ -5,12 +5,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createAdminClient } from "@/integrations/supabase/client.server";
 import { SURVEYS } from "@/surveys";
 import { sectionBreakdown, isValidCompletedResponse } from "@/lib/survey-logic";
 import { pickText } from "@/lib/i18n";
 import type { Question } from "@/surveys/types";
 import { assertAdmin, fillDays } from "@/lib/admin.shared.server";
+
+function adminClient() {
+  return createAdminClient("admin.stats");
+}
 
 export const getStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -40,6 +44,7 @@ export const getStats = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
     let q = supabaseAdmin
       .from("responses")
       .select("id, survey_slug, language, status, started_at, completed_at, progress_pct, answers");
@@ -231,6 +236,7 @@ export const listResponses = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
     const from = data.page * data.pageSize;
     const to = from + data.pageSize - 1;
     let q = supabaseAdmin
@@ -268,6 +274,7 @@ export const getResponseAnswers = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
     const { data: row, error } = await supabaseAdmin
       .from("responses")
       .select("id, survey_slug, language, answers")
@@ -392,6 +399,7 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
     const byDayMap = new Map<string, number>();
     const byStatusCounts = { completed: 0, in_progress: 0, other: 0 };
     const sample: SampleRow[] = [];
+    const supabaseAdmin = adminClient();
 
     const pushSample = (r: Record<string, unknown>) => {
       if (sample.length >= SAMPLE_LIMIT) return;
@@ -643,6 +651,7 @@ export const getAnalyticsReport = createServerFn({ method: "POST" })
   .inputValidator(parseAnalyticsReportInput)
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
     let q = supabaseAdmin
       .from("responses")
       .select("id, survey_slug, language, status, started_at, completed_at, answers");

@@ -27,7 +27,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { assertAdmin, streamAllValidCsvImpl } from "@/lib/admin.shared.server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createAdminClient } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 
 const QuerySchema = z.object({
@@ -100,6 +100,7 @@ export const Route = createFileRoute("/api/admin/export.csv")({
         }
         const opts = parsed.data;
         const startPage = opts.startPage ?? 0;
+        const supabaseAdmin = createAdminClient("api.admin.exportCsv");
 
         const requestId =
           opts.requestId ??

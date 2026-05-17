@@ -54,7 +54,7 @@ vi.mock("@/integrations/supabase/client.server", () => {
     eq: () => mock,
     maybeSingle: vi.fn(),
   };
-  return { supabaseAdmin: mock };
+  return { createAdminClient: vi.fn(() => mock) };
 });
 
 const ALL_SLUGS = Object.keys(SURVEYS);
@@ -389,20 +389,22 @@ describe("admin codebook server fns — authorization + payload structure", () =
   // and (b) the payload shape the admin UI destructures stays stable.
   it("assertAdmin throws the toast-visible 'Forbidden' message for non-admins", async () => {
     const { assertAdmin } = await import("@/lib/admin.shared.server");
-    const { supabaseAdmin } =
+    const { createAdminClient } =
       (await import("@/integrations/supabase/client.server")) as unknown as {
-        supabaseAdmin: { maybeSingle: ReturnType<typeof vi.fn> };
+        createAdminClient: () => { maybeSingle: ReturnType<typeof vi.fn> };
       };
+    const supabaseAdmin = createAdminClient();
     supabaseAdmin.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
     await expect(assertAdmin("not-an-admin")).rejects.toThrow("Forbidden: admin role required");
   });
 
   it("assertAdmin resolves silently when the user_roles row exists", async () => {
     const { assertAdmin } = await import("@/lib/admin.shared.server");
-    const { supabaseAdmin } =
+    const { createAdminClient } =
       (await import("@/integrations/supabase/client.server")) as unknown as {
-        supabaseAdmin: { maybeSingle: ReturnType<typeof vi.fn> };
+        createAdminClient: () => { maybeSingle: ReturnType<typeof vi.fn> };
       };
+    const supabaseAdmin = createAdminClient();
     supabaseAdmin.maybeSingle.mockResolvedValueOnce({
       data: { role: "admin" },
       error: null,

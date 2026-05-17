@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createAdminClient } from "@/integrations/supabase/client.server";
 import { getClientIp, rateLimit } from "@/lib/rate-limit.server";
 import { verifyTurnstile } from "@/lib/turnstile.server";
 
@@ -12,7 +12,11 @@ export type StartResponseData = {
 };
 
 export async function startResponseImpl(data: StartResponseData) {
-  rateLimit(getClientIp(), { name: "startResponse", capacity: 30, windowMs: 10 * 60 * 1000 });
+  await rateLimit(getClientIp(), {
+    name: "startResponse",
+    capacity: 30,
+    windowMs: 10 * 60 * 1000,
+  });
   // Order matters: rate-limit first (cheap, blocks spam before we spend a
   // siteverify roundtrip), THEN Turnstile (blocks bots before we touch the
   // database), THEN insert. saveAnswers / completeResponse don't re-verify
@@ -40,6 +44,7 @@ export async function startResponseImpl(data: StartResponseData) {
       }),
     );
   }
+  const supabaseAdmin = createAdminClient("responses.startResponse");
   const { data: row, error } = await supabaseAdmin
     .from("responses")
     .insert({

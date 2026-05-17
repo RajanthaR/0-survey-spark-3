@@ -2,7 +2,7 @@
  * Persistence guarantee: every write to the `responses` table records the
  * language that was active at the moment the answer was saved.
  *
- * This file mocks `supabaseAdmin` so we can capture the exact payload sent
+ * This file mocks `createAdminClient` so we can capture the exact payload sent
  * to `responses.insert(...)` (startResponse) and `responses.update(...)`
  * (saveAnswers, completeResponse) and assert the `language` column is
  * present and matches what the SurveyRunner passed in.
@@ -56,9 +56,7 @@ vi.mock("@/integrations/supabase/client.server", () => {
   };
 
   return {
-    supabaseAdmin: {
-      from: () => buildFrom(),
-    },
+    createAdminClient: vi.fn(() => ({ from: () => buildFrom() })),
   };
 });
 

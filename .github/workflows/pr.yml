@@ -36,6 +36,15 @@ jobs:
       - name: Lint
         run: bun run lint -- --max-warnings 0
 
+      - name: Service-role client import guard
+        run: |
+          hits="$(grep -RInE 'createAdminClient|supabaseAdmin' src --include='*.tsx' || true)"
+          if [ -n "$hits" ]; then
+            echo "Service-role Supabase clients must not be imported from client-rendered .tsx files."
+            echo "$hits"
+            exit 1
+          fi
+
       - name: Test
         run: bun run test
 

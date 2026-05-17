@@ -1,7 +1,7 @@
 /**
  * Persistence guarantee — the Turnstile verification gate must run BEFORE
  * any row hits the `responses` table. These tests pin that contract by
- * mocking both `supabaseAdmin` (to capture inserts) and `fetch` (to drive
+ * mocking both `createAdminClient` (to capture inserts) and `fetch` (to drive
  * the Cloudflare siteverify response), then asserting:
  *
  *   - missing token         → throws, zero inserts
@@ -30,7 +30,7 @@ vi.mock("@/integrations/supabase/client.server", () => {
       };
     },
   });
-  return { supabaseAdmin: { from: () => buildFrom() } };
+  return { createAdminClient: vi.fn(() => ({ from: () => buildFrom() })) };
 });
 
 import { startResponseImpl } from "@/lib/responses.impl.server";

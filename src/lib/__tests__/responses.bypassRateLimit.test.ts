@@ -32,7 +32,7 @@ vi.mock("@/integrations/supabase/client.server", () => {
       };
     },
   });
-  return { supabaseAdmin: { from: () => buildFrom() } };
+  return { createAdminClient: vi.fn(() => ({ from: () => buildFrom() })) };
 });
 
 // Programmable rate-limit mock — `setRateLimitBehaviour` decides whether

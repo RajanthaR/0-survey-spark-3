@@ -28,14 +28,46 @@ function createSupabaseAdminClient() {
   });
 }
 
-let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
+const clients = new Map<string, ReturnType<typeof createSupabaseAdminClient>>();
+const loggedReasons = new Set<string>();
 
-// Server-side Supabase client with service role - bypasses RLS
-// SECURITY: Only use this for trusted server-side operations, never expose to client code
-// Import like: import { supabaseAdmin } from "@/integrations/supabase/client.server";
-export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdminClient>, {
-  get(_, prop, receiver) {
-    if (!_supabaseAdmin) _supabaseAdmin = createSupabaseAdminClient();
-    return Reflect.get(_supabaseAdmin, prop, receiver);
-  },
-});
+function callerFile(): string | undefined {
+  const stack = new Error().stack;
+  if (!stack) return undefined;
+  const line = stack
+    .split("\n")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.includes("/src/") && !entry.includes("client.server.ts"));
+  return line?.replace(/^at\s+/, "");
+}
+
+// Server-side Supabase client with service role - bypasses RLS.
+// SECURITY: only call this from trusted server-side modules, never client code.
+export function createAdminClient(reason: string): ReturnType<typeof createSupabaseAdminClient> {
+  if (!reason.trim()) {
+    throw new Error("createAdminClient(reason) requires a non-empty audit reason.");
+  }
+  const key = reason.trim();
+  if (!loggedReasons.has(key)) {
+    loggedReasons.add(key);
+    console.log(
+      JSON.stringify({
+        kind: "audit.supabaseAdmin",
+        reason: key,
+        file: callerFile() ?? null,
+        ts: new Date().toISOString(),
+      }),
+    );
+  }
+  let client = clients.get(key);
+  if (!client) {
+    client = createSupabaseAdminClient();
+    clients.set(key, client);
+  }
+  return client;
+}
+
+export function __resetAdminClientAuditForTests(): void {
+  clients.clear();
+  loggedReasons.clear();
+}
