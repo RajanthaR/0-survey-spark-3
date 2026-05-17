@@ -93,9 +93,9 @@ function saveExitBtn(container: HTMLElement, lang: Lang): HTMLButtonElement {
   // (filter in JS rather than CSS — the SI/TA labels contain "&" which is
   // awkward in CSS attribute selectors).
   const expected = pickText(UI.saveExit, lang);
-  const btn = Array.from(
-    container.querySelectorAll<HTMLButtonElement>("nav button"),
-  ).find((b) => b.getAttribute("aria-label") === expected);
+  const btn = Array.from(container.querySelectorAll<HTMLButtonElement>("nav button")).find(
+    (b) => b.getAttribute("aria-label") === expected,
+  );
   if (!btn) throw new Error(`Save & exit button not found for lang=${lang}`);
   return btn;
 }

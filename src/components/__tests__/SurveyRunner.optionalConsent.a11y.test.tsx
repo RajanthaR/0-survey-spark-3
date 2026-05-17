@@ -58,7 +58,9 @@ const SURVEY: Survey = {
 function clickMainCta(container: HTMLElement) {
   const btn = container.querySelector("main button.h-14") as HTMLButtonElement;
   if (!btn) throw new Error("No main CTA button found");
-  act(() => { btn.click(); });
+  act(() => {
+    btn.click();
+  });
 }
 
 function renderAtOptionalStage(lang: "en" | "si" | "ta" = "en") {
@@ -75,9 +77,7 @@ function renderAtOptionalStage(lang: "en" | "si" | "ta" = "en") {
 }
 
 function getCards(): HTMLButtonElement[] {
-  return Array.from(
-    document.querySelectorAll<HTMLButtonElement>('button[role="switch"]'),
-  );
+  return Array.from(document.querySelectorAll<HTMLButtonElement>('button[role="switch"]'));
 }
 
 describe("OptionalConsentPanel — keyboard accessibility", () => {
@@ -157,15 +157,11 @@ describe("OptionalConsentPanel — keyboard accessibility", () => {
 
     let cards = getCards();
     fireEvent.keyDown(cards[0], { key: " ", cancelable: true });
-    expect(screen.getByTestId("optional-toggle-live").textContent).toBe(
-      "Opt one — Selected",
-    );
+    expect(screen.getByTestId("optional-toggle-live").textContent).toBe("Opt one — Selected");
 
     cards = getCards();
     fireEvent.keyDown(cards[0], { key: " ", cancelable: true });
-    expect(screen.getByTestId("optional-toggle-live").textContent).toBe(
-      "Opt one — Deselected",
-    );
+    expect(screen.getByTestId("optional-toggle-live").textContent).toBe("Opt one — Deselected");
 
     // Continue-now hint also announces via aria-live=polite.
     cards = getCards();
@@ -174,10 +170,7 @@ describe("OptionalConsentPanel — keyboard accessibility", () => {
     expect(polite.textContent).toBe("You can continue now.");
   });
 
-  it.each([
-    ["si", "අ1"] as const,
-    ["ta", "த1"] as const,
-  ])(
+  it.each([["si", "අ1"] as const, ["ta", "த1"] as const])(
     "announces Selected/Deselected in %s using the localized dictionary entry",
     (lang, labelText) => {
       renderAtOptionalStage(lang);

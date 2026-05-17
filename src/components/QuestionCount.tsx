@@ -18,11 +18,7 @@ export function QuestionCount({ count, lang, className }: CountProps) {
   const ctx = useLang();
   const effective = lang ?? ctx.lang;
   return (
-    <span
-      className={className}
-      data-testid="question-count"
-      data-lang={effective}
-    >
+    <span className={className} data-testid="question-count" data-lang={effective}>
       {formatQuestionCount(count, effective)}
     </span>
   );
@@ -45,13 +41,7 @@ interface PositionProps {
  * Set `announce` to true on the live progress indicator so screen readers
  * speak the localized position whenever the user moves to a new question.
  */
-export function QuestionPosition({
-  current,
-  total,
-  lang,
-  className,
-  announce,
-}: PositionProps) {
+export function QuestionPosition({ current, total, lang, className, announce }: PositionProps) {
   const ctx = useLang();
   const effective = lang ?? ctx.lang;
   const text = formatQuestionPosition(current, total, effective);

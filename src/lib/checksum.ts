@@ -52,7 +52,10 @@ export function utf8(s: string): Uint8Array {
 
 /** SHA-256 hex via Web Crypto. */
 export async function sha256Hex(bytes: Uint8Array): Promise<string> {
-  const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  const ab = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
   const buf = await crypto.subtle.digest("SHA-256", ab);
   const view = new Uint8Array(buf);
   let out = "";

@@ -34,8 +34,12 @@ export function Stat({
   accent?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl border p-4 ${accent ? "gradient-eco text-primary-foreground" : "bg-card"}`}>
-      <p className={`text-xs uppercase tracking-wider ${accent ? "opacity-80" : "text-muted-foreground"}`}>
+    <div
+      className={`rounded-2xl border p-4 ${accent ? "gradient-eco text-primary-foreground" : "bg-card"}`}
+    >
+      <p
+        className={`text-xs uppercase tracking-wider ${accent ? "opacity-80" : "text-muted-foreground"}`}
+      >
         {label}
       </p>
       <p className="mt-1 text-3xl font-semibold">{value}</p>

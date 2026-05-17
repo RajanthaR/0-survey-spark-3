@@ -4,11 +4,12 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createAdminClient } from "@/integrations/supabase/client.server";
 
 export const adminBootstrap = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = createAdminClient("admin.auth.bootstrap");
     const { data: existing } = await supabaseAdmin
       .from("user_roles")
       .select("id")

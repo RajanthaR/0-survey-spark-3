@@ -25,7 +25,9 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys.filter((k) => k.startsWith("eip-option-images-") && k !== CACHE).map((k) => caches.delete(k)),
+        keys
+          .filter((k) => k.startsWith("eip-option-images-") && k !== CACHE)
+          .map((k) => caches.delete(k)),
       );
       await self.clients.claim();
     })(),
@@ -66,7 +68,10 @@ self.addEventListener("fetch", (event) => {
         const res = await fetch(request);
         // Only cache successful, basic responses (skip opaque).
         if (res && res.status === 200 && res.type === "basic") {
-          cache.put(request, res.clone()).then(() => trim(cache)).catch(() => {});
+          cache
+            .put(request, res.clone())
+            .then(() => trim(cache))
+            .catch(() => {});
         }
         return res;
       } catch (err) {

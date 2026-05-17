@@ -11,21 +11,48 @@
  *   node scripts/smoke-ssr.mjs https://survey.example.org
  */
 
-const BASE = (process.argv[2] || process.env.BASE_URL || "http://localhost:5173").replace(/\/$/, "");
+const BASE = (process.argv[2] || process.env.BASE_URL || "http://localhost:5173").replace(
+  /\/$/,
+  "",
+);
 
-const ROUTES = [
-  "/",
-  "/s/phase-1",
-  "/s/phase-3",
-  "/r/smoke-test-token",
-  "/admin",
-];
+const ROUTES = ["/", "/s/phase-1", "/s/phase-3", "/r/smoke-test-token", "/admin"];
 
 const MIN_HTML_BYTES = 500;
 
 function fail(route, reason, extra = "") {
   console.error(`✗ ${route} — ${reason}${extra ? `\n  ${extra}` : ""}`);
   return false;
+}
+
+function checkSecurityHeaders(route, res) {
+  const expected = [
+    ["strict-transport-security", /max-age=/i],
+    ["permissions-policy", /camera=\(\)/i],
+    ["referrer-policy", /^strict-origin-when-cross-origin$/i],
+    ["x-content-type-options", /^nosniff$/i],
+    ["x-frame-options", /^DENY$/i],
+  ];
+
+  for (const [header, pattern] of expected) {
+    const value = res.headers.get(header) ?? "";
+    if (!pattern.test(value)) {
+      return fail(route, `missing/invalid ${header}`, value || "(missing)");
+    }
+  }
+
+  const csp = res.headers.get("content-security-policy") ?? "";
+  if (!csp) return fail(route, "missing content-security-policy");
+  if (!res.headers.get("content-security-policy-report-only")) {
+    return fail(route, "missing content-security-policy-report-only");
+  }
+  if (!/script-src[^;]*'nonce-[^']+'/.test(csp)) {
+    return fail(route, "CSP script-src missing nonce", csp);
+  }
+  if (/script-src[^;]*'unsafe-inline'/.test(csp)) {
+    return fail(route, "CSP script-src still allows unsafe-inline", csp);
+  }
+  return true;
 }
 
 async function check(route) {
@@ -36,6 +63,8 @@ async function check(route) {
   } catch (e) {
     return fail(route, "fetch threw", String(e));
   }
+
+  if (!checkSecurityHeaders(route, res)) return false;
 
   // Allow redirects (e.g. /admin -> /login)
   if (res.status >= 300 && res.status < 400) {
@@ -54,7 +83,11 @@ async function check(route) {
   const body = await res.text();
   const ct = res.headers.get("content-type") ?? "";
 
-  if (ct.includes("application/json") && body.includes('"unhandled":true') && body.includes('"HTTPError"')) {
+  if (
+    ct.includes("application/json") &&
+    body.includes('"unhandled":true') &&
+    body.includes('"HTTPError"')
+  ) {
     return fail(route, "h3 catastrophic SSR error envelope", body.slice(0, 300));
   }
   if (!ct.includes("text/html")) {

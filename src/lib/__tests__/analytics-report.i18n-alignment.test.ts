@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  analyticsReportSchema,
-} from "@/lib/admin.stats.functions";
+import { analyticsReportSchema } from "@/lib/admin.stats.functions";
 import {
   DATE_I18N,
   SERVER_MSG_TO_KEY,
@@ -20,16 +18,16 @@ import type { Lang } from "@/lib/i18n";
  *      languages without falling back to English.
  */
 const FAILURE_INPUTS: unknown[] = [
-  { dateFrom: "" },                                      // fromRequired
-  { dateFrom: "2024-06-01", dateTo: "" },                // toRequired
-  { dateFrom: "06/01/2024", dateTo: "2024-06-30" },      // fromFormat
-  { dateFrom: "2024-06-01", dateTo: "2024/06/30" },      // toFormat
-  { dateFrom: "2024-02-30", dateTo: "2024-03-01" },      // fromCalendar
-  { dateFrom: "2024-03-01", dateTo: "2024-02-30" },      // toCalendar
-  { dateFrom: "2024-06-01" },                            // missingTo
-  { dateTo: "2024-06-01" },                              // missingFrom
-  { dateFrom: "2024-12-01", dateTo: "2024-01-01" },      // inverted
-  { dateFrom: "2024-01-01", dateTo: "2025-01-02" },      // tooLong
+  { dateFrom: "" }, // fromRequired
+  { dateFrom: "2024-06-01", dateTo: "" }, // toRequired
+  { dateFrom: "06/01/2024", dateTo: "2024-06-30" }, // fromFormat
+  { dateFrom: "2024-06-01", dateTo: "2024/06/30" }, // toFormat
+  { dateFrom: "2024-02-30", dateTo: "2024-03-01" }, // fromCalendar
+  { dateFrom: "2024-03-01", dateTo: "2024-02-30" }, // toCalendar
+  { dateFrom: "2024-06-01" }, // missingTo
+  { dateTo: "2024-06-01" }, // missingFrom
+  { dateFrom: "2024-12-01", dateTo: "2024-01-01" }, // inverted
+  { dateFrom: "2024-01-01", dateTo: "2025-01-02" }, // tooLong
 ];
 
 describe("analytics-report i18n alignment", () => {
@@ -52,10 +50,7 @@ describe("analytics-report i18n alignment", () => {
       for (const issue of r.error.issues) seen.add(issue.message);
     }
     for (const msg of seen) {
-      expect(
-        SERVER_MSG_TO_KEY[msg],
-        `missing SERVER_MSG_TO_KEY entry for "${msg}"`,
-      ).toBeDefined();
+      expect(SERVER_MSG_TO_KEY[msg], `missing SERVER_MSG_TO_KEY entry for "${msg}"`).toBeDefined();
     }
   });
 
@@ -77,10 +72,7 @@ describe("analytics-report i18n alignment", () => {
   it("DATE_I18N has non-empty entries for every key in every language", () => {
     for (const key of Object.keys(DATE_I18N) as Array<keyof typeof DATE_I18N>) {
       for (const lang of ["en", "si", "ta"] as Lang[]) {
-        expect(
-          DATE_I18N[key][lang],
-          `DATE_I18N.${String(key)}.${lang} is empty`,
-        ).toBeTruthy();
+        expect(DATE_I18N[key][lang], `DATE_I18N.${String(key)}.${lang} is empty`).toBeTruthy();
       }
     }
   });

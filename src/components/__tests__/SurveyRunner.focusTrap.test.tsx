@@ -74,7 +74,9 @@ const SURVEY: Survey = {
 function clickMainCta(container: HTMLElement) {
   const btn = container.querySelector("main button.h-14") as HTMLButtonElement;
   if (!btn) throw new Error("No main CTA");
-  act(() => { btn.click(); });
+  act(() => {
+    btn.click();
+  });
 }
 
 function getTrap() {

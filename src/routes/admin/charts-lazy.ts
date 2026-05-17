@@ -16,7 +16,9 @@ export const DashboardCharts = {
     import("@/components/admin/DashboardCharts").then((m) => ({ default: m.SurveyBarChart })),
   ),
   QuestionCompletion: lazy(() =>
-    import("@/components/admin/DashboardCharts").then((m) => ({ default: m.QuestionCompletionChart })),
+    import("@/components/admin/DashboardCharts").then((m) => ({
+      default: m.QuestionCompletionChart,
+    })),
   ),
   AnsweredSkipped: lazy(() =>
     import("@/components/admin/DashboardCharts").then((m) => ({ default: m.AnsweredSkippedBar })),

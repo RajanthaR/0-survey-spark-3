@@ -25,9 +25,6 @@ export function computeDropoff(items: QuestionAnswered[]) {
       dropPct,
     };
   });
-  const steepestIndex = rows.reduce(
-    (best, r, i) => (r.dropPct > rows[best].dropPct ? i : best),
-    0,
-  );
+  const steepestIndex = rows.reduce((best, r, i) => (r.dropPct > rows[best].dropPct ? i : best), 0);
   return { rows, steepestIndex };
 }

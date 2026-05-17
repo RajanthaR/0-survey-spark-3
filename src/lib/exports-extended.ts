@@ -15,20 +15,12 @@
 import type { Lang } from "@/lib/i18n";
 import { pickText } from "@/lib/i18n";
 import type { Survey, Question, Option } from "@/surveys/types";
-import {
-  RESPONSES_CSV_META_HEADERS,
-  escapeCsvCell,
-  type ResponseRow,
-} from "@/lib/responses-csv";
+import { RESPONSES_CSV_META_HEADERS, escapeCsvCell, type ResponseRow } from "@/lib/responses-csv";
 import { isAnswered, isVisible } from "@/lib/survey-logic";
 
 // ─── shared helpers ─────────────────────────────────────────────────────────
 
-function localizeOptionValue(
-  value: unknown,
-  options: Option[] | undefined,
-  lang: Lang,
-): string {
+function localizeOptionValue(value: unknown, options: Option[] | undefined, lang: Lang): string {
   if (value == null) return "";
   if (!options || options.length === 0) return String(value);
   const hit = options.find((o) => o.value === String(value));
@@ -75,8 +67,8 @@ function metaRow(r: ResponseRow): unknown[] {
 // Same row shape as `buildLocalizedResponsesCsv`, but each question's column
 // header is prefixed with its localized section name in square brackets so
 // recipients can group/pivot by section without losing the stable meta-column
-// layout. Examples (lang=si):
-//   "id", "status", "language", … , "[කොටස 1] ඔබේ භූමිකාව?", "[කොටස 1] ඔබේ අංශය?"
+// layout. Example:
+//   "id", "status", "language", ... , "[Section 1] Role", "[Section 1] Sector"
 //
 // We keep it as a single header row (not a banded multi-row layout) so it
 // stays valid CSV and round-trips through any spreadsheet tool without
@@ -100,10 +92,7 @@ export function buildSectionedLocalizedResponsesCsv(
   for (const r of rows) {
     const a = (r.answers ?? {}) as Record<string, unknown>;
     lines.push(
-      [
-        ...metaRow(r),
-        ...questions.map((q) => localizeAnswerCell(q, a[q.id], lang)),
-      ]
+      [...metaRow(r), ...questions.map((q) => localizeAnswerCell(q, a[q.id], lang))]
         .map(escapeCsvCell)
         .join(","),
     );
@@ -134,10 +123,7 @@ export function buildLocalizedResponsesXlsxAoa(
   ];
   const dataRows = rows.map((r) => {
     const a = (r.answers ?? {}) as Record<string, unknown>;
-    return [
-      ...metaRow(r),
-      ...questions.map((q) => localizeAnswerCell(q, a[q.id], lang)),
-    ];
+    return [...metaRow(r), ...questions.map((q) => localizeAnswerCell(q, a[q.id], lang))];
   });
   return {
     aoa: [headerRow, ...dataRows],
@@ -188,10 +174,7 @@ function collectInvalidCodes(survey: Survey, answers: Record<string, unknown>) {
   return out;
 }
 
-function collectMissingRequired(
-  survey: Survey,
-  answers: Record<string, unknown>,
-): string[] {
+function collectMissingRequired(survey: Survey, answers: Record<string, unknown>): string[] {
   const out: string[] = [];
   for (const q of survey.questions) {
     if (q.type === "section_header") continue;
@@ -211,11 +194,7 @@ function collectMissingRequired(
   return out;
 }
 
-const VALIDATION_HEADERS = [
-  "is_valid",
-  "missing_required",
-  "invalid_choice_codes",
-] as const;
+const VALIDATION_HEADERS = ["is_valid", "missing_required", "invalid_choice_codes"] as const;
 
 export function buildValidationReportCsv(
   rows: ResponseRow[],

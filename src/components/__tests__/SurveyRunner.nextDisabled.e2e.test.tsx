@@ -5,9 +5,9 @@
  *
  * Covers, per language:
  *  - required text question: disabled when empty, enabled after typing.
- *  - required email question with invalid format: disabled.
+ *  - required email question with invalid format: blocked.
  *  - required email question with valid format: enabled.
- *  - aria-disabled mirrors the disabled attribute (a11y signal).
+ *  - aria-disabled mirrors the blocked state (a11y signal).
  */
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
@@ -70,8 +70,10 @@ const SURVEY: Survey = {
 
 function SetLang({ lang, children }: { lang: Lang; children: React.ReactNode }) {
   const { setLang } = useLang();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLang(lang); }, []);
+  useEffect(() => {
+    setLang(lang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return <>{children}</>;
 }
 
@@ -124,16 +126,19 @@ describe("SurveyRunner Next button gating", () => {
       const email = screen.getByRole("textbox") as HTMLInputElement;
       expect(email.type).toBe("email");
 
-      // empty required → disabled
-      expect(next.disabled).toBe(true);
+      // empty required after a forward transition remains blocked while
+      // staying focusable for the screen-reader announcement contract.
+      expect(next.disabled).toBe(false);
       expect(next.getAttribute("aria-disabled")).toBe("true");
+      expect(next.getAttribute("data-blocked")).toBe("true");
 
-      // invalid format → still disabled
+      // invalid format → still blocked
       await act(async () => {
         fireEvent.change(email, { target: { value: "not-an-email" } });
       });
-      expect(next.disabled).toBe(true);
+      expect(next.disabled).toBe(false);
       expect(next.getAttribute("aria-disabled")).toBe("true");
+      expect(next.getAttribute("data-blocked")).toBe("true");
       unmount();
     });
 

@@ -35,11 +35,7 @@ const PHASES: Array<{
  * `role="status"` + `aria-live="polite"` envelope, same progressbar
  * semantics, same muted-card chrome.
  */
-export function ZipBundleProgressCard({
-  progress,
-}: {
-  progress: ZipBundleProgress;
-}) {
+export function ZipBundleProgressCard({ progress }: { progress: ZipBundleProgress }) {
   const phaseIndex = PHASES.findIndex((p) => p.key === progress.phase);
   const safeIndex = phaseIndex < 0 ? 0 : phaseIndex;
   // Bar fills as the operator crosses phase boundaries. Final phase pins
@@ -85,9 +81,7 @@ export function ZipBundleProgressCard({
           {progress.surveyCount != null && progress.totalRows != null
             ? `${progress.surveyCount.toLocaleString()} survey${
                 progress.surveyCount === 1 ? "" : "s"
-              } · ${progress.totalRows.toLocaleString()} row${
-                progress.totalRows === 1 ? "" : "s"
-              }`
+              } · ${progress.totalRows.toLocaleString()} row${progress.totalRows === 1 ? "" : "s"}`
             : "Counting…"}
         </span>
         {progress.filename && (

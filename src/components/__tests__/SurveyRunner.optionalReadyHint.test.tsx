@@ -49,14 +49,22 @@ const SURVEY: Survey = {
     { id: "o2", required: false, label: { en: "Opt two", si: "අ2", ta: "த2" } },
   ],
   questions: [
-    { id: "q1", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q1", si: "Q1", ta: "Q1" }, required: false },
+    {
+      id: "q1",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q1", si: "Q1", ta: "Q1" },
+      required: false,
+    },
   ],
 };
 
 function clickMainCta(container: HTMLElement) {
   const btn = container.querySelector("main button.h-14") as HTMLButtonElement;
   if (!btn) throw new Error("No main CTA");
-  act(() => { btn.click(); });
+  act(() => {
+    btn.click();
+  });
 }
 
 function renderAtOptional(lang: "en" | "si" | "ta" = "en") {
@@ -70,8 +78,7 @@ function renderAtOptional(lang: "en" | "si" | "ta" = "en") {
   return utils;
 }
 
-const getReady = () =>
-  document.querySelector('[data-testid="optional-ready-hint"]') as HTMLElement;
+const getReady = () => document.querySelector('[data-testid="optional-ready-hint"]') as HTMLElement;
 const getIdle = () =>
   document.querySelector('[data-testid="optional-idle-hint"]') as HTMLElement | null;
 const getCards = () =>
@@ -98,7 +105,9 @@ describe("Optional consent — polite ready-hint announcement threshold", () => 
   it("populates the polite region with the localized ready text once ≥1 card is selected", () => {
     renderAtOptional("en");
     expect(getReady().textContent).toBe("");
-    act(() => { getCards()[0].click(); });
+    act(() => {
+      getCards()[0].click();
+    });
     expect(getReady().textContent?.trim()).toBe(pickText(UI.optionalHintReady, "en"));
     // Idle hint disappears once threshold is crossed.
     expect(getIdle()).toBeNull();
@@ -106,10 +115,14 @@ describe("Optional consent — polite ready-hint announcement threshold", () => 
 
   it("clears the polite region when the user deselects back below the threshold", () => {
     renderAtOptional("en");
-    act(() => { getCards()[0].click(); });
+    act(() => {
+      getCards()[0].click();
+    });
     expect(getReady().textContent?.trim().length).toBeGreaterThan(0);
     // Re-query: React re-rendered the panel, the previous ref may be stale.
-    act(() => { getCards()[0].click(); });
+    act(() => {
+      getCards()[0].click();
+    });
     expect(getReady().textContent ?? "").toBe("");
     // Idle hint reappears.
     expect(getIdle()).not.toBeNull();
@@ -119,7 +132,9 @@ describe("Optional consent — polite ready-hint announcement threshold", () => 
     "ready hint uses the %s dictionary entry once threshold is met",
     (lang) => {
       renderAtOptional(lang);
-      act(() => { getCards()[0].click(); });
+      act(() => {
+        getCards()[0].click();
+      });
       expect(getReady().textContent?.trim()).toBe(pickText(UI.optionalHintReady, lang));
     },
   );
@@ -129,31 +144,45 @@ describe("Optional consent — polite ready-hint announcement threshold", () => 
     const expected = pickText(UI.optionalHintReady, "en");
 
     // 1st toggle ON — announce
-    act(() => { getCards()[0].click(); });
+    act(() => {
+      getCards()[0].click();
+    });
     expect(getReady().textContent?.trim()).toBe(expected);
 
     // toggle OFF — must clear so the next ON is a real DOM mutation SR will re-read
-    act(() => { getCards()[0].click(); });
+    act(() => {
+      getCards()[0].click();
+    });
     expect(getReady().textContent ?? "").toBe("");
 
     // 2nd toggle ON — re-announce (content transitions "" → text again)
-    act(() => { getCards()[0].click(); });
+    act(() => {
+      getCards()[0].click();
+    });
     expect(getReady().textContent?.trim()).toBe(expected);
 
     // And once more for good measure: off → on still re-announces.
-    act(() => { getCards()[0].click(); });
+    act(() => {
+      getCards()[0].click();
+    });
     expect(getReady().textContent ?? "").toBe("");
-    act(() => { getCards()[0].click(); });
+    act(() => {
+      getCards()[0].click();
+    });
     expect(getReady().textContent?.trim()).toBe(expected);
   });
 
   it("selecting a second card keeps the ready text (does NOT regress to empty)", () => {
     renderAtOptional("en");
     const [c1, c2] = getCards();
-    act(() => { c1.click(); });
+    act(() => {
+      c1.click();
+    });
     const expected = pickText(UI.optionalHintReady, "en");
     expect(getReady().textContent?.trim()).toBe(expected);
-    act(() => { c2.click(); });
+    act(() => {
+      c2.click();
+    });
     expect(getReady().textContent?.trim()).toBe(expected);
   });
 });

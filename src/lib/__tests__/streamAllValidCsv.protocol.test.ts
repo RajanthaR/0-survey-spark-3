@@ -20,14 +20,8 @@
  * test runs synchronously regardless of the backoff schedule.
  */
 import { describe, it, expect } from "vitest";
-import {
-  streamAllValidCsvImpl,
-  type StreamAllValidEvent,
-} from "@/lib/admin.functions";
-import {
-  buildExportColumns,
-  buildExportHeaderRow,
-} from "@/lib/csv-export-shape";
+import { streamAllValidCsvImpl, type StreamAllValidEvent } from "@/lib/admin.shared.server";
+import { buildExportColumns, buildExportHeaderRow } from "@/lib/csv-export-shape";
 
 function escape(v: unknown): string {
   if (v == null) return "";
@@ -35,9 +29,7 @@ function escape(v: unknown): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-const EXPECTED_HEADER_LINE = buildExportHeaderRow(buildExportColumns())
-  .map(escape)
-  .join(",");
+const EXPECTED_HEADER_LINE = buildExportHeaderRow(buildExportColumns()).map(escape).join(",");
 
 const FIXED_NOW = () => new Date("2026-05-15T00:00:00.000Z");
 
@@ -55,9 +47,7 @@ function makeRow(id: string, slug = "survey1") {
   };
 }
 
-async function collect(
-  gen: AsyncGenerator<StreamAllValidEvent>,
-): Promise<StreamAllValidEvent[]> {
+async function collect(gen: AsyncGenerator<StreamAllValidEvent>): Promise<StreamAllValidEvent[]> {
   const out: StreamAllValidEvent[] = [];
   for await (const evt of gen) out.push(evt);
   return out;
@@ -100,12 +90,8 @@ describe("streamAllValidCsvImpl — wire protocol", () => {
     // CSV slices are non-empty, newline-terminated, and have the right
     // number of lines.
     expect(chunks[0].type === "chunk" && chunks[0].csv.endsWith("\n")).toBe(true);
-    expect(
-      chunks[0].type === "chunk" && chunks[0].csv.trimEnd().split("\n"),
-    ).toHaveLength(3);
-    expect(
-      chunks[1].type === "chunk" && chunks[1].csv.trimEnd().split("\n"),
-    ).toHaveLength(2);
+    expect(chunks[0].type === "chunk" && chunks[0].csv.trimEnd().split("\n")).toHaveLength(3);
+    expect(chunks[1].type === "chunk" && chunks[1].csv.trimEnd().split("\n")).toHaveLength(2);
 
     // No event types other than the ones above.
     expect(new Set(events.map((e) => e.type))).toEqual(
@@ -135,7 +121,9 @@ describe("streamAllValidCsvImpl — wire protocol", () => {
     });
     // requestId is auto-generated and non-empty.
     expect(
-      events[0].type === "meta" && typeof events[0].requestId === "string" && events[0].requestId.length >= 8,
+      events[0].type === "meta" &&
+        typeof events[0].requestId === "string" &&
+        events[0].requestId.length >= 8,
     ).toBe(true);
     expect(events[1]).toMatchObject({ type: "checksum" });
     expect(events[2]).toEqual({ type: "done", rowCount: 0 });
@@ -386,4 +374,3 @@ describe("streamAllValidCsvImpl — resume / tuning / correlation", () => {
     }).rejects.toThrowError(/\[requestId=req-deadbeef-9999\]/);
   });
 });
-

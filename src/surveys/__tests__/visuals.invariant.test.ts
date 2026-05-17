@@ -23,7 +23,9 @@ describe("survey option visuals", () => {
   it("detects mixed-state questions", () => {
     const fake = {
       slug: "fake",
-      title: { en: "" }, subtitle: { en: "" }, estimatedMinutes: 0,
+      title: { en: "" },
+      subtitle: { en: "" },
+      estimatedMinutes: 0,
       consent: [],
       questions: [
         {
@@ -32,7 +34,11 @@ describe("survey option visuals", () => {
           section: { en: "" },
           label: { en: "" },
           options: [
-            { value: "a", label: { en: "a" }, visual: { kind: "icon" as const, name: "check" as const } },
+            {
+              value: "a",
+              label: { en: "a" },
+              visual: { kind: "icon" as const, name: "check" as const },
+            },
             { value: "b", label: { en: "b" } },
           ],
         },
@@ -46,7 +52,9 @@ describe("survey option visuals", () => {
   describe("error message detail", () => {
     const fake = (extras: { id: string; opts: Array<{ value: string; visual?: boolean }> }) => ({
       slug: "demo",
-      title: { en: "" }, subtitle: { en: "" }, estimatedMinutes: 0,
+      title: { en: "" },
+      subtitle: { en: "" },
+      estimatedMinutes: 0,
       consent: [],
       questions: [
         {
@@ -57,9 +65,7 @@ describe("survey option visuals", () => {
           options: extras.opts.map((o) => ({
             value: o.value,
             label: { en: o.value },
-            ...(o.visual
-              ? { visual: { kind: "icon" as const, name: "check" as const } }
-              : {}),
+            ...(o.visual ? { visual: { kind: "icon" as const, name: "check" as const } } : {}),
           })),
         },
       ],
@@ -69,11 +75,7 @@ describe("survey option visuals", () => {
       const errs = findVisualInvariantViolations(
         fake({
           id: "q-add",
-          opts: [
-            { value: "alpha", visual: true },
-            { value: "beta" },
-            { value: "gamma" },
-          ],
+          opts: [{ value: "alpha", visual: true }, { value: "beta" }, { value: "gamma" }],
         }),
       );
       expect(errs).toHaveLength(1);
@@ -89,11 +91,7 @@ describe("survey option visuals", () => {
       const errs = findVisualInvariantViolations(
         fake({
           id: "q-remove",
-          opts: [
-            { value: "x", visual: true },
-            { value: "y", visual: true },
-            { value: "z" },
-          ],
+          opts: [{ value: "x", visual: true }, { value: "y", visual: true }, { value: "z" }],
         }),
       );
       expect(errs).toHaveLength(1);
@@ -111,7 +109,9 @@ describe("survey option visuals", () => {
 
     const badSurvey = {
       slug: "bad",
-      title: { en: "" }, subtitle: { en: "" }, estimatedMinutes: 0,
+      title: { en: "" },
+      subtitle: { en: "" },
+      estimatedMinutes: 0,
       consent: [],
       questions: [
         {
@@ -120,7 +120,11 @@ describe("survey option visuals", () => {
           section: { en: "" },
           label: { en: "" },
           options: [
-            { value: "one", label: { en: "one" }, visual: { kind: "icon" as const, name: "check" as const } },
+            {
+              value: "one",
+              label: { en: "one" },
+              visual: { kind: "icon" as const, name: "check" as const },
+            },
             { value: "two", label: { en: "two" } },
           ],
         },

@@ -191,7 +191,9 @@ describe("SurveyRunner — mobile finger-friendly controls (questions stage)", (
     expect(getInput().value).toBe("answer-1");
 
     // Tap Next → q2 becomes the current question.
-    act(() => { getNextButton().click(); });
+    act(() => {
+      getNextButton().click();
+    });
     expect(document.body.textContent).toContain("Second question");
     expect(document.body.textContent).not.toContain("First question");
     // Back button is now enabled at q2.

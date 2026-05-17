@@ -61,7 +61,7 @@ test.describe("mid-survey language toggle", () => {
       const label = (await questionLabel.textContent())?.trim() ?? "";
       const optionText =
         (await firstOption.count()) > 0
-          ? (await firstOption.evaluate((el) => el.closest("label")?.textContent?.trim() ?? ""))
+          ? await firstOption.evaluate((el) => el.closest("label")?.textContent?.trim() ?? "")
           : "";
       const progress = (await position.textContent())?.trim() ?? "";
       return { label, optionText, progress };

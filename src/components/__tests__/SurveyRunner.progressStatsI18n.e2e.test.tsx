@@ -156,23 +156,17 @@ describe("SurveyRunner — mid-survey language toggle relocalizes progress stati
 
     // EN → SI: stats relocalize without losing position or changing pct.
     act(() => fireEvent.click(langPill("සි")));
-    await waitFor(() =>
-      expect(langPill("සි").getAttribute("aria-pressed")).toBe("true"),
-    );
+    await waitFor(() => expect(langPill("සි").getAttribute("aria-pressed")).toBe("true"));
     await assertStatsIn("si", current, baselinePct);
 
     // SI → TA.
     act(() => fireEvent.click(langPill("த")));
-    await waitFor(() =>
-      expect(langPill("த").getAttribute("aria-pressed")).toBe("true"),
-    );
+    await waitFor(() => expect(langPill("த").getAttribute("aria-pressed")).toBe("true"));
     await assertStatsIn("ta", current, baselinePct);
 
     // TA → EN round-trip.
     act(() => fireEvent.click(langPill("EN")));
-    await waitFor(() =>
-      expect(langPill("EN").getAttribute("aria-pressed")).toBe("true"),
-    );
+    await waitFor(() => expect(langPill("EN").getAttribute("aria-pressed")).toBe("true"));
     await assertStatsIn("en", current, baselinePct);
   });
 

@@ -100,7 +100,10 @@ export function FilteredBySurveyChips({
         );
       })}
       {truncated && (
-        <span className="text-xs text-muted-foreground" title="Breakdown sampled the first 5,000 matching rows">
+        <span
+          className="text-xs text-muted-foreground"
+          title="Breakdown sampled the first 5,000 matching rows"
+        >
           (sampled)
         </span>
       )}
@@ -115,10 +118,10 @@ export function FilteredSampleTable({
   sample: FilteredPreview["sample"];
   lang: Lang;
 }) {
-  if (sample.length === 0) return null;
   // Track which row is expanded to lazy-load the response detail panel.
   // Single-row expansion keeps the preview pane scannable on tablets.
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  if (sample.length === 0) return null;
   return (
     <div
       className="mt-3 overflow-x-auto rounded-md border"
@@ -132,12 +135,24 @@ export function FilteredSampleTable({
         <thead className="bg-muted/50 text-left">
           <tr>
             <th scope="col" className="w-6 px-2 py-1.5" aria-label="Expand"></th>
-            <th scope="col" className="px-2 py-1.5 font-medium">Response</th>
-            <th scope="col" className="px-2 py-1.5 font-medium">Survey</th>
-            <th scope="col" className="px-2 py-1.5 font-medium">Lang</th>
-            <th scope="col" className="px-2 py-1.5 font-medium">Status</th>
-            <th scope="col" className="px-2 py-1.5 font-medium">Started (UTC)</th>
-            <th scope="col" className="px-2 py-1.5 font-medium">Contact</th>
+            <th scope="col" className="px-2 py-1.5 font-medium">
+              Response
+            </th>
+            <th scope="col" className="px-2 py-1.5 font-medium">
+              Survey
+            </th>
+            <th scope="col" className="px-2 py-1.5 font-medium">
+              Lang
+            </th>
+            <th scope="col" className="px-2 py-1.5 font-medium">
+              Status
+            </th>
+            <th scope="col" className="px-2 py-1.5 font-medium">
+              Started (UTC)
+            </th>
+            <th scope="col" className="px-2 py-1.5 font-medium">
+              Contact
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -162,7 +177,9 @@ export function FilteredSampleTable({
                   </td>
                   <td className="px-2 py-1.5">{localizedSurveyTitle(r.survey_slug, lang)}</td>
                   <td className="px-2 py-1.5 uppercase">{r.language}</td>
-                  <td className="px-2 py-1.5">{r.status === "in_progress" ? "in progress" : r.status}</td>
+                  <td className="px-2 py-1.5">
+                    {r.status === "in_progress" ? "in progress" : r.status}
+                  </td>
                   <td className="px-2 py-1.5 whitespace-nowrap">{formatStarted(r.started_at)}</td>
                   <td className="px-2 py-1.5">{r.contact_name || "—"}</td>
                 </tr>
@@ -206,11 +223,8 @@ export function FilteredDailyChart({
   const max = byDay.reduce((m, d) => Math.max(m, d.count), 0);
   const total = byDay.reduce((sum, d) => sum + d.count, 0);
   const stepX = byDay.length > 1 ? (W - PAD_X * 2) / (byDay.length - 1) : 0;
-  const yFor = (n: number) =>
-    max === 0 ? H - PAD_Y : H - PAD_Y - ((H - PAD_Y * 2) * n) / max;
-  const points = byDay
-    .map((d, i) => `${PAD_X + i * stepX},${yFor(d.count)}`)
-    .join(" ");
+  const yFor = (n: number) => (max === 0 ? H - PAD_Y : H - PAD_Y - ((H - PAD_Y * 2) * n) / max);
+  const points = byDay.map((d, i) => `${PAD_X + i * stepX},${yFor(d.count)}`).join(" ");
   const peak = byDay.reduce((p, d) => (d.count > p.count ? d : p), byDay[0]);
   const fieldLabel = dateField === "completed_at" ? "completed" : "started";
   return (
@@ -236,17 +250,13 @@ export function FilteredDailyChart({
           points={points}
         />
         {byDay.length === 1 && (
-          <circle
-            cx={PAD_X}
-            cy={yFor(byDay[0].count)}
-            r={2}
-            fill="hsl(var(--primary))"
-          />
+          <circle cx={PAD_X} cy={yFor(byDay[0].count)} r={2} fill="hsl(var(--primary))" />
         )}
       </svg>
       <figcaption className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
         <span>
-          {byDay[0].date} → {byDay[byDay.length - 1].date} · {byDay.length} day{byDay.length === 1 ? "" : "s"} ({fieldLabel})
+          {byDay[0].date} → {byDay[byDay.length - 1].date} · {byDay.length} day
+          {byDay.length === 1 ? "" : "s"} ({fieldLabel})
         </span>
         <span>
           peak {peak.count.toLocaleString()} on {peak.date} · total {total.toLocaleString()}
@@ -272,10 +282,11 @@ export function FilteredByStatusChips({
   byStatus: FilteredPreview["byStatus"];
   total: number;
 }) {
-  const items: Array<{ key: "completed" | "in_progress" | "other"; label: string; count: number }> = [
-    { key: "completed", label: "Completed", count: byStatus.completed },
-    { key: "in_progress", label: "In progress", count: byStatus.in_progress },
-  ];
+  const items: Array<{ key: "completed" | "in_progress" | "other"; label: string; count: number }> =
+    [
+      { key: "completed", label: "Completed", count: byStatus.completed },
+      { key: "in_progress", label: "In progress", count: byStatus.in_progress },
+    ];
   if (byStatus.other > 0) {
     items.push({ key: "other", label: "Other", count: byStatus.other });
   }

@@ -1,19 +1,30 @@
 import { useState } from "react";
 import { Copy } from "lucide-react";
+import { buildResumeUrl, getStoredResumeToken } from "@/lib/resume-token-storage";
 
 export function ResumeStrip({
-  url,
+  surveySlug,
+  resumeToken,
   label,
   copyLabel,
   copiedLabel,
 }: {
-  url: string;
+  surveySlug: string;
+  resumeToken?: string;
   label: string;
   copyLabel: string;
   copiedLabel: string;
 }) {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [url, setUrl] = useState("");
+
+  function revealUrl() {
+    const token = getStoredResumeToken(surveySlug) ?? resumeToken;
+    setUrl(token ? buildResumeUrl(token) : "");
+    setRevealed(true);
+  }
+
   return (
     <div className="border-t bg-secondary/40 px-4 py-2 text-[11px] text-secondary-foreground">
       <div className="mx-auto flex max-w-2xl items-center gap-2">
@@ -22,7 +33,8 @@ export function ResumeStrip({
           <button
             type="button"
             className="ml-auto rounded bg-background/70 px-2 py-1 hover:bg-background"
-            onClick={() => setRevealed(true)}
+            onClick={revealUrl}
+            disabled={!resumeToken}
           >
             {copyLabel}
           </button>
@@ -34,6 +46,7 @@ export function ResumeStrip({
             <button
               type="button"
               className="inline-flex items-center gap-1 rounded px-2 py-1 hover:bg-background/70"
+              disabled={!url}
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(url);

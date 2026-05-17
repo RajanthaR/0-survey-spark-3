@@ -58,31 +58,42 @@ const SURVEY: Survey = {
   estimatedMinutes: 1,
   consent: [],
   questions: [
-    { id: "q1", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q1", si: "Q1", ta: "Q1" }, required: false },
-    { id: "q2", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q2", si: "Q2", ta: "Q2" }, required: false },
-    { id: "q3", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q3", si: "Q3", ta: "Q3" }, required: false },
+    {
+      id: "q1",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q1", si: "Q1", ta: "Q1" },
+      required: false,
+    },
+    {
+      id: "q2",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q2", si: "Q2", ta: "Q2" },
+      required: false,
+    },
+    {
+      id: "q3",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q3", si: "Q3", ta: "Q3" },
+      required: false,
+    },
   ],
 };
 
 function renderRunner() {
   return render(
     <I18nProvider>
-      <SurveyRunner
-        survey={SURVEY}
-        initialToken="tok"
-        initialAnswers={{}}
-        initialLanguage="en"
-      />
+      <SurveyRunner survey={SURVEY} initialToken="tok" initialAnswers={{}} initialLanguage="en" />
     </I18nProvider>,
   );
 }
 
 const qid = () =>
   (document.querySelector('[data-testid="q-stub"]') as HTMLElement).getAttribute("data-qid");
-const nextBtn = () =>
-  document.querySelector('[data-testid="next-button"]') as HTMLButtonElement;
-const backBtn = () =>
-  document.querySelector('[aria-label="Back"]') as HTMLButtonElement;
+const nextBtn = () => document.querySelector('[data-testid="next-button"]') as HTMLButtonElement;
+const backBtn = () => document.querySelector('[aria-label="Back"]') as HTMLButtonElement;
 
 beforeEach(() => {
   window.localStorage.clear();

@@ -91,18 +91,29 @@ export type CodebookLang = (typeof CODEBOOK_LANGS)[number];
 
 const ALL_CODEBOOK_HEADERS = [
   "survey_slug",
-  "survey_title_en", "survey_title_si", "survey_title_ta",
-  "question_id", "question_type", "required",
-  "section_en", "section_si", "section_ta",
-  "question_label_en", "question_label_si", "question_label_ta",
+  "survey_title_en",
+  "survey_title_si",
+  "survey_title_ta",
+  "question_id",
+  "question_type",
+  "required",
+  "section_en",
+  "section_si",
+  "section_ta",
+  "question_label_en",
+  "question_label_si",
+  "question_label_ta",
   "option_value",
-  "option_label_en", "option_label_si", "option_label_ta",
-  "shown_if", "max_select",
+  "option_label_en",
+  "option_label_si",
+  "option_label_ta",
+  "shown_if",
+  "max_select",
   // ---- Join keys (added so analysts can VLOOKUP / merge straight against
   // the response CSV column headers without reconstructing the key shape) ----
-  "column_key",         // matches the response CSV question column header prefix, e.g. "survey1.q1"
-  "label_column_key",   // matches the response CSV sibling label column for choice/likert/yes_no, e.g. "survey1.q1.label_en" (else "")
-  "join_key",           // composite "{slug}|{question_id}|{option_value}" for option rows; "{slug}|{question_id}" otherwise
+  "column_key", // matches the response CSV question column header prefix, e.g. "survey1.q1"
+  "label_column_key", // matches the response CSV sibling label column for choice/likert/yes_no, e.g. "survey1.q1.label_en" (else "")
+  "join_key", // composite "{slug}|{question_id}|{option_value}" for option rows; "{slug}|{question_id}" otherwise
 ] as const;
 
 /** Default (all-language) header list. Kept exported for back-compat. */
@@ -127,11 +138,7 @@ export function buildCodebookHeaders(
  * `q.options` is non-empty), so yes_no — which sources its options from
  * `YES_NO_OPTIONS` rather than `q.options` — is intentionally excluded.
  */
-const HAS_LABEL_COL = new Set<Question["type"]>([
-  "single_choice",
-  "multi_choice",
-  "likert_5",
-]);
+const HAS_LABEL_COL = new Set<Question["type"]>(["single_choice", "multi_choice", "likert_5"]);
 
 /**
  * Build the full codebook row matrix in survey × question × option order.
@@ -173,7 +180,9 @@ export function buildCodebookRows(
       const base: string[] = [
         survey.slug,
         ...pickLangs(survey.title),
-        q.id, q.type, q.required ? "true" : "false",
+        q.id,
+        q.type,
+        q.required ? "true" : "false",
         ...pickLangs(q.section),
         ...pickLangs(q.label),
       ];
@@ -184,8 +193,11 @@ export function buildCodebookRows(
 
       const opts =
         q.type === "yes_no"
-          ? (YES_NO_OPTIONS as unknown as Array<{ value: string; label: { en: string; si?: string; ta?: string } }>)
-          : q.options ?? null;
+          ? (YES_NO_OPTIONS as unknown as Array<{
+              value: string;
+              label: { en: string; si?: string; ta?: string };
+            }>)
+          : (q.options ?? null);
 
       if (opts && opts.length > 0) {
         for (const opt of opts) {

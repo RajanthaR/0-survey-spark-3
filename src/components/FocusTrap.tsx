@@ -40,9 +40,7 @@ export function FocusTrap({ active, children, className, focusKey }: FocusTrapPr
     const focusKeyChanged = prevFocusKey.current !== focusKey;
     prevFocusKey.current = focusKey;
     if (!focusKeyChanged && node.contains(document.activeElement)) return;
-    const focusables = Array.from(
-      node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-    );
+    const focusables = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
     focusables[0]?.focus();
   }, [active, focusKey]);
 
@@ -53,9 +51,9 @@ export function FocusTrap({ active, children, className, focusKey }: FocusTrapPr
     if (!node) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
-      const focusables = Array.from(
-        node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      ).filter((el) => el.tabIndex !== -1);
+      const focusables = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (el) => el.tabIndex !== -1,
+      );
       if (focusables.length === 0) {
         e.preventDefault();
         return;

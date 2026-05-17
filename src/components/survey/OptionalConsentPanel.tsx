@@ -57,14 +57,23 @@ export function OptionalConsentPanel({
     const next = ((i % len) + len) % len;
     cardRefs.current[next]?.focus();
   };
-  const handleCardKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number, id: string, checked: boolean) => {
+  const handleCardKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+    id: string,
+    checked: boolean,
+  ) => {
     switch (e.key) {
       case " ":
       case "Spacebar":
       case "Enter":
         e.preventDefault();
         if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-          try { navigator.vibrate(10); } catch { /* ignore */ }
+          try {
+            navigator.vibrate(10);
+          } catch {
+            /* ignore */
+          }
         }
         toggleWithAnnounce(id, !checked);
         break;
@@ -117,10 +126,7 @@ export function OptionalConsentPanel({
       >
         {pickText(UI.optionalKeyboardHint, lang)}
       </p>
-      <p
-        className="text-xs text-muted-foreground sm:hidden"
-        data-testid="optional-mobile-hint"
-      >
+      <p className="text-xs text-muted-foreground sm:hidden" data-testid="optional-mobile-hint">
         {pickText(UI.optionalMobileHint, lang)}
       </p>
       <ul className="space-y-4" role="group" aria-label={pickText(UI.optionalTitle, lang)}>
@@ -131,11 +137,17 @@ export function OptionalConsentPanel({
           return (
             <li key={c.id}>
               <button
-                ref={(el) => { cardRefs.current[index] = el; }}
+                ref={(el) => {
+                  cardRefs.current[index] = el;
+                }}
                 type="button"
                 onClick={() => {
                   if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-                    try { navigator.vibrate(10); } catch { /* ignore */ }
+                    try {
+                      navigator.vibrate(10);
+                    } catch {
+                      /* ignore */
+                    }
                   }
                   toggleWithAnnounce(c.id, !checked);
                 }}

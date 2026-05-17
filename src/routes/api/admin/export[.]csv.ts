@@ -26,11 +26,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import {
-  assertAdmin,
-  streamAllValidCsvImpl,
-} from "@/lib/admin.shared.server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertAdmin, streamAllValidCsvImpl } from "@/lib/admin.shared.server";
+import { createAdminClient } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 
 const QuerySchema = z.object({
@@ -95,9 +92,7 @@ export const Route = createFileRoute("/api/admin/export.csv")({
 
         // 3. Validate query params (resume offset + retry tuning).
         const url = new URL(request.url);
-        const parsed = QuerySchema.safeParse(
-          Object.fromEntries(url.searchParams),
-        );
+        const parsed = QuerySchema.safeParse(Object.fromEntries(url.searchParams));
         if (!parsed.success) {
           return new Response(`Bad request: ${parsed.error.message}`, {
             status: 400,
@@ -105,14 +100,13 @@ export const Route = createFileRoute("/api/admin/export.csv")({
         }
         const opts = parsed.data;
         const startPage = opts.startPage ?? 0;
+        const supabaseAdmin = createAdminClient("api.admin.exportCsv");
 
         const requestId =
           opts.requestId ??
           (typeof globalThis.crypto?.randomUUID === "function"
             ? globalThis.crypto.randomUUID()
-            : `req-${Date.now().toString(36)}-${Math.random()
-                .toString(36)
-                .slice(2, 10)}`);
+            : `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);
         console.info(
           `[export.csv] start requestId=${requestId} startPage=${startPage} ` +
             `maxAttempts=${opts.maxAttempts ?? 3} baseDelayMs=${
@@ -199,14 +193,10 @@ export const Route = createFileRoute("/api/admin/export.csv")({
               controller.close();
             } catch (e) {
               const msg = e instanceof Error ? e.message : String(e);
-              console.error(
-                `[export.csv] failed requestId=${requestId}: ${msg}`,
-              );
+              console.error(`[export.csv] failed requestId=${requestId}: ${msg}`);
               try {
                 controller.enqueue(
-                  encoder.encode(
-                    `\n# stream failed [requestId=${requestId}]: ${msg}\n`,
-                  ),
+                  encoder.encode(`\n# stream failed [requestId=${requestId}]: ${msg}\n`),
                 );
               } catch {
                 // controller already errored — nothing to do.

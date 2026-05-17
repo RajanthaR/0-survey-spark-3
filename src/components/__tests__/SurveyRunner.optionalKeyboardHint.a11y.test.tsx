@@ -52,14 +52,22 @@ const SURVEY: Survey = {
     { id: "o2", required: false, label: { en: "Opt two", si: "අ2", ta: "த2" } },
   ],
   questions: [
-    { id: "q1", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q1", si: "Q1", ta: "Q1" }, required: false },
+    {
+      id: "q1",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q1", si: "Q1", ta: "Q1" },
+      required: false,
+    },
   ],
 };
 
 function clickMainCta(container: HTMLElement) {
   const btn = container.querySelector("main button.h-14") as HTMLButtonElement;
   if (!btn) throw new Error("No main CTA");
-  act(() => { btn.click(); });
+  act(() => {
+    btn.click();
+  });
 }
 
 function renderAtOptional(lang: "en" | "si" | "ta") {
@@ -150,9 +158,7 @@ describe("Optional consent — keyboard hint a11y", () => {
   it("appears BEFORE every role=switch card so the help is announced before the controls", () => {
     renderAtOptional("en");
     const hint = getHint();
-    const cards = Array.from(
-      document.querySelectorAll<HTMLButtonElement>('button[role="switch"]'),
-    );
+    const cards = Array.from(document.querySelectorAll<HTMLButtonElement>('button[role="switch"]'));
     expect(cards.length).toBeGreaterThan(0);
     for (const card of cards) {
       expect(hint.compareDocumentPosition(card) & 4).toBe(4);

@@ -23,9 +23,7 @@ describe("computeDropoff", () => {
   });
 
   it("treats the first question's miss as drop from 100%", () => {
-    const { rows } = computeDropoff([
-      { id: "q1", label: "Q1", answeredPct: 70 },
-    ]);
+    const { rows } = computeDropoff([{ id: "q1", label: "Q1", answeredPct: 70 }]);
     expect(rows[0].dropPct).toBe(30);
   });
 });

@@ -35,10 +35,7 @@ import {
   AllValidProgressCard,
   type AllValidProgress,
 } from "@/components/admin/AllValidProgressCard";
-import {
-  streamAllValidCsvImpl,
-  type StreamAllValidEvent,
-} from "@/lib/admin.functions";
+import { streamAllValidCsvImpl, type StreamAllValidEvent } from "@/lib/admin.shared.server";
 
 // ---------- deferred-promise helper ----------
 
@@ -76,10 +73,7 @@ function makeRow(id: string) {
  * each `fetchPage(page)` await an externally-controlled `Deferred`, so
  * the test can resolve them one by one and assert the UI between phases.
  */
-function makeControllableStream(opts: {
-  total: number;
-  pages: Record<string, unknown>[][];
-}) {
+function makeControllableStream(opts: { total: number; pages: Record<string, unknown>[][] }) {
   const countD = deferred<number>();
   const pageDeferreds = opts.pages.map(() => deferred<Record<string, unknown>[]>());
   // Sentinel page so the impl's `rows.length < pageSize` early-exit fires
@@ -154,10 +148,7 @@ function StreamingExportHarness({
               // smoothing logic itself is covered by AllValidProgressCard's
               // unit tests.
               rate: 100,
-              etaSeconds: Math.max(
-                0,
-                Math.round((evt.total - evt.processed) / 100),
-              ),
+              etaSeconds: Math.max(0, Math.round((evt.total - evt.processed) / 100)),
             }),
           );
         } else if (evt.type === "done") {
@@ -232,9 +223,7 @@ describe("admin streaming export — integration: events → progress card", () 
     // ── Phase 3: resolve page 0 → first chunk → processed = 2 (50%) ────
     ctl.resolvePage(0);
     await waitFor(() => {
-      expect(
-        within(card).getByRole("progressbar").getAttribute("aria-valuenow"),
-      ).toBe("2");
+      expect(within(card).getByRole("progressbar").getAttribute("aria-valuenow")).toBe("2");
     });
     expect(within(card).getByText(/2 \/ 4/)).toBeInTheDocument();
     expect(within(card).getByText(/· 50%/)).toBeInTheDocument();
@@ -266,9 +255,7 @@ describe("admin streaming export — integration: events → progress card", () 
       total: 2,
       pages: [[makeRow("a"), makeRow("b")]],
     });
-    render(
-      <StreamingExportHarness streamFactory={() => ctl.stream} clearOnFinish />,
-    );
+    render(<StreamingExportHarness streamFactory={() => ctl.stream} clearOnFinish />);
     await user.click(screen.getByRole("button", { name: /export all valid/i }));
     await screen.findByRole("status");
     ctl.resolveCount();
@@ -304,9 +291,7 @@ describe("admin streaming export — integration: events → progress card", () 
       ctl.resolvePage(i);
       const want = String(expectedAfter[i]);
       await waitFor(() => {
-        expect(
-          within(card).getByRole("progressbar").getAttribute("aria-valuenow"),
-        ).toBe(want);
+        expect(within(card).getByRole("progressbar").getAttribute("aria-valuenow")).toBe(want);
       });
       observed.push(expectedAfter[i]);
     }

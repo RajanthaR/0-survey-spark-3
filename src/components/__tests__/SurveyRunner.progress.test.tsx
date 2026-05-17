@@ -57,8 +57,10 @@ function SetLang({ lang, children }: { lang: Lang; children: React.ReactNode }) 
   const { setLang } = useLang();
   // Mount-only seed; we deliberately do NOT track setLang in deps so a later
   // user-driven toggle (LanguageToggle click) is not reverted by this effect.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLang(lang); }, []);
+  useEffect(() => {
+    setLang(lang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return <>{children}</>;
 }
 
@@ -80,18 +82,20 @@ function advance(container: HTMLElement, value: string) {
   const input = container.querySelector("input[type=text]") as HTMLInputElement;
   fireEvent.change(input, { target: { value } });
   const nextBtn = container.querySelector("nav button.flex-1") as HTMLButtonElement;
-  act(() => { nextBtn.click(); });
+  act(() => {
+    nextBtn.click();
+  });
 }
 
 function goBack(container: HTMLElement) {
   // Bottom nav layout: [Back, Save&Exit, Next]. Back is the first button
   // in the nav and is the only one with no text label (icon only).
-  const navButtons = Array.from(
-    container.querySelectorAll<HTMLButtonElement>("nav button"),
-  );
+  const navButtons = Array.from(container.querySelectorAll<HTMLButtonElement>("nav button"));
   const backBtn = navButtons[0];
   if (!backBtn) throw new Error("Back button not found");
-  act(() => { backBtn.click(); });
+  act(() => {
+    backBtn.click();
+  });
 }
 
 async function expectProgress(text: string) {
@@ -152,23 +156,25 @@ describe("SurveyRunner progress header — localized announcements", () => {
       return found as HTMLButtonElement;
     };
 
-    act(() => { fireEvent.click(langButton("සි")); });
-    await waitFor(() =>
-      expect(langButton("සි").getAttribute("aria-pressed")).toBe("true"),
-    );
+    act(() => {
+      fireEvent.click(langButton("සි"));
+    });
+    await waitFor(() => expect(langButton("සි").getAttribute("aria-pressed")).toBe("true"));
     await expectProgress("ප්‍රශ්න 2 / 4");
 
-    act(() => { fireEvent.click(langButton("த")); });
-    await waitFor(() =>
-      expect(langButton("த").getAttribute("aria-pressed")).toBe("true"),
-    );
+    act(() => {
+      fireEvent.click(langButton("த"));
+    });
+    await waitFor(() => expect(langButton("த").getAttribute("aria-pressed")).toBe("true"));
     await expectProgress("கேள்விகள் 2 / 4");
 
     // Advancing after a switch keeps the new locale.
     advance(container, "ஆ");
     await expectProgress("கேள்விகள் 3 / 4");
 
-    act(() => { fireEvent.click(langButton("EN")); });
+    act(() => {
+      fireEvent.click(langButton("EN"));
+    });
     await expectProgress("Question 3 of 4");
   });
 
@@ -225,14 +231,14 @@ describe("SurveyRunner progress header — localized announcements", () => {
         const { container } = renderRunner(lang);
         await expectProgress(first);
 
-        const nextBtn = container.querySelector(
-          "nav button.flex-1",
-        ) as HTMLButtonElement;
+        const nextBtn = container.querySelector("nav button.flex-1") as HTMLButtonElement;
         expect(nextBtn).toBeTruthy();
 
         // Click Next 3 times with no input — guard must keep us on Q1.
         for (let i = 0; i < 3; i++) {
-          act(() => { nextBtn.click(); });
+          act(() => {
+            nextBtn.click();
+          });
         }
         // Give any pending state updates a chance to flush, then assert that
         // the localized header is still Q1.
@@ -242,7 +248,9 @@ describe("SurveyRunner progress header — localized announcements", () => {
         // Provide a valid answer; Next should now succeed and advance.
         const input = container.querySelector("input[type=text]") as HTMLInputElement;
         fireEvent.change(input, { target: { value: "ok" } });
-        act(() => { nextBtn.click(); });
+        act(() => {
+          nextBtn.click();
+        });
         await expectProgress(second);
       });
     }

@@ -18,11 +18,7 @@ export function LineChartSkeleton({ height = 240 }: { height?: number }) {
       aria-hidden="true"
     >
       {bars.map((h, i) => (
-        <Skeleton
-          key={i}
-          className="flex-1 rounded-md"
-          style={{ height: `${h}%` }}
-        />
+        <Skeleton key={i} className="flex-1 rounded-md" style={{ height: `${h}%` }} />
       ))}
     </div>
   );
@@ -37,11 +33,7 @@ export function BarChartSkeleton({ height = 240 }: { height?: number }) {
       aria-hidden="true"
     >
       {bars.map((h, i) => (
-        <Skeleton
-          key={i}
-          className="w-10 rounded-t-md"
-          style={{ height: `${h}%` }}
-        />
+        <Skeleton key={i} className="w-10 rounded-t-md" style={{ height: `${h}%` }} />
       ))}
     </div>
   );
@@ -62,20 +54,10 @@ export function PieChartSkeleton({ height = 240 }: { height?: number }) {
   );
 }
 
-export function HBarListSkeleton({
-  rows = 6,
-  rowPx = 26,
-}: {
-  rows?: number;
-  rowPx?: number;
-}) {
+export function HBarListSkeleton({ rows = 6, rowPx = 26 }: { rows?: number; rowPx?: number }) {
   const height = Math.max(160, rows * rowPx + 40);
   return (
-    <div
-      className="space-y-2 px-2 py-3 animate-fade-in"
-      style={{ height }}
-      aria-hidden="true"
-    >
+    <div className="space-y-2 px-2 py-3 animate-fade-in" style={{ height }} aria-hidden="true">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex items-center gap-2">
           <Skeleton className="h-3 w-36" />

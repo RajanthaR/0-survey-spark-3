@@ -33,7 +33,6 @@ describe("AllValidProgressCard — UI updates", () => {
     expect(screen.queryByRole("progressbar")).toBeNull();
   });
 
-
   it("fetching meta snapshot: shows total, 0% progress, 'Measuring rate…' / 'ETA pending'", () => {
     const p: AllValidProgress = {
       processed: 0,
@@ -99,9 +98,7 @@ describe("AllValidProgressCard — UI updates", () => {
 
   it("re-renders update aria-valuenow as successive snapshots arrive", () => {
     const base = { total: 100, phase: "fetching" as const, rate: 10, etaSeconds: 9 };
-    const { rerender } = render(
-      <AllValidProgressCard progress={{ ...base, processed: 10 }} />,
-    );
+    const { rerender } = render(<AllValidProgressCard progress={{ ...base, processed: 10 }} />);
     expect(progressbar().getAttribute("aria-valuenow")).toBe("10");
     rerender(<AllValidProgressCard progress={{ ...base, processed: 50 }} />);
     expect(progressbar().getAttribute("aria-valuenow")).toBe("50");

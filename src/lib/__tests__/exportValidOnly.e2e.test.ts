@@ -227,10 +227,30 @@ describe("admin export — valid-completed filter", () => {
 
   it("preserves the ordering of kept rows and reports per-bucket drop counts", () => {
     const rows: Row[] = [
-      { id: "ok-1", survey_slug: "valid-export", status: "completed", answers: { name: "A", topics: ["a", "b"], hasFollowup: "no" } },
-      { id: "bad-missing", survey_slug: "valid-export", status: "completed", answers: { name: "B", topics: ["a"], hasFollowup: "no" } },
-      { id: "wip", survey_slug: "valid-export", status: "in_progress", answers: { name: "C", topics: ["a", "b"], hasFollowup: "no" } },
-      { id: "ok-2", survey_slug: "valid-export", status: "completed", answers: { name: "D", topics: ["a", "c"], hasFollowup: "yes", followupNotes: "x" } },
+      {
+        id: "ok-1",
+        survey_slug: "valid-export",
+        status: "completed",
+        answers: { name: "A", topics: ["a", "b"], hasFollowup: "no" },
+      },
+      {
+        id: "bad-missing",
+        survey_slug: "valid-export",
+        status: "completed",
+        answers: { name: "B", topics: ["a"], hasFollowup: "no" },
+      },
+      {
+        id: "wip",
+        survey_slug: "valid-export",
+        status: "in_progress",
+        answers: { name: "C", topics: ["a", "b"], hasFollowup: "no" },
+      },
+      {
+        id: "ok-2",
+        survey_slug: "valid-export",
+        status: "completed",
+        answers: { name: "D", topics: ["a", "c"], hasFollowup: "yes", followupNotes: "x" },
+      },
       { id: "ghost", survey_slug: "ghost-survey", status: "completed", answers: {} },
     ];
     const out = filterValidCompleted(rows);

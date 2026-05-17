@@ -10,7 +10,20 @@ const SI_TA_MSG =
   "Sinhala/Tamil characters are only allowed in dictionary files (src/lib/i18n.tsx, src/lib/format.ts, src/surveys/*) and tests. Move the string into the dictionary and reference it via pickText / UI / format helpers.";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      ".tanstack",
+      "src/routeTree.gen.ts",
+      "src/integrations/supabase/types.ts",
+      "public/sw.js",
+      "audits/**",
+      "Codex-audits/**",
+      "Plans/Unified-Audit-Plan-2026-05-17/**",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -36,7 +49,7 @@ export default tseslint.config(
           ],
         },
       ],
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "react-refresh/only-export-components": "off",
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
@@ -45,11 +58,13 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
     ignores: [
       "src/lib/i18n.tsx",
+      "src/lib/analytics-report-i18n.ts",
       "src/lib/format.ts",
       "src/components/QuestionCount.tsx",
       "src/surveys/**",
       "src/**/__tests__/**",
       "src/**/*.test.{ts,tsx}",
+      "**/*.spec.{ts,tsx}",
       "src/test/**",
     ],
     rules: {

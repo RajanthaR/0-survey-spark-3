@@ -11,10 +11,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import {
-  buildCodebookRows,
-  CODEBOOK_HEADERS,
-} from "@/lib/csv-export-shape";
+import { buildCodebookRows, CODEBOOK_HEADERS } from "@/lib/csv-export-shape";
 import { SURVEYS } from "@/surveys";
 import { YES_NO_OPTIONS } from "@/surveys/types";
 import { pickText } from "@/lib/i18n";

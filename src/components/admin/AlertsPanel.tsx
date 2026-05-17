@@ -59,17 +59,14 @@ export function AlertsPanel({ alerts, onDismiss, onClearAll }: AlertsPanelProps)
             >
               <AlertTriangle
                 className={
-                  "mt-0.5 size-4 shrink-0 " +
-                  (critical ? "text-destructive" : "text-amber-600")
+                  "mt-0.5 size-4 shrink-0 " + (critical ? "text-destructive" : "text-amber-600")
                 }
                 aria-hidden
               />
               <div className="min-w-0 flex-1">
                 {a.kind === "completion_drop" ? (
                   <>
-                    <p className="font-medium">
-                      Completion rate dropped {a.deltaPp}pp
-                    </p>
+                    <p className="font-medium">Completion rate dropped {a.deltaPp}pp</p>
                     <p className="text-xs text-muted-foreground">
                       {a.prevPct}% → {a.curPct}% · {fmtAgo(a.at, now)}
                     </p>

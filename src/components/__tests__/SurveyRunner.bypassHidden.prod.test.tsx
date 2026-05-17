@@ -120,13 +120,9 @@ describe("SurveyRunner — production bypass safety", () => {
       // The inline verification error MUST appear (proof we hit the
       // rejection branch), but the bypass button must NOT.
       await waitFor(() => {
-        expect(
-          document.querySelector('[data-testid="consent-verify-error"]'),
-        ).toBeTruthy();
+        expect(document.querySelector('[data-testid="consent-verify-error"]')).toBeTruthy();
       });
-      expect(
-        document.querySelector('[data-testid="consent-verify-bypass"]'),
-      ).toBeNull();
+      expect(document.querySelector('[data-testid="consent-verify-bypass"]')).toBeNull();
       // Literal copy must not leak into the DOM either.
       expect(document.body.textContent ?? "").not.toMatch(/Continue anyway/i);
     },
@@ -137,9 +133,7 @@ describe("SurveyRunner — production bypass safety", () => {
     // The serverFn surface throws a verification error and never advances.
     setHostname("research.example.org");
     startResponse.mockRejectedValueOnce(
-      new Error(
-        "Please complete the human-verification challenge before continuing.",
-      ),
+      new Error("Please complete the human-verification challenge before continuing."),
     );
 
     const { container } = render(
@@ -154,15 +148,11 @@ describe("SurveyRunner — production bypass safety", () => {
     });
 
     await waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="consent-verify-error"]'),
-      ).toBeTruthy();
+      expect(document.querySelector('[data-testid="consent-verify-error"]')).toBeTruthy();
     });
     // Runner stayed on the consent panel — no question input mounted.
     expect(document.querySelector("main textarea, main input[type=text]")).toBeNull();
     // And the bypass button is still hidden.
-    expect(
-      document.querySelector('[data-testid="consent-verify-bypass"]'),
-    ).toBeNull();
+    expect(document.querySelector('[data-testid="consent-verify-bypass"]')).toBeNull();
   });
 });

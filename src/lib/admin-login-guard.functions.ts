@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getClientIp, rateLimit } from "@/lib/rate-limit.server";
 
 /**
  * Per email+IP failure counter for admin login. The bucket only loses a
@@ -12,33 +11,21 @@ const AdminGuardInput = z.object({
   outcome: z.enum(["check", "fail"]),
 });
 
+const AdminSignInInput = z.object({
+  email: z.string().email().max(200).toLowerCase(),
+  password: z.string().min(1).max(500),
+});
+
 export const adminLoginGuard = createServerFn({ method: "POST" })
   .inputValidator((data) => AdminGuardInput.parse(data))
   .handler(async ({ data }) => {
-    const ip = getClientIp();
-    const key = `${data.email}|${ip}`;
-    if (data.outcome === "check") {
-      // Throws 429 if already exhausted; consumes 0 tokens otherwise.
-      // We use a peek pattern by calling rateLimit then refunding via
-      // a second bucket name is overkill; instead we rely on the same
-      // bucket for both phases — `check` is a no-op pass-through, and
-      // `fail` is the consumption call. Lock-out is enforced on the
-      // NEXT `check` after 5 prior failures.
-      rateLimit(`peek:${key}`, {
-        name: "adminLoginPeek",
-        capacity: 5,
-        windowMs: 15 * 60 * 1000,
-      });
-      // Mirror state from the real bucket (fail bucket) by inspecting nothing —
-      // simply return ok. The check-phase bucket above protects against
-      // probing storms (5 checks / 15 min per email+ip).
-      return { ok: true };
-    }
-    // outcome === "fail" — consume a fail token.
-    rateLimit(key, {
-      name: "adminLoginFail",
-      capacity: 5,
-      windowMs: 15 * 60 * 1000,
-    });
-    return { ok: true };
+    const { adminLoginGuardImpl } = await import("@/lib/admin-login-guard.impl.server");
+    return adminLoginGuardImpl(data);
+  });
+
+export const adminPasswordSignIn = createServerFn({ method: "POST" })
+  .inputValidator((data) => AdminSignInInput.parse(data))
+  .handler(async ({ data }) => {
+    const { adminPasswordSignInImpl } = await import("@/lib/admin-login-guard.impl.server");
+    return adminPasswordSignInImpl(data);
   });
