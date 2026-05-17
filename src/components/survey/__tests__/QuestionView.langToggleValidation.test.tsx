@@ -41,7 +41,11 @@ const EMAIL_Q: Question = {
   required: true,
   section: { en: "Contact", si: "සම්බන්ධතා", ta: "தொடர்பு" },
   label: { en: "Your email", si: "ඔබේ ඊමේල්", ta: "உங்கள் மின்னஞ்சல்" },
-  help: { en: "We will reply here", si: "අපි මෙහි පිළිතුරු දෙමු", ta: "நாங்கள் இங்கே பதிலளிப்போம்" },
+  help: {
+    en: "We will reply here",
+    si: "අපි මෙහි පිළිතුරු දෙමු",
+    ta: "நாங்கள் இங்கே பதிலளிப்போம்",
+  },
 };
 
 const MULTI_Q: Question = {
@@ -66,8 +70,8 @@ function Harness({ q, value }: { q: Question; value: unknown }) {
   const [v] = useState<unknown>(value);
   const code: ValidationError | null = validateAnswerCode(q, v);
   // Mirror the runner's required-empty pathway too (same UI.required string).
-  const isEmpty = v == null || (typeof v === "string" && v.trim() === "") ||
-    (Array.isArray(v) && v.length === 0);
+  const isEmpty =
+    v == null || (typeof v === "string" && v.trim() === "") || (Array.isArray(v) && v.length === 0);
   const error = code
     ? formatValidationError(code, lang)
     : q.required && isEmpty
@@ -159,8 +163,7 @@ describe("QuestionView — mid-question language toggle", () => {
       </I18nProvider>,
     );
 
-    const expected = (lang: Lang) =>
-      pickText(UI.selectAtLeast, lang).replace("{n}", "2");
+    const expected = (lang: Lang) => pickText(UI.selectAtLeast, lang).replace("{n}", "2");
 
     expect(alertMessage()).toBe(expected("en"));
     clickLang("si");

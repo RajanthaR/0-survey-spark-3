@@ -145,10 +145,18 @@ describe("SurveyRunner — rapid Back updates live region + restores focus per s
       // four reads of the same render produce one effective step. The
       // burst-click reality is what we care about for AT.
       const back = backButton(container);
-      act(() => { back.click(); });
-      act(() => { back.click(); });
-      act(() => { back.click(); });
-      act(() => { back.click(); });
+      act(() => {
+        back.click();
+      });
+      act(() => {
+        back.click();
+      });
+      act(() => {
+        back.click();
+      });
+      act(() => {
+        back.click();
+      });
 
       // Final settled position MUST be Q1 ("1 / TOTAL").
       const expectedQ1 = formatQuestionPosition(1, TOTAL, lang);

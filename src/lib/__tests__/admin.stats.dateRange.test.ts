@@ -20,33 +20,29 @@ describe("getAnalyticsReport date-range validation", () => {
   const schema = analyticsReportSchema;
 
   it("accepts valid equal dates", () => {
-    expect(() =>
-      schema.parse({ dateFrom: "2024-06-01", dateTo: "2024-06-01" }),
-    ).not.toThrow();
+    expect(() => schema.parse({ dateFrom: "2024-06-01", dateTo: "2024-06-01" })).not.toThrow();
   });
 
   it("accepts a 366-day span", () => {
-    expect(() =>
-      schema.parse({ dateFrom: "2024-01-01", dateTo: "2024-12-31" }),
-    ).not.toThrow();
+    expect(() => schema.parse({ dateFrom: "2024-01-01", dateTo: "2024-12-31" })).not.toThrow();
   });
 
   it("rejects an inverted range", () => {
-    expect(() =>
-      schema.parse({ dateFrom: "2024-12-01", dateTo: "2024-01-01" }),
-    ).toThrow(/Start date must be on or before end date/);
+    expect(() => schema.parse({ dateFrom: "2024-12-01", dateTo: "2024-01-01" })).toThrow(
+      /Start date must be on or before end date/,
+    );
   });
 
   it("rejects a range larger than 366 days", () => {
-    expect(() =>
-      schema.parse({ dateFrom: "2023-01-01", dateTo: "2024-12-31" }),
-    ).toThrow(/Date range cannot exceed 366 days/);
+    expect(() => schema.parse({ dateFrom: "2023-01-01", dateTo: "2024-12-31" })).toThrow(
+      /Date range cannot exceed 366 days/,
+    );
   });
 
   it("rejects an exactly 367-day span", () => {
-    expect(() =>
-      schema.parse({ dateFrom: "2024-01-01", dateTo: "2025-01-02" }),
-    ).toThrow(/Date range cannot exceed 366 days/);
+    expect(() => schema.parse({ dateFrom: "2024-01-01", dateTo: "2025-01-02" })).toThrow(
+      /Date range cannot exceed 366 days/,
+    );
   });
 
   // Single-sided ranges are no longer accepted — see the "missing partner"

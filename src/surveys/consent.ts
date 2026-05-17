@@ -16,7 +16,12 @@ export const STUDY_META = {
 };
 
 /** 13-item consent block from the official form (1–7 + 13 mandatory; 8–12 omitted — they cover audio/video/photo). */
-export const CONSENT_ITEMS: { id: string; label: LocalizedString; shortLabel?: LocalizedString; required?: boolean }[] = [
+export const CONSENT_ITEMS: {
+  id: string;
+  label: LocalizedString;
+  shortLabel?: LocalizedString;
+  required?: boolean;
+}[] = [
   {
     id: "c1",
     required: true,

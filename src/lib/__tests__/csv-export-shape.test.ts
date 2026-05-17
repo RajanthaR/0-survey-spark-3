@@ -26,16 +26,12 @@ for (const slug of Object.keys(SURVEYS)) {
 }
 
 const HAS_LABELS = (q: Question) =>
-  q.type === "single_choice" ||
-  q.type === "multi_choice" ||
-  q.type === "likert_5";
+  q.type === "single_choice" || q.type === "multi_choice" || q.type === "likert_5";
 
 describe("buildExportColumns / all-valid CSV shape", () => {
   it("emits one column per non-section_header question, in survey × question order", () => {
     const cols = buildExportColumns();
-    expect(cols.map((c) => c.key)).toEqual(
-      ALL_QUESTIONS.map(({ slug, q }) => `${slug}.${q.id}`),
-    );
+    expect(cols.map((c) => c.key)).toEqual(ALL_QUESTIONS.map(({ slug, q }) => `${slug}.${q.id}`));
   });
 
   it("attaches a sibling label_en column for choice/likert question types", () => {
@@ -158,10 +154,7 @@ describe("buildCodebookRows — codebook CSV shape", () => {
   it("scoped + full codebook row counts add up to the all-surveys total", () => {
     const slugs = Object.keys(SURVEYS);
     const full = buildCodebookRows();
-    const summed = slugs.reduce(
-      (n, s) => n + buildCodebookRows([s]).rows.length,
-      0,
-    );
+    const summed = slugs.reduce((n, s) => n + buildCodebookRows([s]).rows.length, 0);
     expect(summed).toBe(full.rows.length);
   });
 

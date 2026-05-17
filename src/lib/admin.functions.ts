@@ -27,16 +27,3 @@ export {
   exportFilteredXlsx,
   exportZipBundle,
 } from "@/lib/admin.exports.functions";
-
-// Helpers + types still live at the original import path for back-compat.
-export {
-  assertAdmin,
-  assembleZipBundle,
-  streamAllValidCsvImpl,
-  streamAllValidXlsxImpl,
-  type StreamAllValidEvent,
-  type StreamAllValidDeps,
-  type StreamAllValidXlsxEvent,
-  type StreamAllValidXlsxDeps,
-  type StreamAllValidInput,
-} from "@/lib/admin.shared.server";

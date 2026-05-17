@@ -63,16 +63,31 @@ vi.mock("framer-motion", () => {
   const passthrough = (tag: string) =>
     React.forwardRef<HTMLElement, Record<string, unknown>>((props, ref) => {
       const {
-        initial, animate, exit, transition, layout, layoutId, whileHover,
-        whileTap, whileFocus, whileDrag, whileInView, drag, dragConstraints,
-        variants, custom, onAnimationStart, onAnimationComplete,
+        initial,
+        animate,
+        exit,
+        transition,
+        layout,
+        layoutId,
+        whileHover,
+        whileTap,
+        whileFocus,
+        whileDrag,
+        whileInView,
+        drag,
+        dragConstraints,
+        variants,
+        custom,
+        onAnimationStart,
+        onAnimationComplete,
         ...rest
       } = props as Record<string, unknown>;
       const motionAttrs: Record<string, string> = {};
       if (initial !== undefined) motionAttrs["data-motion-initial"] = JSON.stringify(initial);
       if (animate !== undefined) motionAttrs["data-motion-animate"] = JSON.stringify(animate);
       if (exit !== undefined) motionAttrs["data-motion-exit"] = JSON.stringify(exit);
-      if (transition !== undefined) motionAttrs["data-motion-transition"] = JSON.stringify(transition);
+      if (transition !== undefined)
+        motionAttrs["data-motion-transition"] = JSON.stringify(transition);
       return React.createElement(tag, { ...rest, ...motionAttrs, ref });
     });
   return {
@@ -153,9 +168,7 @@ describe("SurveyRunner — QuestionCount → QuestionPosition animation contract
     await screen.findByTestId("question-count");
     await user.click(await screen.findByRole("button", { name: /^Start/ }));
     // consent stage → required is empty, so the agree button is the only CTA.
-    await user.click(
-      await screen.findByRole("button", { name: /I agree and want to continue/ }),
-    );
+    await user.click(await screen.findByRole("button", { name: /I agree and want to continue/ }));
     // consent-optional stage → "Continue" advances to questions.
     await user.click(await screen.findByRole("button", { name: /Continue/ }));
 
@@ -172,9 +185,7 @@ describe("SurveyRunner — QuestionCount → QuestionPosition animation contract
     // The intro's QuestionCount is gone — proves the intro section
     // unmounted under AnimatePresence rather than stacking with the
     // questions stage.
-    await waitFor(() =>
-      expect(screen.queryByTestId("question-count")).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByTestId("question-count")).toBeNull());
 
     // The first QuestionView's wrapping motion.section uses the
     // sideways slide-in contract (x: 24 → 0, exit x: -24, 0.25s). Pin

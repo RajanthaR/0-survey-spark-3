@@ -2,9 +2,14 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { assertProductionSecurityConfig } from "./lib/security-headers.server";
+export { RateLimitDO } from "./lib/rate-limit.do";
 
 type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
+  fetch: (
+    request: Request,
+    opts?: { context?: Record<string, unknown> },
+  ) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -12,7 +17,7 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
-      (m) => ((m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry)),
+      (m) => (m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry),
     );
   }
   return serverEntryPromise;
@@ -75,13 +80,20 @@ function describeRequest(request: Request): string {
   }
 }
 
+function envRecord(env: unknown): Record<string, unknown> {
+  return env && typeof env === "object" ? (env as Record<string, unknown>) : {};
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    assertProductionSecurityConfig({ ...process.env, ...envRecord(env) });
     const requestLabel = describeRequest(request);
     const startedAt = Date.now();
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const response = await handler.fetch(request, {
+        context: { cloudflareEnv: env, cloudflareContext: ctx },
+      });
       const normalized = await normalizeCatastrophicSsrResponse(response);
       if (normalized.status >= 500) {
         console.error(

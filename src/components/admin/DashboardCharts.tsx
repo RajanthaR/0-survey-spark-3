@@ -127,13 +127,7 @@ export function QuestionCompletionChart({
         >
           <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.3} />
           <XAxis type="number" domain={[0, 100]} fontSize={11} unit="%" />
-          <YAxis
-            type="category"
-            dataKey="label"
-            width={180}
-            fontSize={11}
-            interval={0}
-          />
+          <YAxis type="category" dataKey="label" width={180} fontSize={11} interval={0} />
           <Tooltip
             formatter={(v: number) => [`${v}%`, "Answered"]}
             labelFormatter={(l: string) => l}
@@ -157,13 +151,7 @@ export function QuestionCompletionChart({
  * proportion across every question × respondent. Renders as a single
  * stacked horizontal bar.
  */
-export function AnsweredSkippedBar({
-  answered,
-  skipped,
-}: {
-  answered: number;
-  skipped: number;
-}) {
+export function AnsweredSkippedBar({ answered, skipped }: { answered: number; skipped: number }) {
   const data = [{ name: "All questions", answered, skipped }];
   return (
     <ResponsiveContainer width="100%" height={80}>
@@ -171,7 +159,10 @@ export function AnsweredSkippedBar({
         <XAxis type="number" hide />
         <YAxis type="category" dataKey="name" hide />
         <Tooltip
-          formatter={(v: number, name: string) => [v.toLocaleString(), name === "answered" ? "Selected" : "Skipped"]}
+          formatter={(v: number, name: string) => [
+            v.toLocaleString(),
+            name === "answered" ? "Selected" : "Skipped",
+          ]}
         />
         <Legend formatter={(v) => (v === "answered" ? "Selected" : "Skipped")} />
         <Bar

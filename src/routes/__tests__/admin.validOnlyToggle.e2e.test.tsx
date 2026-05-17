@@ -101,17 +101,16 @@ function ValidOnlyHarness({
         validOnly: fValidOnly,
         dateField: "started_at",
       };
-      const { rowCount, droppedInvalid, droppedUnknownSurvey } =
-        await exportFilteredFn({ data: payload });
+      const { rowCount, droppedInvalid, droppedUnknownSurvey } = await exportFilteredFn({
+        data: payload,
+      });
       const dInvalid = droppedInvalid ?? 0;
       const dUnknown = droppedUnknownSurvey ?? 0;
       const parts: string[] = [];
       if (fValidOnly && dInvalid > 0) parts.push(`${dInvalid} invalid`);
       if (fValidOnly && dUnknown > 0) parts.push(`${dUnknown} unknown survey`);
       const suffix = parts.length > 0 ? ` (dropped ${parts.join(", ")})` : "";
-      toast.success(
-        `Exported ${rowCount} response${rowCount === 1 ? "" : "s"}${suffix}`,
-      );
+      toast.success(`Exported ${rowCount} response${rowCount === 1 ? "" : "s"}${suffix}`);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -166,9 +165,7 @@ describe("admin UI: Valid only toggle ↔ filtered CSV export", () => {
   it("toggle OFF → suffix suppressed even when server returns nonzero drop counters", async () => {
     const exportFn = vi
       .fn<(args: { data: ExportFilteredPayload }) => Promise<ExportFilteredResult>>()
-      .mockResolvedValue(
-        makeResult({ rowCount: 7, droppedInvalid: 3, droppedUnknownSurvey: 2 }),
-      );
+      .mockResolvedValue(makeResult({ rowCount: 7, droppedInvalid: 3, droppedUnknownSurvey: 2 }));
     render(<ValidOnlyHarness exportFilteredFn={exportFn} />);
     await userEvent.click(screen.getByTestId("export-csv"));
 
@@ -203,9 +200,7 @@ describe("admin UI: Valid only toggle ↔ filtered CSV export", () => {
   it("toggle ON + only invalid drops → '(dropped K invalid)'", async () => {
     const exportFn = vi
       .fn<(args: { data: ExportFilteredPayload }) => Promise<ExportFilteredResult>>()
-      .mockResolvedValue(
-        makeResult({ rowCount: 5, droppedInvalid: 4, droppedUnknownSurvey: 0 }),
-      );
+      .mockResolvedValue(makeResult({ rowCount: 5, droppedInvalid: 4, droppedUnknownSurvey: 0 }));
     render(<ValidOnlyHarness exportFilteredFn={exportFn} />);
     await userEvent.click(screen.getByTestId("valid-only"));
     await userEvent.click(screen.getByTestId("export-csv"));
@@ -215,23 +210,17 @@ describe("admin UI: Valid only toggle ↔ filtered CSV export", () => {
   it("toggle ON + only unknown-survey drops → '(dropped K unknown survey)'", async () => {
     const exportFn = vi
       .fn<(args: { data: ExportFilteredPayload }) => Promise<ExportFilteredResult>>()
-      .mockResolvedValue(
-        makeResult({ rowCount: 8, droppedInvalid: 0, droppedUnknownSurvey: 2 }),
-      );
+      .mockResolvedValue(makeResult({ rowCount: 8, droppedInvalid: 0, droppedUnknownSurvey: 2 }));
     render(<ValidOnlyHarness exportFilteredFn={exportFn} />);
     await userEvent.click(screen.getByTestId("valid-only"));
     await userEvent.click(screen.getByTestId("export-csv"));
-    expect(toastSuccess).toHaveBeenCalledWith(
-      "Exported 8 responses (dropped 2 unknown survey)",
-    );
+    expect(toastSuccess).toHaveBeenCalledWith("Exported 8 responses (dropped 2 unknown survey)");
   });
 
   it("toggle ON + both buckets nonzero → 'invalid' first, 'unknown survey' second, not summed", async () => {
     const exportFn = vi
       .fn<(args: { data: ExportFilteredPayload }) => Promise<ExportFilteredResult>>()
-      .mockResolvedValue(
-        makeResult({ rowCount: 9, droppedInvalid: 3, droppedUnknownSurvey: 1 }),
-      );
+      .mockResolvedValue(makeResult({ rowCount: 9, droppedInvalid: 3, droppedUnknownSurvey: 1 }));
     render(<ValidOnlyHarness exportFilteredFn={exportFn} />);
     await userEvent.click(screen.getByTestId("valid-only"));
     await userEvent.click(screen.getByTestId("export-csv"));

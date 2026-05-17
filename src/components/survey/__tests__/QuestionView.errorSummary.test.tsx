@@ -76,7 +76,7 @@ describe("QuestionView — error summary banner", () => {
     expect(banner.textContent).toContain(pickText(UI.invalidEmail, "en"));
 
     // scrollIntoView was invoked on the banner.
-    expect((Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+    expect(Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).toHaveBeenCalled();
 
     // Focus moved to the email input (first focusable inside the field wrap).
     const input = document.querySelector('input[type="email"]') as HTMLInputElement;

@@ -47,17 +47,17 @@ const TAMIL_NOUN = "கேள்விகள்";
 // Patterns that indicate a hardcoded count/position rather than helper output.
 const PATTERNS: { name: string; re: RegExp }[] = [
   // English: "39 questions", "1 question"
-  { name: "en count (\"N question(s)\")", re: /\b\d+\s+questions?\b/i },
+  { name: 'en count ("N question(s)")', re: /\b\d+\s+questions?\b/i },
   // English: "Question 3 of 39"
-  { name: "en position (\"Question N of M\")", re: /\bQuestion\s+\d+\s+of\s+\d+\b/i },
+  { name: 'en position ("Question N of M")', re: /\bQuestion\s+\d+\s+of\s+\d+\b/i },
   // Sinhala: "ප්‍රශ්න 39" or "ප්‍රශ්න 3 / 39"
   {
-    name: "si count/position (\"ප්‍රශ්න N…\")",
+    name: 'si count/position ("ප්‍රශ්න N…")',
     re: new RegExp(`${SINHALA_NOUN}\\s*\\d`),
   },
   // Tamil: "கேள்விகள் 39" or "கேள்விகள் 3 / 39"
   {
-    name: "ta count/position (\"கேள்விகள் N…\")",
+    name: 'ta count/position ("கேள்விகள் N…")',
     re: new RegExp(`${TAMIL_NOUN}\\s*\\d`),
   },
 ];

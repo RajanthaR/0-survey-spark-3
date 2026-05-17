@@ -8,7 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createAdminClient } from "@/integrations/supabase/client.server";
 import { SURVEYS } from "@/surveys";
 import {
   buildExportColumns,
@@ -17,14 +17,8 @@ import {
   type CodebookLang,
 } from "@/lib/csv-export-shape";
 import { buildCodebookRows } from "@/lib/csv-export-shape";
-import {
-  buildCodebookXlsx,
-  buildCodebookFilenameStem,
-} from "@/lib/codebook-xlsx";
-import {
-  buildResponsesCsv,
-  type ResponseRow,
-} from "@/lib/responses-csv";
+import { buildCodebookXlsx, buildCodebookFilenameStem } from "@/lib/codebook-xlsx";
+import { buildResponsesCsv, type ResponseRow } from "@/lib/responses-csv";
 import {
   assertAdmin,
   fetchSurveyResponseRows,
@@ -39,6 +33,10 @@ import {
   assembleZipBundle,
 } from "@/lib/admin.shared.server";
 
+function adminClient() {
+  return createAdminClient("admin.exports");
+}
+
 export const exportCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { surveySlug: string }) =>
@@ -46,6 +44,7 @@ export const exportCsv = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
 
     // Batched fetch — Postgres-side pagination so we can export beyond the
     // 1000-row default Supabase cap without loading everything in one query.
@@ -73,7 +72,6 @@ export const exportCsv = createServerFn({ method: "POST" })
 // pure builders in `@/lib/exports-extended` produce the rows; this file only
 // owns the auth check, the paginated fetch, and the XLSX encoding.
 
-
 export const exportSectionedLocalizedCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { surveySlug: string; lang: "en" | "si" | "ta" }) =>
@@ -83,9 +81,7 @@ export const exportSectionedLocalizedCsv = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     const survey = SURVEYS[data.surveySlug];
     if (!survey) throw new Error(`Unknown survey: ${data.surveySlug}`);
-    const { buildSectionedLocalizedResponsesCsv } = await import(
-      "@/lib/exports-extended"
-    );
+    const { buildSectionedLocalizedResponsesCsv } = await import("@/lib/exports-extended");
     const rows = await fetchSurveyResponseRows(data.surveySlug);
     return buildSectionedLocalizedResponsesCsv(rows, survey, data.lang);
   });
@@ -99,9 +95,7 @@ export const exportLocalizedXlsx = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     const survey = SURVEYS[data.surveySlug];
     if (!survey) throw new Error(`Unknown survey: ${data.surveySlug}`);
-    const { buildLocalizedResponsesXlsxAoa } = await import(
-      "@/lib/exports-extended"
-    );
+    const { buildLocalizedResponsesXlsxAoa } = await import("@/lib/exports-extended");
     const rows = await fetchSurveyResponseRows(data.surveySlug);
     const built = buildLocalizedResponsesXlsxAoa(rows, survey, data.lang);
 
@@ -123,10 +117,7 @@ export const exportLocalizedXlsx = createServerFn({ method: "POST" })
     let bin = "";
     const CHUNK = 0x8000;
     for (let i = 0; i < bytes.length; i += CHUNK) {
-      bin += String.fromCharCode.apply(
-        null,
-        Array.from(bytes.subarray(i, i + CHUNK)),
-      );
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
     }
     return {
       base64: btoa(bin),
@@ -161,6 +152,7 @@ export const exportAllValidCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
 
     // Pull every completed response, paginated past the 1000-row cap.
     const PAGE = 500;
@@ -168,7 +160,9 @@ export const exportAllValidCsv = createServerFn({ method: "POST" })
     for (let page = 0; page < 400; page += 1) {
       const { data: chunk, error } = await supabaseAdmin
         .from("responses")
-        .select("id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers")
+        .select(
+          "id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers",
+        )
         .eq("status", "completed")
         .order("started_at", { ascending: false })
         .range(page * PAGE, page * PAGE + PAGE - 1);
@@ -225,11 +219,7 @@ export const exportAllValidCsv = createServerFn({ method: "POST" })
           if (val == null) {
             row.push("");
           } else if (Array.isArray(val)) {
-            row.push(
-              val
-                .map((v) => col.optionLabelEn?.get(String(v)) ?? String(v))
-                .join("; "),
-            );
+            row.push(val.map((v) => col.optionLabelEn?.get(String(v)) ?? String(v)).join("; "));
           } else {
             row.push(col.optionLabelEn?.get(String(val)) ?? String(val));
           }
@@ -267,11 +257,10 @@ export const exportAllValidCsv = createServerFn({ method: "POST" })
 
 export const streamAllValidCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: StreamAllValidInput) =>
-    StreamAllValidInputSchema.parse(input),
-  )
+  .inputValidator((input: StreamAllValidInput) => StreamAllValidInputSchema.parse(input))
   .handler(async function* ({ context, data }) {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
     const opts = data ?? {};
     // Stamp every server log with the requestId so admins can grep
     // worker logs by the value the UI shows them.
@@ -295,7 +284,9 @@ export const streamAllValidCsv = createServerFn({ method: "POST" })
       fetchPage: async (page, pageSize) => {
         const { data: chunk, error } = await supabaseAdmin
           .from("responses")
-          .select("id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers")
+          .select(
+            "id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers",
+          )
           .eq("status", "completed")
           .order("started_at", { ascending: false })
           .range(page * pageSize, page * pageSize + pageSize - 1);
@@ -312,11 +303,10 @@ export const streamAllValidCsv = createServerFn({ method: "POST" })
 
 export const streamAllValidXlsx = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: StreamAllValidInput) =>
-    StreamAllValidInputSchema.parse(input),
-  )
+  .inputValidator((input: StreamAllValidInput) => StreamAllValidInputSchema.parse(input))
   .handler(async function* ({ context, data }) {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
     const opts = data ?? {};
     const requestId =
       opts.requestId ??
@@ -338,7 +328,9 @@ export const streamAllValidXlsx = createServerFn({ method: "POST" })
       fetchPage: async (page, pageSize) => {
         const { data: chunk, error } = await supabaseAdmin
           .from("responses")
-          .select("id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers")
+          .select(
+            "id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers",
+          )
           .eq("status", "completed")
           .order("started_at", { ascending: false })
           .range(page * pageSize, page * pageSize + pageSize - 1);
@@ -370,15 +362,13 @@ export const streamAllValidXlsx = createServerFn({ method: "POST" })
 export const exportCodebookCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { surveySlug?: string; langs?: CodebookLang[] } | undefined) =>
-      input ?? {},
+    (input: { surveySlug?: string; langs?: CodebookLang[] } | undefined) => input ?? {},
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
 
     const slug = data?.surveySlug;
-    const slugs =
-      slug && slug !== "__all__" ? [slug] : (Object.keys(SURVEYS) as string[]);
+    const slugs = slug && slug !== "__all__" ? [slug] : (Object.keys(SURVEYS) as string[]);
     if (slug && slug !== "__all__" && !SURVEYS[slug]) {
       throw new Error(`Unknown survey: ${slug}`);
     }
@@ -387,8 +377,10 @@ export const exportCodebookCsv = createServerFn({ method: "POST" })
     const langs: readonly CodebookLang[] =
       requested && requested.length > 0 ? requested : CODEBOOK_LANGS;
 
-    const { headers, rows, questionCount, optionCount, surveyCount } =
-      buildCodebookRows(slugs, langs);
+    const { headers, rows, questionCount, optionCount, surveyCount } = buildCodebookRows(
+      slugs,
+      langs,
+    );
     const escape = (v: unknown) => {
       if (v == null) return "";
       const s = typeof v === "object" ? JSON.stringify(v) : String(v);
@@ -399,8 +391,7 @@ export const exportCodebookCsv = createServerFn({ method: "POST" })
 
     const stamp = new Date().toISOString().slice(0, 10);
     const scope = slug && slug !== "__all__" ? `-${slug}` : "";
-    const langTag =
-      langs.length === CODEBOOK_LANGS.length ? "" : `-${langs.join("")}`;
+    const langTag = langs.length === CODEBOOK_LANGS.length ? "" : `-${langs.join("")}`;
     return {
       csv: lines.join("\n"),
       filename: `eip-insight-codebook${scope}${langTag}-${stamp}.csv`,
@@ -434,8 +425,7 @@ export const exportCodebookXlsx = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
 
     const slug = data?.surveySlug;
-    const slugs =
-      slug && slug !== "__all__" ? [slug] : (Object.keys(SURVEYS) as string[]);
+    const slugs = slug && slug !== "__all__" ? [slug] : (Object.keys(SURVEYS) as string[]);
     if (slug && slug !== "__all__" && !SURVEYS[slug]) {
       throw new Error(`Unknown survey: ${slug}`);
     }
@@ -488,6 +478,7 @@ export const exportFilteredCsv = createServerFn({ method: "POST" })
   .inputValidator((d: FilteredExportInput) => filteredExportSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
 
     const built = await buildFilteredExportRows(data);
 
@@ -552,10 +543,7 @@ export const exportFilteredXlsx = createServerFn({ method: "POST" })
     let bin = "";
     const CHUNK = 0x8000;
     for (let i = 0; i < bytes.length; i += CHUNK) {
-      bin += String.fromCharCode.apply(
-        null,
-        Array.from(bytes.subarray(i, i + CHUNK)),
-      );
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
     }
     const base64 = btoa(bin);
 
@@ -586,10 +574,11 @@ export const exportZipBundle = createServerFn({ method: "POST" })
   .inputValidator((d: FilteredExportInput) => filteredExportSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
 
     const effectiveStatus: "completed" | "in_progress" | "all" = data.validOnly
       ? "completed"
-      : data.statusFilter ?? (data.completedOnly ? "completed" : "all");
+      : (data.statusFilter ?? (data.completedOnly ? "completed" : "all"));
     const dateCol = data.dateField;
 
     const PAGE = 500;
@@ -624,4 +613,3 @@ export const exportZipBundle = createServerFn({ method: "POST" })
 
     return assembleZipBundle({ data, rowsBySlug });
   });
-

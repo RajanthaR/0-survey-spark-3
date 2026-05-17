@@ -70,8 +70,10 @@ const SURVEY: Survey = {
 
 function SetLang({ lang, children }: { lang: Lang; children: React.ReactNode }) {
   const { setLang } = useLang();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLang(lang); }, []);
+  useEffect(() => {
+    setLang(lang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return <>{children}</>;
 }
 
@@ -110,7 +112,9 @@ describe("SurveyRunner Next guard after Back", () => {
         fireEvent.change(q1, { target: { value: "Sample Org" } });
       });
       expect(next().disabled).toBe(false);
-      await act(async () => { fireEvent.click(next()); });
+      await act(async () => {
+        fireEvent.click(next());
+      });
 
       // Q2: empty required → disabled.
       const q2Initial = screen.getByRole("textbox") as HTMLInputElement;
@@ -119,7 +123,9 @@ describe("SurveyRunner Next guard after Back", () => {
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Back → Q1, guard must reflect Q1 (still answered) → enabled.
-      await act(async () => { fireEvent.click(getBackButton(lang)); });
+      await act(async () => {
+        fireEvent.click(getBackButton(lang));
+      });
       const q1AgainText = screen.getByRole("textbox") as HTMLInputElement;
       expect(q1AgainText.type).toBe("text");
       expect(q1AgainText.value).toBe("Sample Org");
@@ -127,7 +133,9 @@ describe("SurveyRunner Next guard after Back", () => {
       expect(next().getAttribute("aria-disabled")).toBe("false");
 
       // Forward to Q2 again, still empty → disabled (guard switched back).
-      await act(async () => { fireEvent.click(next()); });
+      await act(async () => {
+        fireEvent.click(next());
+      });
       const q2Again = screen.getByRole("textbox") as HTMLInputElement;
       expect(q2Again.type).toBe("email");
       expect(q2Again.value).toBe("");
@@ -142,12 +150,16 @@ describe("SurveyRunner Next guard after Back", () => {
       expect(next().getAttribute("aria-disabled")).toBe("false");
 
       // Back → Q1, guard reflects Q1 (still answered) → enabled.
-      await act(async () => { fireEvent.click(getBackButton(lang)); });
+      await act(async () => {
+        fireEvent.click(getBackButton(lang));
+      });
       expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("Sample Org");
       expect(next().disabled).toBe(false);
 
       // Forward to Q2: previously-typed email is preserved → still enabled.
-      await act(async () => { fireEvent.click(next()); });
+      await act(async () => {
+        fireEvent.click(next());
+      });
       const q2Final = screen.getByRole("textbox") as HTMLInputElement;
       expect(q2Final.type).toBe("email");
       expect(q2Final.value).toBe("user@example.com");

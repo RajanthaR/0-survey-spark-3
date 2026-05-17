@@ -28,11 +28,7 @@ export function formatQuestionCount(n: number, lang: Lang): string {
  *   si: "ප්‍රශ්න 3 / 39"
  *   ta: "கேள்விகள் 3 / 39"
  */
-export function formatQuestionPosition(
-  current: number,
-  total: number,
-  lang: Lang,
-): string {
+export function formatQuestionPosition(current: number, total: number, lang: Lang): string {
   if (lang === "en") return `Question ${current} of ${total}`;
   return `${QUESTION_NOUN[lang]} ${current} / ${total}`;
 }

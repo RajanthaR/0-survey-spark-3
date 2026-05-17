@@ -33,6 +33,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as XLSXNS from "xlsx";
+import { strFromU8, unzipSync } from "fflate";
 
 import {
   buildCodebookXlsx,
@@ -41,14 +42,20 @@ import {
   codebookXlsxCacheSize,
   CODEBOOK_SHEET_NAME,
 } from "@/lib/codebook-xlsx";
-import {
-  buildCodebookHeaders,
-  buildCodebookRows,
-  CODEBOOK_LANGS,
-} from "@/lib/csv-export-shape";
+import { buildCodebookHeaders, buildCodebookRows, CODEBOOK_LANGS } from "@/lib/csv-export-shape";
 import { SURVEYS } from "@/surveys";
 import { pickText } from "@/lib/i18n";
 import { YES_NO_OPTIONS } from "@/surveys/types";
+
+vi.mock("@/integrations/supabase/client.server", () => {
+  const mock = {
+    from: () => mock,
+    select: () => mock,
+    eq: () => mock,
+    maybeSingle: vi.fn(),
+  };
+  return { createAdminClient: vi.fn(() => mock) };
+});
 
 const ALL_SLUGS = Object.keys(SURVEYS);
 const FIRST_SLUG = ALL_SLUGS[0];
@@ -62,6 +69,13 @@ function decode(base64: string): Uint8Array {
 
 function readWorkbook(base64: string): XLSXNS.WorkBook {
   return XLSXNS.read(decode(base64), { type: "array", cellStyles: true });
+}
+
+function firstSheetXml(base64: string): string {
+  const zip = unzipSync(decode(base64));
+  const sheet = zip["xl/worksheets/sheet1.xml"];
+  expect(sheet).toBeDefined();
+  return strFromU8(sheet);
 }
 
 beforeEach(() => {
@@ -105,13 +119,11 @@ describe("buildCodebookXlsx — base64 + workbook structure", () => {
       langs: CODEBOOK_LANGS,
       perLanguageSheets: false,
     });
+    const xml = firstSheetXml(r.base64);
+    expect(xml).toContain('ySplit="1"');
+    expect(xml).toContain('state="frozen"');
     const wb = readWorkbook(r.base64);
     const ws = wb.Sheets[CODEBOOK_SHEET_NAME];
-    // Freeze pane: ySplit=1 means the first row is frozen.
-    const freeze = (ws as unknown as { "!freeze"?: { ySplit?: number } })[
-      "!freeze"
-    ];
-    expect(freeze?.ySplit).toBe(1);
     // Every header cell carries `font.bold === true`.
     for (let c = 0; c < r.headerRow.length; c += 1) {
       const addr = XLSXNS.utils.encode_cell({ r: 0, c });
@@ -182,12 +194,8 @@ describe("buildCodebookXlsx — header / row count fidelity vs survey definition
       defval: "",
     }) as string[][];
     const headers = aoa[0];
-    const siCols = headers
-      .map((h, idx) => (/_si$/.test(h) ? idx : -1))
-      .filter((idx) => idx >= 0);
-    const taCols = headers
-      .map((h, idx) => (/_ta$/.test(h) ? idx : -1))
-      .filter((idx) => idx >= 0);
+    const siCols = headers.map((h, idx) => (/_si$/.test(h) ? idx : -1)).filter((idx) => idx >= 0);
+    const taCols = headers.map((h, idx) => (/_ta$/.test(h) ? idx : -1)).filter((idx) => idx >= 0);
     expect(siCols.length).toBeGreaterThan(0);
     expect(taCols.length).toBeGreaterThan(0);
     const SI_RE = /[\u0D80-\u0DFF]/;
@@ -216,9 +224,7 @@ describe("buildCodebookXlsx — header / row count fidelity vs survey definition
     }) as string[][];
     const headers = aoa[0];
     const col = (name: string) => headers.indexOf(name);
-    const yesNoRows = aoa
-      .slice(1)
-      .filter((r2) => r2[col("question_type")] === "yes_no");
+    const yesNoRows = aoa.slice(1).filter((r2) => r2[col("question_type")] === "yes_no");
     expect(yesNoRows.length).toBeGreaterThan(0);
     for (const row of yesNoRows) {
       const v = row[col("option_value")];
@@ -381,32 +387,24 @@ describe("admin codebook server fns — authorization + payload structure", () =
   // pure builders these tests already cover), so this file's job here is
   // (a) the guard rejects non-admins with the toast-visible error message
   // and (b) the payload shape the admin UI destructures stays stable.
-  vi.mock("@/integrations/supabase/client.server", () => {
-    const mock = {
-      from: () => mock,
-      select: () => mock,
-      eq: () => mock,
-      maybeSingle: vi.fn(),
-    };
-    return { supabaseAdmin: mock };
-  });
-
   it("assertAdmin throws the toast-visible 'Forbidden' message for non-admins", async () => {
-    const { assertAdmin } = await import("@/lib/admin.functions");
-    const { supabaseAdmin } = (await import(
-      "@/integrations/supabase/client.server"
-    )) as unknown as { supabaseAdmin: { maybeSingle: ReturnType<typeof vi.fn> } };
+    const { assertAdmin } = await import("@/lib/admin.shared.server");
+    const { createAdminClient } =
+      (await import("@/integrations/supabase/client.server")) as unknown as {
+        createAdminClient: () => { maybeSingle: ReturnType<typeof vi.fn> };
+      };
+    const supabaseAdmin = createAdminClient();
     supabaseAdmin.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
-    await expect(assertAdmin("not-an-admin")).rejects.toThrow(
-      "Forbidden: admin role required",
-    );
+    await expect(assertAdmin("not-an-admin")).rejects.toThrow("Forbidden: admin role required");
   });
 
   it("assertAdmin resolves silently when the user_roles row exists", async () => {
-    const { assertAdmin } = await import("@/lib/admin.functions");
-    const { supabaseAdmin } = (await import(
-      "@/integrations/supabase/client.server"
-    )) as unknown as { supabaseAdmin: { maybeSingle: ReturnType<typeof vi.fn> } };
+    const { assertAdmin } = await import("@/lib/admin.shared.server");
+    const { createAdminClient } =
+      (await import("@/integrations/supabase/client.server")) as unknown as {
+        createAdminClient: () => { maybeSingle: ReturnType<typeof vi.fn> };
+      };
+    const supabaseAdmin = createAdminClient();
     supabaseAdmin.maybeSingle.mockResolvedValueOnce({
       data: { role: "admin" },
       error: null,
@@ -463,21 +461,13 @@ describe("admin codebook server fns — authorization + payload structure", () =
       date: new Date("2026-05-15T00:00:00Z"),
     });
     const payload = {
-      csv: [expected.headers.join(","), ...expected.rows.map((r) => r.join(","))].join(
-        "\n",
-      ),
+      csv: [expected.headers.join(","), ...expected.rows.map((r) => r.join(","))].join("\n"),
       filename: `${stem}.csv`,
       questionCount: expected.questionCount,
       optionCount: expected.optionCount,
       surveyCount: expected.surveyCount,
     };
-    for (const key of [
-      "csv",
-      "filename",
-      "questionCount",
-      "optionCount",
-      "surveyCount",
-    ]) {
+    for (const key of ["csv", "filename", "questionCount", "optionCount", "surveyCount"]) {
       expect(payload, `missing ${key}`).toHaveProperty(key);
     }
     expect(payload.filename.endsWith(".csv")).toBe(true);

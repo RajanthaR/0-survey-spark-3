@@ -27,20 +27,32 @@ function parseCsv(csv: string): string[][] {
   for (let i = 0; i < csv.length; i += 1) {
     const ch = csv[i];
     if (inQuotes) {
-      if (ch === '"' && csv[i + 1] === '"') { cell += '"'; i += 1; }
-      else if (ch === '"') { inQuotes = false; }
-      else { cell += ch; }
+      if (ch === '"' && csv[i + 1] === '"') {
+        cell += '"';
+        i += 1;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        cell += ch;
+      }
     } else if (ch === '"') {
       inQuotes = true;
     } else if (ch === ",") {
-      row.push(cell); cell = "";
+      row.push(cell);
+      cell = "";
     } else if (ch === "\n") {
-      row.push(cell); rows.push(row); row = []; cell = "";
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
     } else {
       cell += ch;
     }
   }
-  if (cell.length > 0 || row.length > 0) { row.push(cell); rows.push(row); }
+  if (cell.length > 0 || row.length > 0) {
+    row.push(cell);
+    rows.push(row);
+  }
   return rows;
 }
 

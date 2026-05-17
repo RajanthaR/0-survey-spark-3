@@ -75,8 +75,7 @@ function record(entry: PerformanceResourceTiming) {
   const duration = Math.max(0, entry.responseEnd - entry.startTime);
   // deliveryType is in the spec but not yet typed everywhere.
   const deliveryType = (entry as unknown as { deliveryType?: string }).deliveryType;
-  const httpHit =
-    entry.transferSize === 0 && entry.decodedBodySize > 0;
+  const httpHit = entry.transferSize === 0 && entry.decodedBodySize > 0;
   const cacheHit = deliveryType === "cache";
   const swHit = swHits.has(entry.name);
   const hit = swHit || httpHit || cacheHit;
@@ -86,7 +85,6 @@ function record(entry: PerformanceResourceTiming) {
   if (typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search);
     if (params.get("perf") === "log") {
-      // eslint-disable-next-line no-console
       console.debug(
         `[eip-perf] img ${source.padEnd(7)} ${duration.toFixed(0).padStart(4)}ms ${entry.name}`,
       );

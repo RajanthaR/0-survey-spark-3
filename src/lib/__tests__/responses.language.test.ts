@@ -2,7 +2,7 @@
  * Persistence guarantee: every write to the `responses` table records the
  * language that was active at the moment the answer was saved.
  *
- * This file mocks `supabaseAdmin` so we can capture the exact payload sent
+ * This file mocks `createAdminClient` so we can capture the exact payload sent
  * to `responses.insert(...)` (startResponse) and `responses.update(...)`
  * (saveAnswers, completeResponse) and assert the `language` column is
  * present and matches what the SurveyRunner passed in.
@@ -56,17 +56,12 @@ vi.mock("@/integrations/supabase/client.server", () => {
   };
 
   return {
-    supabaseAdmin: {
-      from: () => buildFrom(),
-    },
+    createAdminClient: vi.fn(() => ({ from: () => buildFrom() })),
   };
 });
 
-import {
-  startResponse,
-  saveAnswers,
-  completeResponse,
-} from "@/lib/responses.functions";
+import { startResponseImpl } from "@/lib/responses.impl.server";
+import { saveAnswers, completeResponse } from "@/lib/responses.functions";
 
 beforeEach(() => {
   insertCalls.length = 0;
@@ -77,9 +72,7 @@ describe("responses persistence — language is recorded on every write", () => 
   it.each(["en", "si", "ta"] as const)(
     "startResponse(%s) inserts the language column",
     async (lang) => {
-      await startResponse({
-        data: { surveySlug: "demo", language: lang, consent: {} },
-      });
+      await startResponseImpl({ surveySlug: "demo", language: lang, consent: {} });
       expect(insertCalls).toHaveLength(1);
       expect(insertCalls[0]).toMatchObject({
         survey_slug: "demo",
@@ -139,12 +132,8 @@ describe("responses persistence — language is recorded on every write", () => 
       });
     }
     expect(updateCalls).toHaveLength(sequence.length);
-    expect(updateCalls.map((u) => u.language)).toEqual(
-      sequence.map((s) => s.lang),
-    );
-    expect(updateCalls.map((u) => u.progress_pct)).toEqual(
-      sequence.map((s) => s.pct),
-    );
+    expect(updateCalls.map((u) => u.language)).toEqual(sequence.map((s) => s.lang));
+    expect(updateCalls.map((u) => u.progress_pct)).toEqual(sequence.map((s) => s.pct));
   });
 
   it("completeResponse marks status=completed and progress=100 (language preserved from prior saves)", async () => {

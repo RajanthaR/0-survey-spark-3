@@ -13,14 +13,33 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { adminBootstrap, exportCsv, exportCodebookCsv, exportCodebookXlsx, exportFilteredCsv, exportFilteredXlsx, exportZipBundle, getStats, listResponses, previewFilteredCount, streamAllValidCsv, streamAllValidXlsx } from "@/lib/admin.functions";
+import {
+  adminBootstrap,
+  exportCsv,
+  exportCodebookCsv,
+  exportCodebookXlsx,
+  exportFilteredCsv,
+  exportFilteredXlsx,
+  exportZipBundle,
+  getStats,
+  listResponses,
+  previewFilteredCount,
+  streamAllValidCsv,
+  streamAllValidXlsx,
+} from "@/lib/admin.functions";
 import { Zip, AsyncZipDeflate, strToU8 } from "fflate";
 import { SURVEY_LIST, SURVEYS } from "@/surveys";
 import { buildCodebookHeaders, type CodebookLang } from "@/lib/csv-export-shape";
-import { pickText, useLang } from "@/lib/i18n";
-import { AllValidProgressCard, type AllValidProgress } from "@/components/admin/AllValidProgressCard";
+import { LANG_LABELS, pickText, useLang } from "@/lib/i18n";
+import {
+  AllValidProgressCard,
+  type AllValidProgress,
+} from "@/components/admin/AllValidProgressCard";
 import { CopyRequestIdButton } from "@/components/admin/CopyRequestIdButton";
-import { ZipBundleProgressCard, type ZipBundleProgress } from "@/components/admin/ZipBundleProgressCard";
+import {
+  ZipBundleProgressCard,
+  type ZipBundleProgress,
+} from "@/components/admin/ZipBundleProgressCard";
 import { LiveStatusPill } from "@/components/admin/LiveStatusPill";
 import { AnalyticsReportPanel } from "@/components/admin/AnalyticsReportPanel";
 import {
@@ -76,7 +95,6 @@ export const Route = createFileRoute("/admin")({
     ],
   }),
 });
-
 
 type StatsResult = Awaited<ReturnType<typeof getStats>>;
 type ListResult = Awaited<ReturnType<typeof listResponses>>;
@@ -218,8 +236,7 @@ function Dashboard({ email }: { email: string }) {
   // Confirmation dialog gate for cancelling the all-valid export — the
   // run can take minutes on large datasets so we don't want a misclick
   // on "Cancel" to discard the work-in-progress silently.
-  const [confirmCancelAllValidOpen, setConfirmCancelAllValidOpen] =
-    useState(false);
+  const [confirmCancelAllValidOpen, setConfirmCancelAllValidOpen] = useState(false);
   // AbortController for the (single-shot) filtered CSV / XLSX exports.
   // Lets the admin stop a long-running filtered export the same way
   // they can stop the all-valid stream.
@@ -389,7 +406,12 @@ function Dashboard({ email }: { email: string }) {
     persistWarnedRef.current.delete(`${kind}:limit`);
     persistWarnedRef.current.delete(`${kind}:quota`);
   };
-  type PersistedFailedRun = { error: string; requestId: string; rowCount: number; lastPage: number };
+  type PersistedFailedRun = {
+    error: string;
+    requestId: string;
+    rowCount: number;
+    lastPage: number;
+  };
   const tryPersist = (
     kind: "csv" | "xlsx",
     storageKey: string,
@@ -430,7 +452,12 @@ function Dashboard({ email }: { email: string }) {
     }
   };
   const saveCsvResume = (buf: PartialBuffer, fr: PersistedFailedRun) => {
-    tryPersist("csv", CSV_RESUME_KEY, { buffer: buf, failedRun: fr, savedAt: Date.now() }, fr.requestId);
+    tryPersist(
+      "csv",
+      CSV_RESUME_KEY,
+      { buffer: buf, failedRun: fr, savedAt: Date.now() },
+      fr.requestId,
+    );
   };
   const clearCsvResume = () => {
     if (typeof window === "undefined") return;
@@ -442,7 +469,12 @@ function Dashboard({ email }: { email: string }) {
     }
   };
   const saveXlsxResume = (buf: XlsxPartialBuffer, fr: PersistedFailedRun) => {
-    tryPersist("xlsx", XLSX_RESUME_KEY, { buffer: buf, failedRun: fr, savedAt: Date.now() }, fr.requestId);
+    tryPersist(
+      "xlsx",
+      XLSX_RESUME_KEY,
+      { buffer: buf, failedRun: fr, savedAt: Date.now() },
+      fr.requestId,
+    );
   };
   const clearXlsxResume = () => {
     if (typeof window === "undefined") return;
@@ -469,8 +501,9 @@ function Dashboard({ email }: { email: string }) {
      *  it left off rather than restarting from page 1. */
     resumeFromPage?: number;
   };
-  const [xlsxAllValidProgress, setXlsxAllValidProgress] =
-    useState<XlsxAllValidProgress | null>(null);
+  const [xlsxAllValidProgress, setXlsxAllValidProgress] = useState<XlsxAllValidProgress | null>(
+    null,
+  );
   type XlsxPartialBuffer = {
     filename: string;
     total: number;
@@ -518,7 +551,6 @@ function Dashboard({ email }: { email: string }) {
       ? { label: "View logs", onClick: () => openLogUrl(requestId) }
       : undefined;
 
-
   // Set by the hydration effect when a persisted failed run is restored
   // from localStorage after a page refresh. Drives the auto-resume
   // prompt (AlertDialog) so the admin sees the saved lastPage +
@@ -549,8 +581,12 @@ function Dashboard({ email }: { email: string }) {
         const b = parsed.buffer;
         const fr = parsed.failedRun;
         if (
-          b && Array.isArray(b.chunks) && typeof b.lastPage === "number"
-          && b.lastPage >= 0 && fr && typeof fr.error === "string"
+          b &&
+          Array.isArray(b.chunks) &&
+          typeof b.lastPage === "number" &&
+          b.lastPage >= 0 &&
+          fr &&
+          typeof fr.error === "string"
         ) {
           partialBufferRef.current = {
             filename: b.filename,
@@ -622,9 +658,13 @@ function Dashboard({ email }: { email: string }) {
         const b = parsed.buffer;
         const fr = parsed.failedRun;
         if (
-          b && Array.isArray(b.rows) && Array.isArray(b.headerRow)
-          && typeof b.lastPage === "number" && b.lastPage >= 0
-          && fr && typeof fr.error === "string"
+          b &&
+          Array.isArray(b.rows) &&
+          Array.isArray(b.headerRow) &&
+          typeof b.lastPage === "number" &&
+          b.lastPage >= 0 &&
+          fr &&
+          typeof fr.error === "string"
         ) {
           // Prefer the persisted failedRun.requestId, but fall back to
           // the standalone current-requestId key when it's missing or
@@ -691,7 +731,6 @@ function Dashboard({ email }: { email: string }) {
     // life of the component so no dependency churn is intended.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
 
   // Filtered-export controls (independent of the dashboard scope tabs).
   // Persisted in localStorage so the admin's last-used filters survive reloads.
@@ -831,7 +870,17 @@ function Dashboard({ email }: { email: string }) {
       };
     }, 300);
     return () => clearTimeout(handle);
-  }, [fSurvey, fLang, fFrom, fTo, effectiveStatus, fValidOnly, fDateField, datesValid, previewFilteredFn]);
+  }, [
+    fSurvey,
+    fLang,
+    fFrom,
+    fTo,
+    effectiveStatus,
+    fValidOnly,
+    fDateField,
+    datesValid,
+    previewFilteredFn,
+  ]);
 
   // Apply the filter-panel Status (Completed / In progress / All) to the
   // top-of-page analytics + stats so the dashboard cards, daily chart,
@@ -842,9 +891,7 @@ function Dashboard({ email }: { email: string }) {
     () => ({
       ...(slug === "__all__" ? {} : { surveySlug: slug }),
       ...(effectiveStatus === "all" ? {} : { statusFilter: effectiveStatus }),
-      ...(cohortLang === "__all__"
-        ? {}
-        : { language: cohortLang as "en" | "si" | "ta" }),
+      ...(cohortLang === "__all__" ? {} : { language: cohortLang as "en" | "si" | "ta" }),
       ...(cohortDatesValid && cohortFrom ? { dateFrom: cohortFrom } : {}),
       ...(cohortDatesValid && cohortTo ? { dateTo: cohortTo } : {}),
     }),
@@ -855,9 +902,7 @@ function Dashboard({ email }: { email: string }) {
       page,
       pageSize: PAGE_SIZE,
       ...(slug === "__all__" ? {} : { surveySlug: slug }),
-      ...(cohortLang === "__all__"
-        ? {}
-        : { language: cohortLang as "en" | "si" | "ta" }),
+      ...(cohortLang === "__all__" ? {} : { language: cohortLang as "en" | "si" | "ta" }),
       ...(cohortDatesValid && cohortFrom ? { dateFrom: cohortFrom } : {}),
       ...(cohortDatesValid && cohortTo ? { dateTo: cohortTo } : {}),
     }),
@@ -909,10 +954,7 @@ function Dashboard({ email }: { email: string }) {
         // "Updated Xs ago" so admins can see refresh has stopped working
         // without a toast firing every 15s on a flaky connection.
         if (!background) toast.error((e as Error).message);
-        else
-          console.warn(
-            `[admin/live] background refresh failed: ${(e as Error).message}`,
-          );
+        else console.warn(`[admin/live] background refresh failed: ${(e as Error).message}`);
       } finally {
         if (background) setRefreshing(false);
         else setLoading(false);
@@ -952,21 +994,17 @@ function Dashboard({ email }: { email: string }) {
     if (!live) return;
     const channel = supabase
       .channel("admin-responses-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "responses" },
-        () => {
-          if (realtimeDebounceRef.current != null) {
-            window.clearTimeout(realtimeDebounceRef.current);
+      .on("postgres_changes", { event: "*", schema: "public", table: "responses" }, () => {
+        if (realtimeDebounceRef.current != null) {
+          window.clearTimeout(realtimeDebounceRef.current);
+        }
+        realtimeDebounceRef.current = window.setTimeout(() => {
+          realtimeDebounceRef.current = null;
+          if (document.visibilityState === "visible") {
+            loadStats({ background: true });
           }
-          realtimeDebounceRef.current = window.setTimeout(() => {
-            realtimeDebounceRef.current = null;
-            if (document.visibilityState === "visible") {
-              loadStats({ background: true });
-            }
-          }, 1500);
-        },
-      )
+        }, 1500);
+      })
       .subscribe();
     return () => {
       if (realtimeDebounceRef.current != null) {
@@ -996,17 +1034,15 @@ function Dashboard({ email }: { email: string }) {
     }
   }
 
-  async function downloadAllValidCsv(
-    resume?: {
-      startPage: number;
-      requestId: string;
-      filename: string;
-      total: number;
-      pageSize: number;
-      priorChunks: string[];
-      priorRowCount: number;
-    },
-  ) {
+  async function downloadAllValidCsv(resume?: {
+    startPage: number;
+    requestId: string;
+    filename: string;
+    total: number;
+    pageSize: number;
+    priorChunks: string[];
+    priorRowCount: number;
+  }) {
     setExporting("__all_valid__");
     // Clear any prior failed-run banner — a fresh attempt starts now.
     setFailedRun(null);
@@ -1133,10 +1169,14 @@ function Dashboard({ email }: { email: string }) {
       processed: number,
       total: number,
       chunkBytes: number,
-    ): { rate: number; etaSeconds: number | null; bytesProcessed: number; rateHistory: number[] } => {
+    ): {
+      rate: number;
+      etaSeconds: number | null;
+      bytesProcessed: number;
+      rateHistory: number[];
+    } => {
       const ref = allValidRateRef.current;
-      if (!ref)
-        return { rate: 0, etaSeconds: null, bytesProcessed: 0, rateHistory: [] };
+      if (!ref) return { rate: 0, etaSeconds: null, bytesProcessed: 0, rateHistory: [] };
       const now = performance.now();
       const dtSec = Math.max(0.001, (now - ref.lastSampleAt) / 1000);
       const dProcessed = Math.max(0, processed - ref.lastProcessed);
@@ -1144,9 +1184,7 @@ function Dashboard({ email }: { email: string }) {
       // EWMA: alpha=0.3 → reactive but not jittery. First real sample
       // bootstraps the smoothed value to avoid a slow ramp-up.
       const smoothed =
-        ref.smoothedRate === 0
-          ? instantRate
-          : 0.3 * instantRate + 0.7 * ref.smoothedRate;
+        ref.smoothedRate === 0 ? instantRate : 0.3 * instantRate + 0.7 * ref.smoothedRate;
       ref.lastSampleAt = now;
       ref.lastProcessed = processed;
       ref.smoothedRate = smoothed;
@@ -1157,8 +1195,7 @@ function Dashboard({ email }: { email: string }) {
       }
       ref.rateHistory = nextHistory;
       const remaining = total > 0 ? Math.max(0, total - processed) : 0;
-      const etaSeconds =
-        total > 0 && smoothed > 0 ? remaining / smoothed : null;
+      const etaSeconds = total > 0 && smoothed > 0 ? remaining / smoothed : null;
       return {
         rate: smoothed,
         etaSeconds,
@@ -1166,7 +1203,6 @@ function Dashboard({ email }: { email: string }) {
         rateHistory: nextHistory,
       };
     };
-
 
     /** Snapshot the cancelled state into the progress card so it
      *  reads "Export cancelled — N rows fetched" until the admin
@@ -1195,9 +1231,7 @@ function Dashboard({ email }: { email: string }) {
           maxAttempts: retryPrefs.maxAttempts,
           baseDelayMs: retryPrefs.baseDelayMs,
           backoffFactor: retryPrefs.backoffFactor,
-          ...(resume
-            ? { startPage: resume.startPage, requestId: resume.requestId }
-            : {}),
+          ...(resume ? { startPage: resume.startPage, requestId: resume.requestId } : {}),
         },
       });
       for await (const evt of stream) {
@@ -1234,9 +1268,7 @@ function Dashboard({ email }: { email: string }) {
             // a stale localStorage payload before any new chunk lands.
             const carryCheck = validateAssembledCsv(chunks, runHeaderLine);
             if (!carryCheck.ok) {
-              throw new Error(
-                `Resume buffer continuity check failed: ${carryCheck.reason}`,
-              );
+              throw new Error(`Resume buffer continuity check failed: ${carryCheck.reason}`);
             }
           }
           // Initialise / refresh the partial buffer with fresh meta.
@@ -1283,13 +1315,13 @@ function Dashboard({ email }: { email: string }) {
           const rawChunkBytes = utf8(evt.csv);
           if (typeof evt.crc32 === "string") {
             const localCrc = crc32OfBytes(rawChunkBytes);
-            const sizeOk = typeof evt.byteLength !== "number" || evt.byteLength === rawChunkBytes.byteLength;
+            const sizeOk =
+              typeof evt.byteLength !== "number" || evt.byteLength === rawChunkBytes.byteLength;
             if (localCrc !== evt.crc32 || !sizeOk) {
               chunkCrcMismatches++;
-              toast.warning(
-                `CSV chunk CRC mismatch on page ${evt.page}`,
-                { description: `expected=${evt.crc32}, got=${localCrc}${sizeOk ? "" : `, size=${rawChunkBytes.byteLength}/${evt.byteLength}`}` },
-              );
+              toast.warning(`CSV chunk CRC mismatch on page ${evt.page}`, {
+                description: `expected=${evt.crc32}, got=${localCrc}${sizeOk ? "" : `, size=${rawChunkBytes.byteLength}/${evt.byteLength}`}`,
+              });
             } else {
               continuityChecksPassed++;
             }
@@ -1302,8 +1334,11 @@ function Dashboard({ email }: { email: string }) {
           runShaParts.push(rawChunkBytes);
           runByteLen += rawChunkBytes.byteLength;
           const chunkBytes = safeCsv.length;
-          const { rate, etaSeconds, bytesProcessed, rateHistory } =
-            sampleProgress(evt.processed, evt.total, chunkBytes);
+          const { rate, etaSeconds, bytesProcessed, rateHistory } = sampleProgress(
+            evt.processed,
+            evt.total,
+            chunkBytes,
+          );
           // Track the highest successfully appended page so a transient
           // failure can resume from `lastPage + 1` instead of restarting.
           if (typeof evt.page === "number") {
@@ -1332,14 +1367,19 @@ function Dashboard({ email }: { email: string }) {
           finalRowCount = evt.rowCount;
           setAllValidProgress((p) =>
             p
-              ? { ...p, processed: evt.rowCount, phase: "finalizing", etaSeconds: 0, integrity: buildIntegrity() }
+              ? {
+                  ...p,
+                  processed: evt.rowCount,
+                  phase: "finalizing",
+                  etaSeconds: 0,
+                  integrity: buildIntegrity(),
+                }
               : p,
           );
         } else if (evt.type === "warn") {
-          toast.warning(
-            `${evt.label} — retry ${evt.attempt}/${evt.maxAttempts}`,
-            { description: evt.message },
-          );
+          toast.warning(`${evt.label} — retry ${evt.attempt}/${evt.maxAttempts}`, {
+            description: evt.message,
+          });
         }
       }
       if (cancelled) {
@@ -1462,13 +1502,13 @@ function Dashboard({ email }: { email: string }) {
             const rawChunkBytes = utf8(evt.csv);
             if (typeof evt.crc32 === "string") {
               const localCrc = crc32OfBytes(rawChunkBytes);
-              const sizeOk = typeof evt.byteLength !== "number" || evt.byteLength === rawChunkBytes.byteLength;
+              const sizeOk =
+                typeof evt.byteLength !== "number" || evt.byteLength === rawChunkBytes.byteLength;
               if (localCrc !== evt.crc32 || !sizeOk) {
                 chunkCrcMismatches++;
-                toast.warning(
-                  `CSV chunk CRC mismatch on page ${evt.page} (auto-retry)`,
-                  { description: `expected=${evt.crc32}, got=${localCrc}${sizeOk ? "" : `, size=${rawChunkBytes.byteLength}/${evt.byteLength}`}` },
-                );
+                toast.warning(`CSV chunk CRC mismatch on page ${evt.page} (auto-retry)`, {
+                  description: `expected=${evt.crc32}, got=${localCrc}${sizeOk ? "" : `, size=${rawChunkBytes.byteLength}/${evt.byteLength}`}`,
+                });
               } else {
                 continuityChecksPassed++;
               }
@@ -1505,10 +1545,9 @@ function Dashboard({ email }: { email: string }) {
           } else if (evt.type === "done") {
             finalRowCount = evt.rowCount;
           } else if (evt.type === "warn") {
-            toast.warning(
-              `${evt.label} — retry ${evt.attempt}/${evt.maxAttempts}`,
-              { description: evt.message },
-            );
+            toast.warning(`${evt.label} — retry ${evt.attempt}/${evt.maxAttempts}`, {
+              description: evt.message,
+            });
           }
         }
         if (cancelled) break;
@@ -1524,8 +1563,7 @@ function Dashboard({ email }: { email: string }) {
         // flow. Throwing afterwards keeps the failed-run banner +
         // persisted resume buffer behaviour unchanged.
         const ci = continuity.chunkIndex;
-        const pageOfChunk =
-          typeof ci === "number" && ci >= 2 ? ci - 2 : undefined;
+        const pageOfChunk = typeof ci === "number" && ci >= 2 ? ci - 2 : undefined;
         const exhaustedNote =
           continuityAttempt > 0
             ? ` Auto-retry exhausted after ${continuityAttempt}/${MAX_CONTINUITY_AUTO_RETRIES} attempt${continuityAttempt === 1 ? "" : "s"}.`
@@ -1542,7 +1580,8 @@ function Dashboard({ email }: { email: string }) {
                   suggestion:
                     (pageOfChunk != null
                       ? `Retry the export from the last successfully appended page (page ${lastPage}). The offending data was introduced at page ${pageOfChunk}.`
-                      : `Retry the export from the last successfully appended page (page ${lastPage}).`) + exhaustedNote,
+                      : `Retry the export from the last successfully appended page (page ${lastPage}).`) +
+                    exhaustedNote,
                 },
               }
             : prev,
@@ -1567,7 +1606,10 @@ function Dashboard({ email }: { email: string }) {
       if (serverChecksum) {
         const total = new Uint8Array(runByteLen);
         let off = 0;
-        for (const part of runShaParts) { total.set(part, off); off += part.byteLength; }
+        for (const part of runShaParts) {
+          total.set(part, off);
+          off += part.byteLength;
+        }
         runShaHex = await sha256Hex(total);
         runCrcHex = crc32Hex(runCrcState);
         const sizeOk = serverChecksum.byteLength === runByteLen;
@@ -1589,9 +1631,7 @@ function Dashboard({ email }: { email: string }) {
           throw new Error(reason);
         }
         checksumStatus = "ok";
-        setAllValidProgress((prev) =>
-          prev ? { ...prev, integrity: buildIntegrity() } : prev,
-        );
+        setAllValidProgress((prev) => (prev ? { ...prev, integrity: buildIntegrity() } : prev));
       }
       // Append a checksum trailer so the downloaded file carries proof
       // of integrity. Format (CSV-comment style; consumers that don't
@@ -1606,13 +1646,19 @@ function Dashboard({ email }: { email: string }) {
       a.click();
       URL.revokeObjectURL(url);
       const descParts: string[] = [`requestId=${runRequestId || "unknown"}`];
-      if (duplicateCsvPages > 0) descParts.unshift(`Resume de-dup dropped ${duplicateCsvPages} duplicate page${duplicateCsvPages === 1 ? "" : "s"}`);
-      if (chunkCrcMismatches > 0) descParts.unshift(`${chunkCrcMismatches} chunk CRC mismatch${chunkCrcMismatches === 1 ? "" : "es"} (auto-recovered)`);
+      if (duplicateCsvPages > 0)
+        descParts.unshift(
+          `Resume de-dup dropped ${duplicateCsvPages} duplicate page${duplicateCsvPages === 1 ? "" : "s"}`,
+        );
+      if (chunkCrcMismatches > 0)
+        descParts.unshift(
+          `${chunkCrcMismatches} chunk CRC mismatch${chunkCrcMismatches === 1 ? "" : "es"} (auto-recovered)`,
+        );
       if (serverChecksum) descParts.push(`sha256=${serverChecksum.sha256.slice(0, 12)}…`);
-      toast.success(
-        `Exported ${finalRowCount} valid response${finalRowCount === 1 ? "" : "s"}`,
-        { description: descParts.join(" · "), action: viewLogsAction(runRequestId) },
-      );
+      toast.success(`Exported ${finalRowCount} valid response${finalRowCount === 1 ? "" : "s"}`, {
+        description: descParts.join(" · "),
+        action: viewLogsAction(runRequestId),
+      });
       setAllValidProgress(null);
       // Successful run — drop the partial buffer / failed-run banner.
       partialBufferRef.current = null;
@@ -1705,18 +1751,16 @@ function Dashboard({ email }: { email: string }) {
   }
 
   // ── Streaming all-valid XLSX export ─────────────────────────────────
-  async function downloadAllValidXlsx(
-    resume?: {
-      startPage: number;
-      requestId: string;
-      filename: string;
-      total: number;
-      pageSize: number;
-      headerRow: string[];
-      priorRows: (string | number | boolean | null)[][];
-      priorRowCount: number;
-    },
-  ) {
+  async function downloadAllValidXlsx(resume?: {
+    startPage: number;
+    requestId: string;
+    filename: string;
+    total: number;
+    pageSize: number;
+    headerRow: string[];
+    priorRows: (string | number | boolean | null)[][];
+    priorRowCount: number;
+  }) {
     setExporting("__all_valid_xlsx__");
     setXlsxFailedRun(null);
     clearXlsxResume();
@@ -1735,9 +1779,7 @@ function Dashboard({ email }: { email: string }) {
     let runRequestId = resume?.requestId ?? "";
     setXlsxCurrentRequestId(resume?.requestId ?? null);
     let headerRow: string[] = resume?.headerRow ?? [];
-    const allRows: (string | number | boolean | null)[][] = resume
-      ? [...resume.priorRows]
-      : [];
+    const allRows: (string | number | boolean | null)[][] = resume ? [...resume.priorRows] : [];
     let lastPage = resume ? resume.startPage - 1 : -1;
     let finalRowCount = resume?.priorRowCount ?? 0;
     // Resume de-dup (XLSX): same shape as the CSV streamer — track
@@ -1772,9 +1814,7 @@ function Dashboard({ email }: { email: string }) {
           maxAttempts: retryPrefs.maxAttempts,
           baseDelayMs: retryPrefs.baseDelayMs,
           backoffFactor: retryPrefs.backoffFactor,
-          ...(resume
-            ? { startPage: resume.startPage, requestId: resume.requestId }
-            : {}),
+          ...(resume ? { startPage: resume.startPage, requestId: resume.requestId } : {}),
         },
       });
       for await (const evt of stream) {
@@ -1835,10 +1875,9 @@ function Dashboard({ email }: { email: string }) {
             phase: "finalizing",
           });
         } else if (evt.type === "warn") {
-          toast.warning(
-            `${evt.label} — retry ${evt.attempt}/${evt.maxAttempts}`,
-            { description: evt.message },
-          );
+          toast.warning(`${evt.label} — retry ${evt.attempt}/${evt.maxAttempts}`, {
+            description: evt.message,
+          });
         }
       }
 
@@ -1883,9 +1922,7 @@ function Dashboard({ email }: { email: string }) {
         setXlsxAllValidProgress((p) => (p ? { ...p, phase: "cancelled" } : null));
         toast.info(
           "XLSX export cancelled",
-          runRequestId
-            ? { description: `requestId=${runRequestId}` }
-            : undefined,
+          runRequestId ? { description: `requestId=${runRequestId}` } : undefined,
         );
         xlsxPartialBufferRef.current = null;
         setXlsxFailedRun(null);
@@ -1984,7 +2021,6 @@ function Dashboard({ email }: { email: string }) {
     clearXlsxResume();
   }
 
-
   /** First step of cancellation — open the confirmation dialog so a
    *  misclick on "Cancel" doesn't discard a multi-minute streaming
    *  export. The actual abort happens in `confirmCancelAllValidCsv`. */
@@ -2028,9 +2064,7 @@ function Dashboard({ email }: { email: string }) {
     });
     pauseGateRef.current = { promise, resolve };
     setAllValidPaused(true);
-    setAllValidProgress((p) =>
-      p ? { ...p, phase: "paused", etaSeconds: null } : p,
-    );
+    setAllValidProgress((p) => (p ? { ...p, phase: "paused", etaSeconds: null } : p));
   }
 
   function resumeAllValidCsv() {
@@ -2039,9 +2073,7 @@ function Dashboard({ email }: { email: string }) {
     pauseGateRef.current = null;
     (gate as PauseGate).resolve();
     setAllValidPaused(false);
-    setAllValidProgress((p) =>
-      p && p.phase === "paused" ? { ...p, phase: "fetching" } : p,
-    );
+    setAllValidProgress((p) => (p && p.phase === "paused" ? { ...p, phase: "fetching" } : p));
   }
 
   function dismissAllValidProgress() {
@@ -2070,8 +2102,7 @@ function Dashboard({ email }: { email: string }) {
       if (!raw) return fallback;
       const parsed = JSON.parse(raw) as Partial<CodebookPrefs>;
       const survey =
-        typeof parsed.survey === "string" &&
-        (parsed.survey === "__all__" || SURVEYS[parsed.survey])
+        typeof parsed.survey === "string" && (parsed.survey === "__all__" || SURVEYS[parsed.survey])
           ? parsed.survey
           : "__all__";
       const lang =
@@ -2087,14 +2118,13 @@ function Dashboard({ email }: { email: string }) {
       return fallback;
     }
   }
-  const [codebookSurvey, setCodebookSurvey] = useState<string>(
-    () => loadCodebookPrefs().survey,
-  );
+  const [codebookSurvey, setCodebookSurvey] = useState<string>(() => loadCodebookPrefs().survey);
   const [codebookLang, setCodebookLang] = useState<"__all__" | "en" | "si" | "ta">(
     () => loadCodebookPrefs().lang,
   );
-  const [codebookPerLanguageSheets, setCodebookPerLanguageSheets] =
-    useState<boolean>(() => loadCodebookPrefs().perLanguageSheets);
+  const [codebookPerLanguageSheets, setCodebookPerLanguageSheets] = useState<boolean>(
+    () => loadCodebookPrefs().perLanguageSheets,
+  );
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -2119,18 +2149,13 @@ function Dashboard({ email }: { email: string }) {
   // two label columns from the header.
   const codebookHeaderLangs: readonly CodebookLang[] =
     codebookLang === "__all__" ? (["en", "si", "ta"] as const) : [codebookLang];
-  const codebookHeaderPreview = useMemo(
-    () => buildCodebookHeaders(codebookHeaderLangs),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [codebookLang],
-  );
+  const codebookHeaderPreview = buildCodebookHeaders(codebookHeaderLangs);
 
   // Visual analytics chart language. Tracks the codebook language picker
   // so the dashboard charts speak the same language as the export the
   // admin is about to download. "__all__" falls back to English (the
   // canonical export label language).
-  const chartLang: "en" | "si" | "ta" =
-    codebookLang === "__all__" ? "en" : codebookLang;
+  const chartLang: "en" | "si" | "ta" = codebookLang === "__all__" ? "en" : codebookLang;
 
   async function downloadCodebookCsv() {
     setExporting("__codebook__");
@@ -2138,10 +2163,9 @@ function Dashboard({ email }: { email: string }) {
       const payload: { surveySlug?: string; langs?: ("en" | "si" | "ta")[] } = {};
       if (codebookSurvey !== "__all__") payload.surveySlug = codebookSurvey;
       if (codebookLang !== "__all__") payload.langs = [codebookLang];
-      const { csv, filename, questionCount, optionCount, surveyCount } =
-        await exportCodebookFn({
-          data: Object.keys(payload).length ? payload : undefined,
-        });
+      const { csv, filename, questionCount, optionCount, surveyCount } = await exportCodebookFn({
+        data: Object.keys(payload).length ? payload : undefined,
+      });
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -2161,15 +2185,12 @@ function Dashboard({ email }: { email: string }) {
 
   async function downloadCodebookXlsx() {
     setExporting("__codebook_xlsx__");
-    const scopeLabel =
-      codebookSurvey === "__all__" ? "All surveys" : codebookSurvey;
+    const scopeLabel = codebookSurvey === "__all__" ? "All surveys" : codebookSurvey;
     const langLabel =
       codebookLang === "__all__"
         ? "EN+SI+TA"
         : ({ en: "English", si: "Sinhala", ta: "Tamil" } as const)[codebookLang];
-    const sheetModeLabel = codebookPerLanguageSheets
-      ? "per-language sheets"
-      : "merged sheet";
+    const sheetModeLabel = codebookPerLanguageSheets ? "per-language sheets" : "merged sheet";
     try {
       const payload: {
         surveySlug?: string;
@@ -2179,17 +2200,10 @@ function Dashboard({ email }: { email: string }) {
       if (codebookSurvey !== "__all__") payload.surveySlug = codebookSurvey;
       if (codebookLang !== "__all__") payload.langs = [codebookLang];
       if (codebookPerLanguageSheets) payload.perLanguageSheets = true;
-      const {
-        base64,
-        filename,
-        questionCount,
-        optionCount,
-        surveyCount,
-        sheetNames,
-        cacheHit,
-      } = await exportCodebookXlsxFn({
-        data: Object.keys(payload).length ? payload : undefined,
-      });
+      const { base64, filename, questionCount, optionCount, surveyCount, sheetNames, cacheHit } =
+        await exportCodebookXlsxFn({
+          data: Object.keys(payload).length ? payload : undefined,
+        });
       const bin = atob(base64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -2464,19 +2478,13 @@ function Dashboard({ email }: { email: string }) {
   // independent across users); we re-key by `id` / `slug` here against
   // `SURVEYS` to swap them in. When `chartLang === "en"` this is a no-op
   // pass-through (same identity for surveySplit / questionStats).
-  const LANG_LABEL: Record<"en" | "si" | "ta", { en: string; si: string; ta: string }> = {
-    en: { en: "English", si: "ඉංග්‍රීසි", ta: "ஆங்கிலம்" },
-    si: { en: "Sinhala", si: "සිංහල", ta: "சிங்களம்" },
-    ta: { en: "Tamil", si: "දෙමළ", ta: "தமிழ்" },
-  };
   const localizedLangSplit = useMemo(() => {
     if (!stats) return [] as { name: string; value: number }[];
     return stats.langSplit.map((s) => {
       const code = s.name as "en" | "si" | "ta";
-      const dict = LANG_LABEL[code];
-      return { name: dict ? dict[chartLang] : s.name, value: s.value };
+      const dict = LANG_LABELS[code];
+      return { name: dict ? pickText(dict, chartLang) : s.name, value: s.value };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stats, chartLang]);
   const localizedSurveySplit = useMemo(() => {
     if (!stats) return [] as { name: string; value: number }[];
@@ -2563,7 +2571,6 @@ function Dashboard({ email }: { email: string }) {
     [alerts, dismissedIds],
   );
 
-
   return (
     <div className="min-h-screen bg-background">
       {/* Auto-prompt: shown once on mount when a previous failed CSV/XLSX
@@ -2603,14 +2610,9 @@ function Dashboard({ email }: { email: string }) {
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
                   Buffered{" "}
-                  <span className="font-medium text-foreground">
-                    {p.rowCount.toLocaleString()}
-                  </span>{" "}
+                  <span className="font-medium text-foreground">{p.rowCount.toLocaleString()}</span>{" "}
                   row{p.rowCount === 1 ? "" : "s"} through page{" "}
-                  <span className="font-medium text-foreground">
-                    {p.lastPage}
-                  </span>
-                  .
+                  <span className="font-medium text-foreground">{p.lastPage}</span>.
                 </div>
                 <div className="mt-1 text-[11px] text-muted-foreground">
                   <span className="font-mono">requestId={p.requestId}</span>
@@ -2619,9 +2621,7 @@ function Dashboard({ email }: { email: string }) {
             ))}
           </ul>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="resume-prompt-later">
-              Decide later
-            </AlertDialogCancel>
+            <AlertDialogCancel data-testid="resume-prompt-later">Decide later</AlertDialogCancel>
             <AlertDialogAction
               data-testid="resume-prompt-discard-all"
               onClick={() => {
@@ -2653,7 +2653,12 @@ function Dashboard({ email }: { email: string }) {
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="hidden text-muted-foreground sm:inline">{email}</span>
-            <Button variant="ghost" size="sm" aria-label="Sign out" onClick={() => supabase.auth.signOut()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Sign out"
+              onClick={() => supabase.auth.signOut()}
+            >
               <LogOut className="size-4" aria-hidden="true" />
             </Button>
           </div>
@@ -2674,12 +2679,14 @@ function Dashboard({ email }: { email: string }) {
 
         <Card title="Cohort filters">
           <p className="mb-3 text-xs text-muted-foreground">
-            Filter the dashboard stats and response list to compare cohorts.
-            The survey tab above acts as the questionnaire version selector.
+            Filter the dashboard stats and response list to compare cohorts. The survey tab above
+            acts as the questionnaire version selector.
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
-              <Label htmlFor="cohort-lang" className="text-xs">Language</Label>
+              <Label htmlFor="cohort-lang" className="text-xs">
+                Language
+              </Label>
               <select
                 id="cohort-lang"
                 className="h-9 w-full rounded-md border bg-background px-2 text-sm"
@@ -2693,7 +2700,9 @@ function Dashboard({ email }: { email: string }) {
               </select>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="cohort-from" className="text-xs">From (started)</Label>
+              <Label htmlFor="cohort-from" className="text-xs">
+                From (started)
+              </Label>
               <Input
                 id="cohort-from"
                 type="date"
@@ -2703,7 +2712,9 @@ function Dashboard({ email }: { email: string }) {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="cohort-to" className="text-xs">To (started)</Label>
+              <Label htmlFor="cohort-to" className="text-xs">
+                To (started)
+              </Label>
               <Input
                 id="cohort-to"
                 type="date"
@@ -2717,9 +2728,7 @@ function Dashboard({ email }: { email: string }) {
                 variant="outline"
                 size="sm"
                 className="w-full"
-                disabled={
-                  cohortLang === "__all__" && !cohortFrom && !cohortTo
-                }
+                disabled={cohortLang === "__all__" && !cohortFrom && !cohortTo}
                 onClick={() => {
                   setCohortLang("__all__");
                   setCohortFrom("");
@@ -2731,9 +2740,7 @@ function Dashboard({ email }: { email: string }) {
             </div>
           </div>
           {!cohortDatesValid && (
-            <p className="mt-2 text-xs text-destructive">
-              "From" must be on or before "To".
-            </p>
+            <p className="mt-2 text-xs text-destructive">"From" must be on or before "To".</p>
           )}
         </Card>
 
@@ -2748,9 +2755,15 @@ function Dashboard({ email }: { email: string }) {
               ))}
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
-              <Card title="Responses over time"><LineChartSkeleton /></Card>
-              <Card title="By language"><PieChartSkeleton /></Card>
-              <Card title="By survey"><BarChartSkeleton /></Card>
+              <Card title="Responses over time">
+                <LineChartSkeleton />
+              </Card>
+              <Card title="By language">
+                <PieChartSkeleton />
+              </Card>
+              <Card title="By survey">
+                <BarChartSkeleton />
+              </Card>
               <Card title="Completion rate">
                 <div className="grid h-[240px] place-items-center">
                   <Skeleton className="h-16 w-32" />
@@ -2792,9 +2805,7 @@ function Dashboard({ email }: { email: string }) {
             </div>
 
             <Card title="Download analytics report">
-              <AnalyticsReportPanel
-                surveySlug={slug !== "__all__" ? slug : undefined}
-              />
+              <AnalyticsReportPanel surveySlug={slug !== "__all__" ? slug : undefined} />
             </Card>
 
             <div
@@ -2854,97 +2865,104 @@ function Dashboard({ email }: { email: string }) {
               </Card>
             )}
 
-            {slug !== "__all__" && localizedQuestionStats.length > 0 && (() => {
-              const answered = localizedQuestionStats.reduce((s, q) => s + q.answered, 0);
-              const possible = localizedQuestionStats.reduce((s, q) => s + q.total, 0);
-              const skipped = Math.max(0, possible - answered);
-              const answeredPct = possible ? Math.round((answered / possible) * 100) : 0;
-              const skippedPct = possible ? 100 - answeredPct : 0;
-              const chartData = localizedQuestionStats.map((q) => ({
-                id: q.id,
-                label: q.label,
-                answeredPct: q.answeredPct,
-              }));
-              // Richer dataset used by the drop-off drilldown so the
-              // dialog can render exact counts + the top-N selected
-              // answers in the dashboard's current language.
-              const dropoffData = localizedQuestionStats.map((q) => ({
-                id: q.id,
-                label: q.label,
-                section: q.section,
-                type: q.type,
-                answered: q.answered,
-                total: q.total,
-                answeredPct: q.answeredPct,
-                distribution: q.distribution,
-              }));
-              // Pre-compute drop-off so the drilldown can show the same
-              // % the chart bar represents without recomputing.
-              const dropoffRows = computeDropoff(dropoffData).rows;
-              const selectedDrilldown: QuestionDrilldownData | null = (() => {
-                if (!dropoffSelectedId) return null;
-                const q = dropoffData.find((d) => d.id === dropoffSelectedId);
-                if (!q) return null;
-                const r = dropoffRows.find((rr) => rr.id === dropoffSelectedId);
-                return { ...q, dropPct: r?.dropPct ?? 0 };
-              })();
-              return (
-                <Card title="Progress analytics">
-                  <p className="mb-4 text-xs text-muted-foreground">
-                    Aggregate completion across {localizedQuestionStats.length} questions ×{" "}
-                    {stats.total} {stats.total === 1 ? "respondent" : "respondents"}.
-                  </p>
-                  <div className="grid gap-4 lg:grid-cols-3">
-                    <Stat label="Completion rate" value={`${stats.completionRate}%`} accent />
-                    <Stat label="Selected (answers)" value={answered.toLocaleString()} />
-                    <Stat label="Skipped" value={skipped.toLocaleString()} />
-                  </div>
-                  <div className="mt-4">
-                    <p className="mb-2 text-xs text-muted-foreground">
-                      Selected vs skipped — {answeredPct}% selected, {skippedPct}% skipped
+            {slug !== "__all__" &&
+              localizedQuestionStats.length > 0 &&
+              (() => {
+                const answered = localizedQuestionStats.reduce((s, q) => s + q.answered, 0);
+                const possible = localizedQuestionStats.reduce((s, q) => s + q.total, 0);
+                const skipped = Math.max(0, possible - answered);
+                const answeredPct = possible ? Math.round((answered / possible) * 100) : 0;
+                const skippedPct = possible ? 100 - answeredPct : 0;
+                const chartData = localizedQuestionStats.map((q) => ({
+                  id: q.id,
+                  label: q.label,
+                  answeredPct: q.answeredPct,
+                }));
+                // Richer dataset used by the drop-off drilldown so the
+                // dialog can render exact counts + the top-N selected
+                // answers in the dashboard's current language.
+                const dropoffData = localizedQuestionStats.map((q) => ({
+                  id: q.id,
+                  label: q.label,
+                  section: q.section,
+                  type: q.type,
+                  answered: q.answered,
+                  total: q.total,
+                  answeredPct: q.answeredPct,
+                  distribution: q.distribution,
+                }));
+                // Pre-compute drop-off so the drilldown can show the same
+                // % the chart bar represents without recomputing.
+                const dropoffRows = computeDropoff(dropoffData).rows;
+                const selectedDrilldown: QuestionDrilldownData | null = (() => {
+                  if (!dropoffSelectedId) return null;
+                  const q = dropoffData.find((d) => d.id === dropoffSelectedId);
+                  if (!q) return null;
+                  const r = dropoffRows.find((rr) => rr.id === dropoffSelectedId);
+                  return { ...q, dropPct: r?.dropPct ?? 0 };
+                })();
+                return (
+                  <Card title="Progress analytics">
+                    <p className="mb-4 text-xs text-muted-foreground">
+                      Aggregate completion across {localizedQuestionStats.length} questions ×{" "}
+                      {stats.total} {stats.total === 1 ? "respondent" : "respondents"}.
                     </p>
-                    <Suspense fallback={<StackedBarSkeleton />}>
-                      <DashboardCharts.AnsweredSkipped answered={answered} skipped={skipped} />
-                    </Suspense>
-                  </div>
-                  <div className="mt-4">
-                    <p className="mb-2 text-xs text-muted-foreground">
-                      Question-by-question completion
-                    </p>
-                    <Suspense fallback={<HBarListSkeleton rows={Math.min(chartData.length || 6, 8)} />}>
-                      <DashboardCharts.QuestionCompletion data={chartData} />
-                    </Suspense>
-                  </div>
-                  <div className="mt-4">
-                    <p className="mb-2 text-xs text-muted-foreground">
-                      Drop-off per question — percentage-point loss vs. the previous question.
-                      The highlighted bar marks the steepest drop, which usually points to a
-                      confusing or burdensome question worth reviewing. Tap a bar (or a row
-                      below) to drill into response counts and the top selected answers.
-                    </p>
-                    <Suspense fallback={<HBarListSkeleton rows={Math.min(dropoffData.length || 6, 8)} />}>
-                      <DashboardCharts.Dropoff
-                        data={dropoffData}
-                        selectedId={dropoffSelectedId}
-                        onSelect={(id) => setDropoffSelectedId(id)}
-                      />
-                    </Suspense>
-                  </div>
-                  <QuestionDropoffDrilldown
-                    open={!!dropoffSelectedId}
-                    onOpenChange={(o) => {
-                      if (!o) setDropoffSelectedId(null);
-                    }}
-                    question={selectedDrilldown}
-                  />
-                </Card>
-              );
-            })()}
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      <Stat label="Completion rate" value={`${stats.completionRate}%`} accent />
+                      <Stat label="Selected (answers)" value={answered.toLocaleString()} />
+                      <Stat label="Skipped" value={skipped.toLocaleString()} />
+                    </div>
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs text-muted-foreground">
+                        Selected vs skipped — {answeredPct}% selected, {skippedPct}% skipped
+                      </p>
+                      <Suspense fallback={<StackedBarSkeleton />}>
+                        <DashboardCharts.AnsweredSkipped answered={answered} skipped={skipped} />
+                      </Suspense>
+                    </div>
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs text-muted-foreground">
+                        Question-by-question completion
+                      </p>
+                      <Suspense
+                        fallback={<HBarListSkeleton rows={Math.min(chartData.length || 6, 8)} />}
+                      >
+                        <DashboardCharts.QuestionCompletion data={chartData} />
+                      </Suspense>
+                    </div>
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs text-muted-foreground">
+                        Drop-off per question — percentage-point loss vs. the previous question. The
+                        highlighted bar marks the steepest drop, which usually points to a confusing
+                        or burdensome question worth reviewing. Tap a bar (or a row below) to drill
+                        into response counts and the top selected answers.
+                      </p>
+                      <Suspense
+                        fallback={<HBarListSkeleton rows={Math.min(dropoffData.length || 6, 8)} />}
+                      >
+                        <DashboardCharts.Dropoff
+                          data={dropoffData}
+                          selectedId={dropoffSelectedId}
+                          onSelect={(id) => setDropoffSelectedId(id)}
+                        />
+                      </Suspense>
+                    </div>
+                    <QuestionDropoffDrilldown
+                      open={!!dropoffSelectedId}
+                      onOpenChange={(o) => {
+                        if (!o) setDropoffSelectedId(null);
+                      }}
+                      question={selectedDrilldown}
+                    />
+                  </Card>
+                );
+              })()}
 
             {slug !== "__all__" && localizedQuestionStats.length > 0 && (
               <Card title="Question-level stats">
                 <p className="mb-3 text-xs text-muted-foreground">
-                  Answered rate per question across {stats.total} responses. Distribution shown for choice and Likert questions.
+                  Answered rate per question across {stats.total} responses. Distribution shown for
+                  choice and Likert questions.
                 </p>
                 <ul className="space-y-5">
                   {localizedQuestionStats.map((q) => {
@@ -2995,7 +3013,9 @@ function Dashboard({ email }: { email: string }) {
                                     style={{ width: `${(d.value / maxDist) * 100}%` }}
                                   />
                                 </span>
-                                <span className="tabular-nums text-muted-foreground">{d.value}</span>
+                                <span className="tabular-nums text-muted-foreground">
+                                  {d.value}
+                                </span>
                               </li>
                             ))}
                           </ul>
@@ -3009,11 +3029,15 @@ function Dashboard({ email }: { email: string }) {
 
             <Card title="Filtered export">
               <p className="mb-3 text-xs text-muted-foreground">
-                Narrow the CSV by survey, language, started-at date range, and/or status. Same multilingual column layout as the full export — decode value codes with the codebook.
+                Narrow the CSV by survey, language, started-at date range, and/or status. Same
+                multilingual column layout as the full export — decode value codes with the
+                codebook.
               </p>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <div>
-                  <Label htmlFor="f-survey" className="text-xs">Survey</Label>
+                  <Label htmlFor="f-survey" className="text-xs">
+                    Survey
+                  </Label>
                   <select
                     id="f-survey"
                     className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
@@ -3022,12 +3046,16 @@ function Dashboard({ email }: { email: string }) {
                   >
                     <option value="__all__">All surveys</option>
                     {SURVEY_LIST.map((s) => (
-                      <option key={s.slug} value={s.slug}>{s.slug}</option>
+                      <option key={s.slug} value={s.slug}>
+                        {s.slug}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="f-lang" className="text-xs">Language</Label>
+                  <Label htmlFor="f-lang" className="text-xs">
+                    Language
+                  </Label>
                   <select
                     id="f-lang"
                     className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
@@ -3041,7 +3069,9 @@ function Dashboard({ email }: { email: string }) {
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="f-date-field" className="text-xs">Date field</Label>
+                  <Label htmlFor="f-date-field" className="text-xs">
+                    Date field
+                  </Label>
                   <select
                     id="f-date-field"
                     className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
@@ -3178,25 +3208,27 @@ function Dashboard({ email }: { email: string }) {
                 ) : preview ? (
                   <span>
                     {previewLoading && (
-                      <Loader2 className="mr-1 inline size-3 animate-spin align-[-2px]" aria-hidden="true" />
+                      <Loader2
+                        className="mr-1 inline size-3 animate-spin align-[-2px]"
+                        aria-hidden="true"
+                      />
                     )}
                     <span className="font-medium text-foreground">
                       {preview.matched.toLocaleString()}
                     </span>{" "}
                     response{preview.matched === 1 ? "" : "s"} match the current filters
-                    {fValidOnly && (preview.droppedInvalid + preview.droppedUnknownSurvey) > 0 && (
+                    {fValidOnly && preview.droppedInvalid + preview.droppedUnknownSurvey > 0 && (
                       <>
                         {" "}
                         <span className="text-muted-foreground">
-                          ({(preview.droppedInvalid + preview.droppedUnknownSurvey).toLocaleString()} dropped as invalid)
+                          (
+                          {(preview.droppedInvalid + preview.droppedUnknownSurvey).toLocaleString()}{" "}
+                          dropped as invalid)
                         </span>
                       </>
                     )}
                     {preview.matched > 0 && (
-                      <FilteredByStatusChips
-                        byStatus={preview.byStatus}
-                        total={preview.matched}
-                      />
+                      <FilteredByStatusChips byStatus={preview.byStatus} total={preview.matched} />
                     )}
                   </span>
                 ) : null}
@@ -3215,7 +3247,13 @@ function Dashboard({ email }: { email: string }) {
               {preview && preview.sample.length > 0 && (
                 <FilteredSampleTable sample={preview.sample} lang={lang} />
               )}
-              {(fSurvey !== "__all__" || fLang !== "__all__" || fFrom || fTo || fStatus !== "completed" || fValidOnly || fDateField !== "started_at") && (
+              {(fSurvey !== "__all__" ||
+                fLang !== "__all__" ||
+                fFrom ||
+                fTo ||
+                fStatus !== "completed" ||
+                fValidOnly ||
+                fDateField !== "started_at") && (
                 <button
                   type="button"
                   className="mt-3 text-xs text-muted-foreground underline"
@@ -3345,14 +3383,16 @@ function Dashboard({ email }: { email: string }) {
                         <div>
                           <h4 className="text-sm font-medium">Stream retry / backoff</h4>
                           <p className="text-xs text-muted-foreground">
-                            Applied to the streaming XLSX export (and the CSV stream).
-                            Higher attempts = more resilient; longer delays = friendlier to
-                            a flaky upstream but slower overall.
+                            Applied to the streaming XLSX export (and the CSV stream). Higher
+                            attempts = more resilient; longer delays = friendlier to a flaky
+                            upstream but slower overall.
                           </p>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1">
-                            <Label htmlFor="retry-max" className="text-xs">Max attempts</Label>
+                            <Label htmlFor="retry-max" className="text-xs">
+                              Max attempts
+                            </Label>
                             <Input
                               id="retry-max"
                               type="number"
@@ -3375,7 +3415,9 @@ function Dashboard({ email }: { email: string }) {
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor="retry-base" className="text-xs">Base delay (ms)</Label>
+                            <Label htmlFor="retry-base" className="text-xs">
+                              Base delay (ms)
+                            </Label>
                             <Input
                               id="retry-base"
                               type="number"
@@ -3398,7 +3440,9 @@ function Dashboard({ email }: { email: string }) {
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor="retry-factor" className="text-xs">Backoff ×</Label>
+                            <Label htmlFor="retry-factor" className="text-xs">
+                              Backoff ×
+                            </Label>
                             <Input
                               id="retry-factor"
                               type="number"
@@ -3424,8 +3468,7 @@ function Dashboard({ email }: { email: string }) {
                         <p className="text-[11px] text-muted-foreground">
                           Schedule: attempt N waits{" "}
                           <span className="font-mono">
-                            {retryPrefs.baseDelayMs} ×{" "}
-                            {retryPrefs.backoffFactor}
+                            {retryPrefs.baseDelayMs} × {retryPrefs.backoffFactor}
                             <sup>N−1</sup>
                           </span>{" "}
                           ms (jittered server-side). Saved to this browser.
@@ -3525,16 +3568,16 @@ function Dashboard({ email }: { email: string }) {
                     >
                       <option value="__all__">All surveys</option>
                       {SURVEY_LIST.map((s) => (
-                        <option key={s.slug} value={s.slug}>{s.slug}</option>
+                        <option key={s.slug} value={s.slug}>
+                          {s.slug}
+                        </option>
                       ))}
                     </select>
                     <select
                       aria-label="Codebook languages"
                       className="h-9 border-r bg-background px-2 text-xs"
                       value={codebookLang}
-                      onChange={(e) =>
-                        setCodebookLang(e.target.value as typeof codebookLang)
-                      }
+                      onChange={(e) => setCodebookLang(e.target.value as typeof codebookLang)}
                       disabled={exporting === "__codebook__"}
                     >
                       <option value="__all__">All languages (EN+SI+TA)</option>
@@ -3581,13 +3624,8 @@ function Dashboard({ email }: { email: string }) {
                       type="checkbox"
                       data-testid="codebook-per-language-sheets"
                       checked={codebookPerLanguageSheets}
-                      onChange={(e) =>
-                        setCodebookPerLanguageSheets(e.target.checked)
-                      }
-                      disabled={
-                        exporting === "__codebook_xlsx__" ||
-                        codebookLang !== "__all__"
-                      }
+                      onChange={(e) => setCodebookPerLanguageSheets(e.target.checked)}
+                      disabled={exporting === "__codebook_xlsx__" || codebookLang !== "__all__"}
                     />
                     XLSX: separate sheet per language
                   </label>
@@ -3601,9 +3639,7 @@ function Dashboard({ email }: { email: string }) {
                       <span>
                         {codebookHeaderPreview.length} column
                         {codebookHeaderPreview.length === 1 ? "" : "s"} ·{" "}
-                        {codebookLang === "__all__"
-                          ? "EN+SI+TA"
-                          : codebookLang.toUpperCase()}
+                        {codebookLang === "__all__" ? "EN+SI+TA" : codebookLang.toUpperCase()}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1">
@@ -3644,9 +3680,7 @@ function Dashboard({ email }: { email: string }) {
                   onPause={pauseAllValidCsv}
                   onResume={resumeAllValidCsv}
                   onDismiss={
-                    allValidProgress.phase === "cancelled"
-                      ? dismissAllValidProgress
-                      : undefined
+                    allValidProgress.phase === "cancelled" ? dismissAllValidProgress : undefined
                   }
                   onRetryContinuity={
                     allValidProgress.continuityError && failedRun?.canResume
@@ -3704,10 +3738,9 @@ function Dashboard({ email }: { email: string }) {
                   )}
                 </div>
                 <div className="mt-1 text-[11px] text-muted-foreground">
-                  Use <span className="font-mono">{"{requestId}"}</span> as
-                  the placeholder. The link appears in toasts and the
-                  failure banner whenever a requestId is available. Stored
-                  in this browser only.
+                  Use <span className="font-mono">{"{requestId}"}</span> as the placeholder. The
+                  link appears in toasts and the failure banner whenever a requestId is available.
+                  Stored in this browser only.
                 </div>
               </div>
               {failedRun && (
@@ -3716,12 +3749,8 @@ function Dashboard({ email }: { email: string }) {
                   role="alert"
                   className="mt-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm"
                 >
-                  <div className="font-medium text-destructive">
-                    Streaming export failed
-                  </div>
-                  <div className="mt-1 text-muted-foreground">
-                    {failedRun.error}
-                  </div>
+                  <div className="font-medium text-destructive">Streaming export failed</div>
+                  <div className="mt-1 text-muted-foreground">{failedRun.error}</div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {failedRun.canResume ? (
                       <>
@@ -3739,9 +3768,7 @@ function Dashboard({ email }: { email: string }) {
                     ) : (
                       <>No completed pages to resume from.</>
                     )}{" "}
-                    <span className="font-mono">
-                      requestId={failedRun.requestId}
-                    </span>
+                    <span className="font-mono">requestId={failedRun.requestId}</span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {failedRun.canResume && (
@@ -3879,8 +3906,8 @@ function Dashboard({ email }: { email: string }) {
                         </li>
                       </ul>
                       <div className="mt-1 text-muted-foreground">
-                        Increase max attempts or the base delay below before
-                        retrying if the upstream is still flaky.
+                        Increase max attempts or the base delay below before retrying if the
+                        upstream is still flaky.
                       </div>
                     </div>
                   )}
@@ -3895,8 +3922,9 @@ function Dashboard({ email }: { email: string }) {
                         <span className="font-medium text-foreground">
                           {xlsxFailedRun.lastPage + 1}
                         </span>{" "}
-                        page{xlsxFailedRun.lastPage + 1 === 1 ? "" : "s"} (0–{xlsxFailedRun.lastPage}).
-                        Resume reuses them and continues from page {xlsxFailedRun.lastPage + 1}.
+                        page{xlsxFailedRun.lastPage + 1 === 1 ? "" : "s"} (0–
+                        {xlsxFailedRun.lastPage}). Resume reuses them and continues from page{" "}
+                        {xlsxFailedRun.lastPage + 1}.
                       </>
                     ) : (
                       <>No completed pages to resume from.</>
@@ -3920,8 +3948,7 @@ function Dashboard({ email }: { email: string }) {
                         size="sm"
                         variant="secondary"
                         disabled={
-                          exporting === "__all_valid_xlsx__" ||
-                          retryPrefs.maxAttempts >= 10
+                          exporting === "__all_valid_xlsx__" || retryPrefs.maxAttempts >= 10
                         }
                         data-testid="all-valid-xlsx-failed-run-bump-retries"
                         title={
@@ -3933,9 +3960,7 @@ function Dashboard({ email }: { email: string }) {
                           const next = Math.min(10, retryPrefs.maxAttempts + 2);
                           if (next !== retryPrefs.maxAttempts) {
                             setRetryPrefs((prev) => ({ ...prev, maxAttempts: next }));
-                            toast.info(
-                              `Increased max attempts to ${next} before resuming`,
-                            );
+                            toast.info(`Increased max attempts to ${next} before resuming`);
                           }
                           resumeAllValidXlsxFromLastPage();
                         }}
@@ -3996,8 +4021,8 @@ function Dashboard({ email }: { email: string }) {
                       ) : (
                         "."
                       )}{" "}
-                      Cancelling stops pagination on the server and discards
-                      the partial file — nothing will be downloaded.
+                      Cancelling stops pagination on the server and discards the partial file —
+                      nothing will be downloaded.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -4038,9 +4063,7 @@ function Dashboard({ email }: { email: string }) {
                                 : "bg-muted text-muted-foreground"
                             }`}
                           >
-                            <span aria-hidden="true">
-                              {r.status === "completed" ? "✓" : "•"}
-                            </span>
+                            <span aria-hidden="true">{r.status === "completed" ? "✓" : "•"}</span>
                             {r.status === "completed" ? "Completed" : "In progress"}
                           </span>
                         </td>

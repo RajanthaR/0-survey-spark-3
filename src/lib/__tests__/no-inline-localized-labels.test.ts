@@ -18,12 +18,13 @@ const SRC = join(process.cwd(), "src");
 // Everything else MUST go through pickText against one of these dictionaries.
 const ALLOWED = new Set(
   [
-    "src/lib/i18n.tsx",            // UI string dictionary
-    "src/lib/format.ts",           // QuestionCount / QuestionPosition nouns
-    "src/surveys/types.ts",        // Shared option dictionaries (likert, months, …)
-    "src/surveys/consent.ts",      // Shared consent items
-    "src/surveys/phase-1.ts",      // Survey definition
-    "src/surveys/phase-3.ts",      // Survey definition
+    "src/lib/i18n.tsx", // UI string dictionary
+    "src/lib/analytics-report-i18n.ts", // Admin analytics-report dictionary
+    "src/lib/format.ts", // QuestionCount / QuestionPosition nouns
+    "src/surveys/types.ts", // Shared option dictionaries (likert, months, …)
+    "src/surveys/consent.ts", // Shared consent items
+    "src/surveys/phase-1.ts", // Survey definition
+    "src/surveys/phase-3.ts", // Survey definition
     "src/lib/csv-export-shape.ts", // Yes/No option dictionary used by the codebook
     "src/components/QuestionCount.tsx", // JSDoc examples mirror format.ts output
   ].map((p) => p.split("/").join(sep)),

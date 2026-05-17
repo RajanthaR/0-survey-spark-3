@@ -125,16 +125,10 @@ describe("AllValidProgressCard — CSV resume integration", () => {
     };
     // Snapshot A: rate 50 rows/s → 700 / 50 = 14s remaining
     const { rerender } = render(
-      <AllValidProgressCard
-        progress={{ ...base, rate: 50, etaSeconds: 14, rateHistory: [50] }}
-      />,
+      <AllValidProgressCard progress={{ ...base, rate: 50, etaSeconds: 14, rateHistory: [50] }} />,
     );
-    expect(screen.getByTestId("all-valid-rate-eta").textContent).toMatch(
-      /~14s remaining/,
-    );
-    expect(screen.getByTestId("all-valid-rate-eta").textContent).toMatch(
-      /50(?:\.0)? rows\/s/,
-    );
+    expect(screen.getByTestId("all-valid-rate-eta").textContent).toMatch(/~14s remaining/);
+    expect(screen.getByTestId("all-valid-rate-eta").textContent).toMatch(/50(?:\.0)? rows\/s/);
 
     // Snapshot B: rate climbs to 100 rows/s → 600 / 100 = 6s remaining
     rerender(

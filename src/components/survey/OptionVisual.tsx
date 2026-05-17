@@ -21,10 +21,7 @@ export function OptionVisual({
   const { lang } = useLang();
   if (!visual) return null;
 
-  const box =
-    size === "sm"
-      ? "size-8 rounded-lg"
-      : "size-10 rounded-xl";
+  const box = size === "sm" ? "size-8 rounded-lg" : "size-10 rounded-xl";
 
   if (visual.kind === "image") {
     const altText = visual.alt ? pickText(visual.alt, lang) : "";
@@ -45,10 +42,7 @@ export function OptionVisual({
   const bgClass = active ? "bg-primary/15" : "bg-muted/50";
 
   return (
-    <span
-      aria-hidden
-      className={`grid shrink-0 place-items-center ${box} ${bgClass}`}
-    >
+    <span aria-hidden className={`grid shrink-0 place-items-center ${box} ${bgClass}`}>
       <Icon className={`size-5 ${toneClass}`} strokeWidth={2} />
     </span>
   );
@@ -83,12 +77,7 @@ function ImageVisual({
       className={`relative grid shrink-0 place-items-center overflow-hidden bg-muted/40 ${box}`}
       data-loaded={loaded || undefined}
     >
-      {!loaded && (
-        <span
-          aria-hidden
-          className="absolute inset-0 animate-pulse bg-muted/60"
-        />
-      )}
+      {!loaded && <span aria-hidden className="absolute inset-0 animate-pulse bg-muted/60" />}
       <img
         ref={(el) => {
           if (el && el.complete && el.naturalWidth > 0 && !loaded) {

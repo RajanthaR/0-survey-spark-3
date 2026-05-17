@@ -3,28 +3,11 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 import { OptionVisual } from "@/components/survey/OptionVisual";
-import { pickText, useLang, type Lang } from "@/lib/i18n";
+import { pickText, UI, useLang, type Lang } from "@/lib/i18n";
 import { visibleQuestions } from "@/lib/survey-logic";
-import {
-  type Option,
-  type Question,
-  type Survey,
-  YES_NO_OPTIONS,
-} from "@/surveys/types";
+import { type Option, type Question, type Survey, YES_NO_OPTIONS } from "@/surveys/types";
 
 type Answers = Record<string, unknown>;
-
-const HEADING: Record<Lang, string> = {
-  en: "Your selections",
-  si: "ඔබේ තේරීම්",
-  ta: "உங்கள் தேர்வுகள்",
-};
-
-const TAP_HINT: Record<Lang, string> = {
-  en: "Tap to expand",
-  si: "විස්තර බලන්න",
-  ta: "விரிவாக்க தட்டவும்",
-};
 
 function optionsFor(q: Question): Option[] {
   if (q.type === "yes_no") return YES_NO_OPTIONS;
@@ -35,9 +18,7 @@ function selectedOptions(q: Question, value: unknown): Option[] {
   const opts = optionsFor(q);
   if (opts.length === 0 || value == null || value === "") return [];
   const values = Array.isArray(value) ? value.map(String) : [String(value)];
-  return values
-    .map((v) => opts.find((o) => o.value === v))
-    .filter((o): o is Option => Boolean(o));
+  return values.map((v) => opts.find((o) => o.value === v)).filter((o): o is Option => Boolean(o));
 }
 
 /**
@@ -87,7 +68,7 @@ export function ResponseVisualSummary({
 
   if (rows.length === 0) return null;
 
-  const heading = HEADING[lang];
+  const heading = pickText(UI.responseVisualHeading, lang);
 
   return (
     <motion.section
@@ -109,7 +90,7 @@ export function ResponseVisualSummary({
             picked={picked}
             lang={lang}
             defaultExpanded={defaultExpanded}
-            tapHint={TAP_HINT[lang]}
+            tapHint={pickText(UI.responseVisualTapHint, lang)}
             reduceMotion={!!reduceMotion}
           />
         ))}
@@ -169,12 +150,8 @@ function SummaryRow({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-xs text-muted-foreground">
-            {label}
-          </span>
-          <span className="text-[11px] text-muted-foreground/70">
-            {open ? "" : tapHint}
-          </span>
+          <span className="block truncate text-xs text-muted-foreground">{label}</span>
+          <span className="text-[11px] text-muted-foreground/70">{open ? "" : tapHint}</span>
         </span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}

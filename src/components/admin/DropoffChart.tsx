@@ -115,9 +115,7 @@ export function DropoffChart({
                 type="button"
                 onClick={() => onSelect(r.id)}
                 className={`flex w-full items-center justify-between gap-2 rounded-md border px-2 py-1 text-left transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  selectedId === r.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border"
+                  selectedId === r.id ? "border-primary bg-primary/5" : "border-border"
                 }`}
               >
                 <span className="truncate" title={r.label}>

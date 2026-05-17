@@ -61,11 +61,7 @@ const COL = {
 // excluded — `buildExportColumns` only emits a sibling `*.label_en` column
 // when `q.options` is non-empty, and yes_no sources its options from
 // `YES_NO_OPTIONS` instead of `q.options`.
-const HAS_LABEL_COL_TYPES = new Set([
-  "single_choice",
-  "multi_choice",
-  "likert_5",
-]);
+const HAS_LABEL_COL_TYPES = new Set(["single_choice", "multi_choice", "likert_5"]);
 
 function optionsFor(q: Question): readonly Option[] {
   if (q.type === "yes_no") return YES_NO_OPTIONS;
@@ -76,14 +72,27 @@ describe("codebook headers — canonical layout", () => {
   it("CODEBOOK_HEADERS contains all required columns in canonical order", () => {
     expect([...CODEBOOK_HEADERS]).toEqual([
       "survey_slug",
-      "survey_title_en", "survey_title_si", "survey_title_ta",
-      "question_id", "question_type", "required",
-      "section_en", "section_si", "section_ta",
-      "question_label_en", "question_label_si", "question_label_ta",
+      "survey_title_en",
+      "survey_title_si",
+      "survey_title_ta",
+      "question_id",
+      "question_type",
+      "required",
+      "section_en",
+      "section_si",
+      "section_ta",
+      "question_label_en",
+      "question_label_si",
+      "question_label_ta",
       "option_value",
-      "option_label_en", "option_label_si", "option_label_ta",
-      "shown_if", "max_select",
-      "column_key", "label_column_key", "join_key",
+      "option_label_en",
+      "option_label_si",
+      "option_label_ta",
+      "shown_if",
+      "max_select",
+      "column_key",
+      "label_column_key",
+      "join_key",
     ]);
   });
 

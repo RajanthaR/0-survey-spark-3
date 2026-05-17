@@ -23,11 +23,7 @@
  *      reproducible across timezones).
  */
 import { describe, it, expect } from "vitest";
-import {
-  buildCodebookFilenameStem,
-  CODEBOOK_LANGS,
-  type CodebookLang,
-} from "@/lib/codebook-xlsx";
+import { buildCodebookFilenameStem, CODEBOOK_LANGS, type CodebookLang } from "@/lib/codebook-xlsx";
 
 // ---------------------------------------------------------------------------
 // Mirrors of the inline filename rules in src/lib/admin.functions.ts. If you
@@ -60,15 +56,15 @@ type FilteredFilenameInput = {
 function filteredExportFilenameStem(d: FilteredFilenameInput): string {
   const effectiveStatus = d.validOnly
     ? "completed"
-    : d.statusFilter ?? (d.completedOnly === false ? "all" : "completed");
+    : (d.statusFilter ?? (d.completedOnly === false ? "all" : "completed"));
   const stamp = d.date.toISOString().slice(0, 10);
   const statusPart = d.validOnly
     ? "valid-completed"
     : effectiveStatus === "completed"
-    ? "completed"
-    : effectiveStatus === "in_progress"
-    ? "in-progress"
-    : "all-statuses";
+      ? "completed"
+      : effectiveStatus === "in_progress"
+        ? "in-progress"
+        : "all-statuses";
   const dateTag = d.dateField === "completed_at" ? "completed" : "started";
   const parts = [
     d.surveySlug ?? "all-surveys",
@@ -86,9 +82,9 @@ const D = new Date("2026-05-15T07:30:00.000Z");
 
 describe("export filename rules — codebook", () => {
   it("all-language, all-survey scope drops both tags", () => {
-    expect(
-      buildCodebookFilenameStem({ langs: CODEBOOK_LANGS, date: D }),
-    ).toBe("eip-insight-codebook-2026-05-15");
+    expect(buildCodebookFilenameStem({ langs: CODEBOOK_LANGS, date: D })).toBe(
+      "eip-insight-codebook-2026-05-15",
+    );
   });
 
   it("survey scope is inserted before the date stamp", () => {
@@ -119,9 +115,9 @@ describe("export filename rules — codebook", () => {
     [["si", "ta"], "-sita"],
     [["ta", "en"], "-taen"], // order is preserved verbatim
   ])("partial language filter %j → tag '%s'", (langs, tag) => {
-    expect(
-      buildCodebookFilenameStem({ langs, date: D }),
-    ).toBe(`eip-insight-codebook${tag}-2026-05-15`);
+    expect(buildCodebookFilenameStem({ langs, date: D })).toBe(
+      `eip-insight-codebook${tag}-2026-05-15`,
+    );
   });
 
   it("perLanguageSheets adds -multisheet only when 2+ langs are exported", () => {
@@ -177,9 +173,7 @@ describe("export filename rules — codebook", () => {
 
 describe("export filename rules — all-valid stream", () => {
   it("uses the canonical stamp suffix", () => {
-    expect(allValidStreamFilename(D)).toBe(
-      "eip-insight-all-valid-responses-2026-05-15.csv",
-    );
+    expect(allValidStreamFilename(D)).toBe("eip-insight-all-valid-responses-2026-05-15.csv");
   });
 
   it("date is strict ISO YYYY-MM-DD", () => {
@@ -191,9 +185,7 @@ describe("export filename rules — all-valid stream", () => {
 
 describe("export filename rules — filtered CSV/XLSX", () => {
   it("defaults: no scope, no lang, completed-only, started date field", () => {
-    expect(
-      filteredExportFilenameStem({ dateField: "started_at", date: D }),
-    ).toBe(
+    expect(filteredExportFilenameStem({ dateField: "started_at", date: D })).toBe(
       "eip-insight-all-surveys_completed_all-langs_started-any_started-any_2026-05-15",
     );
   });
@@ -207,9 +199,7 @@ describe("export filename rules — filtered CSV/XLSX", () => {
         statusFilter: "completed",
         date: D,
       }),
-    ).toBe(
-      "eip-insight-phase-1_completed_si_started-any_started-any_2026-05-15",
-    );
+    ).toBe("eip-insight-phase-1_completed_si_started-any_started-any_2026-05-15");
   });
 
   it.each<["en" | "si" | "ta", string]>([
@@ -239,10 +229,7 @@ describe("export filename rules — filtered CSV/XLSX", () => {
     ).toBe("valid-completed");
   });
 
-  it.each<[
-    "completed" | "in_progress" | "all",
-    "completed" | "in-progress" | "all-statuses",
-  ]>([
+  it.each<["completed" | "in_progress" | "all", "completed" | "in-progress" | "all-statuses"]>([
     ["completed", "completed"],
     ["in_progress", "in-progress"],
     ["all", "all-statuses"],

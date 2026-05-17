@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { I18nProvider } from "@/lib/i18n";
+import { I18nProvider, type Lang } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { registerOptionImageSW } from "@/lib/sw-register";
@@ -73,49 +73,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+type RootRouteContext = { queryClient: QueryClient; initialLang: Lang };
+
+export const Route = createRootRouteWithContext<RootRouteContext>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      // Content-Security-Policy. Delivered as a meta http-equiv so it ships
-      // with the SSR HTML on every host (Cloudflare Worker / preview /
-      // custom domain) without needing a separate edge config. The policy
-      // is permissive enough for the existing app surface (Google Fonts,
-      // Supabase REST + Realtime over wss, blob workers for chart export)
-      // and explicitly allow-lists Cloudflare Turnstile so the consent
-      // screen can load `https://challenges.cloudflare.com/turnstile/v0/api.js`
-      // and render its challenge iframe. `'unsafe-inline'` on script-src is
-      // required for the language pre-hydration `<script>` injected below
-      // and the runtime scripts TanStack Start emits via `<Scripts />`.
-      {
-        httpEquiv: "Content-Security-Policy",
-        content: [
-          "default-src 'self'",
-          "base-uri 'self'",
-          "object-src 'none'",
-          "form-action 'self'",
-          "frame-ancestors 'self'",
-          // Turnstile widget script + the in-app inline pre-hydration script.
-          "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
-          "script-src-elem 'self' 'unsafe-inline' https://challenges.cloudflare.com",
-          // Turnstile renders its challenge in an iframe served from this origin.
-          "frame-src 'self' https://challenges.cloudflare.com",
-          "child-src 'self' https://challenges.cloudflare.com blob:",
-          // Supabase REST / Storage / Realtime (wss) + Turnstile siteverify
-          // is server-to-server, but the client also pings the same host
-          // for telemetry on some browsers.
-          "connect-src 'self' https: wss:",
-          "img-src 'self' data: blob: https:",
-          // Tailwind injects inline <style> blocks at build/runtime; Google
-          // Fonts ships its CSS from fonts.googleapis.com.
-          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-          "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
-          "font-src 'self' data: https://fonts.gstatic.com",
-          "worker-src 'self' blob:",
-          "manifest-src 'self'",
-        ].join("; "),
-      },
       { title: "EIP Insight — Sri Lanka Eco-Industrial Park research" },
       {
         name: "description",
@@ -143,14 +107,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap",
       },
     ],
-    scripts: [
-      {
-        // Pre-hydration: set <html lang> and a __eipLang global from
-        // localStorage so the very first paint matches the user's choice.
-        children:
-          "(function(){try{var l=localStorage.getItem('eip.lang');if(l==='si'||l==='ta'||l==='en'){window.__eipLang=l;document.documentElement.lang=l;}}catch(e){}})();",
-      },
-    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -159,8 +115,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  const { initialLang } = Route.useRouteContext();
   return (
-    <html lang="en">
+    <html lang={initialLang}>
       <head>
         <HeadContent />
       </head>
@@ -172,7 +129,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const { queryClient, initialLang } = Route.useRouteContext();
   const router = useRouter();
 
   useEffect(() => {
@@ -192,7 +149,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
+      <I18nProvider initialLang={initialLang}>
         <Outlet />
         <Toaster />
         <PerfDebugOverlay />

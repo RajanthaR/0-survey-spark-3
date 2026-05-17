@@ -28,20 +28,29 @@
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import * as XLSX from "xlsx";
-import {
-  streamAllValidXlsxImpl,
-  type StreamAllValidXlsxEvent,
-} from "@/lib/admin.functions";
+import { streamAllValidXlsxImpl, type StreamAllValidXlsxEvent } from "@/lib/admin.shared.server";
 
 // ── Minimal localStorage shim (no DOM in this test file) ─────────────
 class MemoryStorage implements Storage {
   private store = new Map<string, string>();
-  get length() { return this.store.size; }
-  clear() { this.store.clear(); }
-  getItem(k: string) { return this.store.has(k) ? this.store.get(k)! : null; }
-  setItem(k: string, v: string) { this.store.set(k, String(v)); }
-  removeItem(k: string) { this.store.delete(k); }
-  key(i: number) { return Array.from(this.store.keys())[i] ?? null; }
+  get length() {
+    return this.store.size;
+  }
+  clear() {
+    this.store.clear();
+  }
+  getItem(k: string) {
+    return this.store.has(k) ? this.store.get(k)! : null;
+  }
+  setItem(k: string, v: string) {
+    this.store.set(k, String(v));
+  }
+  removeItem(k: string) {
+    this.store.delete(k);
+  }
+  key(i: number) {
+    return Array.from(this.store.keys())[i] ?? null;
+  }
 }
 const storage = new MemoryStorage();
 
@@ -83,14 +92,10 @@ async function collect(
 
 const chunksOf = (events: StreamAllValidXlsxEvent[]) =>
   events.filter(
-    (e): e is Extract<StreamAllValidXlsxEvent, { type: "chunk" }> =>
-      e.type === "chunk",
+    (e): e is Extract<StreamAllValidXlsxEvent, { type: "chunk" }> => e.type === "chunk",
   );
 const metaOf = (events: StreamAllValidXlsxEvent[]) =>
-  events.find(
-    (e): e is Extract<StreamAllValidXlsxEvent, { type: "meta" }> =>
-      e.type === "meta",
-  )!;
+  events.find((e): e is Extract<StreamAllValidXlsxEvent, { type: "meta" }> => e.type === "meta")!;
 
 /**
  * Mirrors the workbook assembly in `downloadAllValidXlsx` so the test
@@ -134,10 +139,7 @@ describe("XLSX export — resume after refresh matches uninterrupted run (e2e)",
     const baselineMeta = metaOf(baselineEvents);
     const baselineRows = chunksOf(baselineEvents).flatMap((c) => c.rows);
     expect(baselineRows).toHaveLength(6);
-    const baselineSheet = assembleWorkbookSheet(
-      baselineMeta.headerRow,
-      baselineRows,
-    );
+    const baselineSheet = assembleWorkbookSheet(baselineMeta.headerRow, baselineRows);
 
     // ── 2. First attempt: succeed on page 0, then "fail" after it ──
     //    (we simulate the failure by only feeding back page 0 and

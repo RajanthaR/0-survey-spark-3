@@ -8,10 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAnalyticsReport } from "@/lib/admin.functions";
 import { useLang } from "@/lib/i18n";
-import {
-  DATE_I18N,
-  localizeServerMessage,
-} from "@/lib/analytics-report-i18n";
+import { DATE_I18N, localizeServerMessage } from "@/lib/analytics-report-i18n";
 
 type Report = Awaited<ReturnType<typeof getAnalyticsReport>>;
 
@@ -87,8 +84,8 @@ function buildPdf(report: Report): Blob {
   const row = (cells: string[], widths: number[], bold = false) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(10);
-    const heights = cells.map((c, i) =>
-      (doc.splitTextToSize(c, widths[i] - 6) as string[]).length * 12,
+    const heights = cells.map(
+      (c, i) => (doc.splitTextToSize(c, widths[i] - 6) as string[]).length * 12,
     );
     const rowH = Math.max(...heights, 14);
     ensureSpace(rowH + 4);
@@ -107,10 +104,7 @@ function buildPdf(report: Report): Blob {
   text("Analytics report", 18, true);
   text(`Generated: ${new Date(report.generatedAt).toLocaleString()}`, 10);
   text(`Survey: ${report.surveySlug ?? "All surveys"}`, 10);
-  text(
-    `Date range: ${report.dateFrom ?? "earliest"} → ${report.dateTo ?? "today"}`,
-    10,
-  );
+  text(`Date range: ${report.dateFrom ?? "earliest"} → ${report.dateTo ?? "today"}`, 10);
   y += 8;
 
   text("Summary", 14, true);
@@ -118,10 +112,7 @@ function buildPdf(report: Report): Blob {
   row(["Total responses", String(report.total)], [pageWidth - margin * 2 - 120, 120]);
   row(["Completed", String(report.completed)], [pageWidth - margin * 2 - 120, 120]);
   row(["In progress", String(report.inProgress)], [pageWidth - margin * 2 - 120, 120]);
-  row(
-    ["Completion rate", `${report.completionRate}%`],
-    [pageWidth - margin * 2 - 120, 120],
-  );
+  row(["Completion rate", `${report.completionRate}%`], [pageWidth - margin * 2 - 120, 120]);
   y += 8;
 
   text("Language breakdown", 14, true);
@@ -219,10 +210,7 @@ export function AnalyticsReportPanel({ surveySlug }: { surveySlug?: string }) {
 
   const fileBase = () => {
     const slugPart = surveySlug ?? "all";
-    const range =
-      dateFrom || dateTo
-        ? `_${dateFrom || "start"}_to_${dateTo || todayIso()}`
-        : "";
+    const range = dateFrom || dateTo ? `_${dateFrom || "start"}_to_${dateTo || todayIso()}` : "";
     return `analytics_${slugPart}${range}`;
   };
 
@@ -309,12 +297,12 @@ export function AnalyticsReportPanel({ surveySlug }: { surveySlug?: string }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        {tx("intro")}
-      </p>
+      <p className="text-xs text-muted-foreground">{tx("intro")}</p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
         <div className="space-y-1">
-          <Label htmlFor="report-from" className="text-xs">{tx("fromLabel")}</Label>
+          <Label htmlFor="report-from" className="text-xs">
+            {tx("fromLabel")}
+          </Label>
           <Input
             id="report-from"
             type="date"
@@ -333,62 +321,46 @@ export function AnalyticsReportPanel({ surveySlug }: { surveySlug?: string }) {
             }}
           />
           {fromError && (
-            <p
-              id="report-from-error"
-              className="text-xs text-destructive"
-              role="alert"
-            >
+            <p id="report-from-error" className="text-xs text-destructive" role="alert">
               {fromError}
             </p>
           )}
         </div>
         <div className="space-y-1">
-          <Label htmlFor="report-to" className="text-xs">{tx("toLabel")}</Label>
+          <Label htmlFor="report-to" className="text-xs">
+            {tx("toLabel")}
+          </Label>
           <Input
             id="report-to"
             type="date"
             value={dateTo}
             min={dateFrom || undefined}
             max={todayIso()}
-          placeholder={tx("datePlaceholder")}
-          pattern="\d{4}-\d{2}-\d{2}"
-          inputMode="numeric"
-          maxLength={10}
-          aria-invalid={toError ? true : undefined}
-          aria-describedby={toError ? "report-to-error" : undefined}
-          onChange={(e) => {
-            setDateTo(maskYmd(e.target.value));
-            if (toError) setToError(null);
-            if (fromError) setFromError(null);
-          }}
-        />
-        {toError && (
-          <p
-            id="report-to-error"
-            className="text-xs text-destructive"
-            role="alert"
-          >
-            {toError}
-          </p>
-        )}
-      </div>
-      <p
-        id="report-range-help"
-        className="col-span-full text-xs text-muted-foreground"
-      >
-        {tx("rangeHelp")}
-      </p>
-      <p
-        id="report-range-example"
-        className="col-span-full text-xs text-muted-foreground"
-      >
-        {tx("rangeExample")}
-      </p>
-      <Button
-        variant="outline"
-        onClick={() => run("csv")}
-        disabled={busy !== null}
-      >
+            placeholder={tx("datePlaceholder")}
+            pattern="\d{4}-\d{2}-\d{2}"
+            inputMode="numeric"
+            maxLength={10}
+            aria-invalid={toError ? true : undefined}
+            aria-describedby={toError ? "report-to-error" : undefined}
+            onChange={(e) => {
+              setDateTo(maskYmd(e.target.value));
+              if (toError) setToError(null);
+              if (fromError) setFromError(null);
+            }}
+          />
+          {toError && (
+            <p id="report-to-error" className="text-xs text-destructive" role="alert">
+              {toError}
+            </p>
+          )}
+        </div>
+        <p id="report-range-help" className="col-span-full text-xs text-muted-foreground">
+          {tx("rangeHelp")}
+        </p>
+        <p id="report-range-example" className="col-span-full text-xs text-muted-foreground">
+          {tx("rangeExample")}
+        </p>
+        <Button variant="outline" onClick={() => run("csv")} disabled={busy !== null}>
           {busy === "csv" ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
           ) : (

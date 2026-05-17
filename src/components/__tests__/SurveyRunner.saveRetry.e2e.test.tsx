@@ -74,11 +74,7 @@ const ANSWER = "Persisted answer text";
 function renderRunner() {
   return render(
     <I18nProvider>
-      <SurveyRunner
-        survey={SURVEY}
-        initialLanguage="en"
-        initialToken="tok"
-      />
+      <SurveyRunner survey={SURVEY} initialLanguage="en" initialToken="tok" />
     </I18nProvider>,
   );
 }
@@ -105,9 +101,7 @@ describe("SurveyRunner — save failure retry e2e", () => {
     toastError.mockReset();
 
     // Fail once, then succeed on retry.
-    saveAnswers
-      .mockRejectedValueOnce(new Error("Network down"))
-      .mockResolvedValueOnce({});
+    saveAnswers.mockRejectedValueOnce(new Error("Network down")).mockResolvedValueOnce({});
 
     renderRunner();
 

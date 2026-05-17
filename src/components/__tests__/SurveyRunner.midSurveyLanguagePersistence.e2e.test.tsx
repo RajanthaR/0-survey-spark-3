@@ -40,16 +40,14 @@ const completeCalls: Array<{
 
 vi.mock("@/lib/responses.functions", () => ({
   startResponse: vi.fn().mockResolvedValue({ resumeToken: "tok-mid-survey" }),
-  saveAnswers: vi.fn(async ({ data }: { data: typeof saveCalls[number] }) => {
+  saveAnswers: vi.fn(async ({ data }: { data: (typeof saveCalls)[number] }) => {
     saveCalls.push(data);
     return { ok: true };
   }),
-  completeResponse: vi.fn(
-    async ({ data }: { data: typeof completeCalls[number] }) => {
-      completeCalls.push(data);
-      return { ok: true };
-    },
-  ),
+  completeResponse: vi.fn(async ({ data }: { data: (typeof completeCalls)[number] }) => {
+    completeCalls.push(data);
+    return { ok: true };
+  }),
 }));
 
 vi.mock("sonner", () => ({
@@ -105,17 +103,15 @@ const SURVEY: Survey = {
 function getLangPill(code: Lang): HTMLButtonElement {
   const meta = LANGS.find((l) => l.code === code);
   if (!meta) throw new Error(`unknown lang ${code}`);
-  const btn = Array.from(
-    document.querySelectorAll<HTMLButtonElement>("button"),
-  ).find((b) => b.textContent?.trim() === meta.label);
+  const btn = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
+    (b) => b.textContent?.trim() === meta.label,
+  );
   if (!btn) throw new Error(`language pill "${meta.label}" not found`);
   return btn;
 }
 
 function getInput(): HTMLInputElement {
-  const el = document.querySelector(
-    'input[type="text"]',
-  ) as HTMLInputElement | null;
+  const el = document.querySelector('input[type="text"]') as HTMLInputElement | null;
   if (!el) throw new Error("text input not found");
   return el;
 }
@@ -131,11 +127,7 @@ describe("SurveyRunner — mid-survey language toggle persists active language o
     try {
       render(
         <I18nProvider>
-          <SurveyRunner
-            survey={SURVEY}
-            initialLanguage="en"
-            initialToken="tok-mid-survey"
-          />
+          <SurveyRunner survey={SURVEY} initialLanguage="en" initialToken="tok-mid-survey" />
         </I18nProvider>,
       );
 
@@ -161,12 +153,7 @@ describe("SurveyRunner — mid-survey language toggle persists active language o
 
       // The critical assertion: language on each saved payload matches the
       // active toggle at the moment the save fired.
-      expect(saveCalls.map((c) => c.language)).toEqual([
-        "en",
-        "si",
-        "ta",
-        "en",
-      ]);
+      expect(saveCalls.map((c) => c.language)).toEqual(["en", "si", "ta", "en"]);
 
       // The token never drifts and answers are non-empty on every save.
       for (const call of saveCalls) {

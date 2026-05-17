@@ -18,11 +18,7 @@ import {
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { FocusTrap } from "@/components/FocusTrap";
 import { pickText, t, useLang, UI } from "@/lib/i18n";
-import {
-  startResponse,
-  saveAnswers,
-  completeResponse,
-} from "@/lib/responses.functions";
+import { startResponse, saveAnswers, completeResponse } from "@/lib/responses.functions";
 import type { Survey } from "@/surveys/types";
 import { progressFor, visibleQuestions } from "@/lib/survey-logic";
 import { QuestionCount, QuestionPosition } from "@/components/QuestionCount";
@@ -41,6 +37,7 @@ import { OptionalConsentPanel } from "@/components/survey/OptionalConsentPanel";
 import { ResponseVisualSummary } from "@/components/survey/ResponseVisualSummary";
 import { QuestionMap } from "@/components/survey/QuestionMap";
 import { prefetchUpcomingOptionImages } from "@/surveys/visuals/prefetch";
+import { clearStoredResumeToken, setStoredResumeToken } from "@/lib/resume-token-storage";
 
 type Answers = Record<string, unknown>;
 type Stage = "intro" | "consent" | "consent-optional" | "questions" | "review" | "contact" | "done";
@@ -53,8 +50,6 @@ interface Props {
   initialConsent?: Record<string, boolean>;
   initialStatus?: string;
 }
-
-const LS_KEY = (slug: string) => `eip.token.${slug}`;
 
 export function SurveyRunner({
   survey,
@@ -78,8 +73,7 @@ export function SurveyRunner({
     // re-mounts within the same session.
     if (!initialLanguage) return;
     adoptServerLang(initialLanguage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialLanguage]);
+  }, [adoptServerLang, initialLanguage]);
 
   const [token, setToken] = useState<string | undefined>(initialToken);
   const [answers, setAnswers] = useState<Answers>(initialAnswers ?? {});
@@ -98,6 +92,7 @@ export function SurveyRunner({
   // direction in <QuestionView> so Forward feels like sliding to the next
   // card and Back feels like sliding to the previous one.
   const [navDirection, setNavDirection] = useState<1 | -1>(1);
+  const [focusableBlockedQuestionId, setFocusableBlockedQuestionId] = useState<string | null>(null);
   // Ref to the sticky-bar Next button so we can return keyboard focus
   // there after every step transition. This makes Enter/Space repeat
   // advance through the questionnaire without keyboard users having to
@@ -119,9 +114,7 @@ export function SurveyRunner({
   const pct = useMemo(() => progressFor(survey, answers), [survey, answers]);
 
   // ── id-based current question (survives visibility shifts) ──
-  const [currentId, setCurrentId] = useState<string | undefined>(
-    () => visible[0]?.id,
-  );
+  const [currentId, setCurrentId] = useState<string | undefined>(() => visible[0]?.id);
   useEffect(() => {
     if (!visible.length) return;
     if (!currentId || !visible.some((q) => q.id === currentId)) {
@@ -159,15 +152,10 @@ export function SurveyRunner({
     prefetchUpcomingOptionImages(visible, idx);
   }, [stage, idx, visible]);
 
-  const resumeUrl =
-    typeof window !== "undefined" && token
-      ? `${window.location.origin}/s/${survey.slug}?token=${encodeURIComponent(token)}`
-      : "";
-
   // Persist token locally so a refresh on the same device resumes.
   useEffect(() => {
     if (token && typeof window !== "undefined") {
-      window.localStorage.setItem(LS_KEY(survey.slug), token);
+      setStoredResumeToken(survey.slug, token);
     }
   }, [token, survey.slug]);
 
@@ -184,12 +172,14 @@ export function SurveyRunner({
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       lastSavedRef.current = payload;
-      saveFnRef.current({
-        data: { resumeToken: token, answers, progressPct: pct, language: lang },
-      }).catch(() => {
-        // fire-and-forget: a failure here is non-fatal; user can also tap save
-        lastSavedRef.current = "";
-      });
+      saveFnRef
+        .current({
+          data: { resumeToken: token, answers, progressPct: pct, language: lang },
+        })
+        .catch(() => {
+          // fire-and-forget: a failure here is non-fatal; user can also tap save
+          lastSavedRef.current = "";
+        });
     }, 1500);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -204,9 +194,11 @@ export function SurveyRunner({
       if (payload === lastSavedRef.current) return;
       lastSavedRef.current = payload;
       // Best-effort; ignore if browser refuses.
-      saveFnRef.current({
-        data: { resumeToken: token, answers, progressPct: pct, language: lang },
-      }).catch(() => {});
+      saveFnRef
+        .current({
+          data: { resumeToken: token, answers, progressPct: pct, language: lang },
+        })
+        .catch(() => {});
     };
     const onHide = () => {
       if (document.visibilityState === "hidden") flush();
@@ -235,12 +227,8 @@ export function SurveyRunner({
       });
       setToken(res.resumeToken);
       setVerifyError(null);
-      navigate({
-        to: "/s/$slug",
-        params: { slug: survey.slug },
-        search: { token: res.resumeToken },
-        replace: true,
-      });
+      setStoredResumeToken(survey.slug, res.resumeToken);
+      navigate({ to: "/s/$slug", params: { slug: survey.slug }, replace: true });
       return res.resumeToken;
     } finally {
       setBusy(false);
@@ -269,7 +257,7 @@ export function SurveyRunner({
     try {
       await completeFn({ data: { resumeToken: token, answers, contact } });
       setStage("done");
-      if (typeof window !== "undefined") window.localStorage.removeItem(LS_KEY(survey.slug));
+      clearStoredResumeToken(survey.slug);
     } catch {
       toast.error(pickText(UI.errorSave, lang));
     } finally {
@@ -308,6 +296,7 @@ export function SurveyRunner({
       const nextUnanswered = after.find((q) => !isAnswered(q, answers));
       const nextId = (nextUnanswered ?? visible[idx + 1]).id;
       setNavDirection(1);
+      setFocusableBlockedQuestionId(nextId);
       setCurrentId(nextId);
       const enc = UI.encouragements;
       if (enc && idx === Math.floor(visible.length / 2) - 1) {
@@ -335,6 +324,7 @@ export function SurveyRunner({
   const goBack = useCallback(() => {
     if (idx <= 0) return;
     setNavDirection(-1);
+    setFocusableBlockedQuestionId(null);
     setCurrentId(visible[idx - 1].id);
     setValidationErrorCode(null);
   }, [idx, visible]);
@@ -397,7 +387,8 @@ export function SurveyRunner({
       const t = e.target as HTMLElement | null;
       if (t) {
         const tag = t.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable)
+          return;
       }
       if (e.key === "Home") {
         if (visible.length === 0) return;
@@ -409,7 +400,7 @@ export function SurveyRunner({
         e.preventDefault();
         setCurrentId(visible[visible.length - 1].id);
         setValidationErrorCode(null);
-      } else if (e.key === "ArrowRight" || (e.key === "PageDown")) {
+      } else if (e.key === "ArrowRight" || e.key === "PageDown") {
         // Forward navigation via keyboard. Enter / Space already work
         // natively when the Next button has focus, so we don't intercept
         // those here — that would double-fire on the button's own click
@@ -427,15 +418,15 @@ export function SurveyRunner({
 
   // Return focus to the sticky action bar after every question
   // transition so a keyboard user can keep advancing with Enter / Space
-  // (or Arrow keys) without re-Tabbing to the primary CTA. We schedule
-  // this on a microtask so it wins against <FocusTrap>'s initial-focus
-  // pass (which would otherwise land focus on the first input inside
-  // the question card). When going backward, prefer the Back button so
-  // repeated activation feels symmetric.
+  // (or Arrow keys) without re-Tabbing to the primary CTA. Defer until
+  // after the new question's initial-focus pass, then restore the sticky
+  // action focus. When going backward, prefer the Back button so repeated
+  // activation feels symmetric.
+  const activeQuestionId = current?.id;
   useEffect(() => {
     if (stage !== "questions") return;
-    if (!current) return;
-    const id = window.requestAnimationFrame(() => {
+    if (!activeQuestionId) return;
+    const id = window.setTimeout(() => {
       const target =
         navDirection === -1 && backButtonRef.current && !backButtonRef.current.disabled
           ? backButtonRef.current
@@ -443,9 +434,9 @@ export function SurveyRunner({
             ? nextButtonRef.current
             : backButtonRef.current;
       target?.focus({ preventScroll: true });
-    });
-    return () => window.cancelAnimationFrame(id);
-  }, [stage, current?.id, navDirection]);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [stage, activeQuestionId, navDirection]);
 
   // ───────────────────────── render ─────────────────────────
   return (
@@ -480,28 +471,12 @@ export function SurveyRunner({
                     advancing in step with the slide animation on the
                     question card. */}
                 <AnimatePresence mode="popLayout" initial={false}>
-                  <motion.span
-                    key={`pos-${idx}`}
-                    initial={
-                      prefersReducedMotion
-                        ? { opacity: 1 }
-                        : { opacity: 0, y: navDirection === 1 ? 6 : -6 }
-                    }
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={
-                      prefersReducedMotion
-                        ? { opacity: 1 }
-                        : { opacity: 0, y: navDirection === 1 ? -6 : 6 }
-                    }
-                    transition={{ duration: 0.22, ease: "easeOut" }}
+                  <QuestionPosition
+                    current={idx + 1}
+                    total={visible.length}
+                    announce
                     className="inline-flex font-medium tabular-nums text-foreground"
-                  >
-                    <QuestionPosition
-                      current={idx + 1}
-                      total={visible.length}
-                      announce
-                    />
-                  </motion.span>
+                  />
                   {skippedCount > 0 && (
                     <motion.span
                       key={`skip-${idx}`}
@@ -514,7 +489,7 @@ export function SurveyRunner({
                       data-testid="skipped-pill"
                       className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
                     >
-                      +{skippedCount} {lang === "si" ? "මඟ හරින ලදී" : lang === "ta" ? "தவிர்க்கப்பட்டது" : "skipped"}
+                      +{skippedCount} {pickText(UI.skipped, lang)}
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -536,7 +511,9 @@ export function SurveyRunner({
               // Smoother, slightly longer fill so the bar visibly catches
               // up with the position counter on every advance (and clearly
               // sweeps forward when a skip jumps the indicator by >1).
-              style={{ ["--progress-transition" as string]: "600ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+              style={{
+                ["--progress-transition" as string]: "600ms cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
               aria-label={pickText(UI.progress, lang)}
               aria-valuenow={pct}
               aria-valuemin={0}
@@ -550,328 +527,340 @@ export function SurveyRunner({
         active={stage === "consent" || stage === "consent-optional" || stage === "questions"}
         focusKey={`${stage}:${current?.id ?? ""}`}
       >
-      <main className="mx-auto max-w-2xl px-4 pb-32 pt-6">
-        <AnimatePresence mode="wait">
-          {stage === "intro" && (
-            <motion.section
-              key="intro"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              className="space-y-6"
-            >
-              <div className="rounded-3xl gradient-eco p-6 text-primary-foreground shadow-soft">
-                <p className="text-sm opacity-90">{pickText(UI.tagline, lang)}</p>
-                <h2 className="mt-2 text-2xl font-semibold">{pickText(survey.title, lang)}</h2>
-                <p className="mt-2 text-sm opacity-90">{pickText(survey.subtitle, lang)}</p>
-                <p className="mt-4 text-xs opacity-80">
-                  ~{survey.estimatedMinutes} min · <QuestionCount count={survey.questions.length} />
-                </p>
-              </div>
-              <Button
-                size="lg"
-                className="h-14 w-full rounded-2xl text-base"
-                onClick={() => setStage("consent")}
-              >
-                {pickText(UI.start, lang)} <ArrowRight className="ml-2 size-5" />
-              </Button>
-            </motion.section>
-          )}
-
-          {stage === "consent" && (() => {
-            const required = survey.consent.filter((c) => c.required);
-            // c13 first, then the rest in their existing order
-            const ordered = [
-              ...required.filter((c) => c.id === "c13"),
-              ...required.filter((c) => c.id !== "c13"),
-            ];
-            return (
+        <main className="mx-auto max-w-2xl px-4 pb-32 pt-6">
+          <AnimatePresence mode="wait">
+            {stage === "intro" && (
               <motion.section
-                key="consent"
+                key="intro"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                className="space-y-6"
+              >
+                <div className="rounded-3xl gradient-eco p-6 text-primary-foreground shadow-soft">
+                  <p className="text-sm opacity-90">{pickText(UI.tagline, lang)}</p>
+                  <h2 className="mt-2 text-2xl font-semibold">{pickText(survey.title, lang)}</h2>
+                  <p className="mt-2 text-sm opacity-90">{pickText(survey.subtitle, lang)}</p>
+                  <p className="mt-4 text-xs opacity-80">
+                    ~{survey.estimatedMinutes} min ·{" "}
+                    <QuestionCount count={survey.questions.length} />
+                  </p>
+                </div>
+                <Button
+                  size="lg"
+                  className="h-14 w-full rounded-2xl text-base"
+                  onClick={() => setStage("consent")}
+                >
+                  {pickText(UI.start, lang)} <ArrowRight className="ml-2 size-5" />
+                </Button>
+              </motion.section>
+            )}
+
+            {stage === "consent" &&
+              (() => {
+                const required = survey.consent.filter((c) => c.required);
+                // c13 first, then the rest in their existing order
+                const ordered = [
+                  ...required.filter((c) => c.id === "c13"),
+                  ...required.filter((c) => c.id !== "c13"),
+                ];
+                return (
+                  <motion.section
+                    key="consent"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    className="space-y-4"
+                  >
+                    <h2 className="text-xl font-semibold">
+                      {pickText(UI.requirementsTitle, lang)}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {pickText(UI.requirementsLead, lang)}
+                    </p>
+                    <Accordion type="single" collapsible className="rounded-2xl border bg-card">
+                      {ordered.map((c) => (
+                        <AccordionItem key={c.id} value={c.id} className="px-4">
+                          <AccordionTrigger className="text-left text-sm font-medium">
+                            {pickText(c.shortLabel ?? c.label, lang)}
+                          </AccordionTrigger>
+                          <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                            {pickText(c.label, lang)}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                    <Button
+                      size="lg"
+                      className="h-14 w-full rounded-2xl"
+                      disabled={busy}
+                      onClick={() => {
+                        setConsent((s) => {
+                          const next = { ...s };
+                          for (const c of required) next[c.id] = true;
+                          return next;
+                        });
+                        setStage("consent-optional");
+                      }}
+                    >
+                      {busy ? (
+                        <Loader2 className="size-5 animate-spin" />
+                      ) : (
+                        pickText(UI.consentAgree, lang)
+                      )}
+                    </Button>
+                  </motion.section>
+                );
+              })()}
+
+            {stage === "consent-optional" &&
+              (() => {
+                const optional = survey.consent.filter((c) => !c.required);
+                const continueOptional = async (opts?: { bypassTurnstile?: boolean }) => {
+                  try {
+                    await beginIfNeeded(opts);
+                    setStage("questions");
+                  } catch (err) {
+                    // Server-side Turnstile rejection surfaces here as a thrown
+                    // Error from the serverFn RPC. Detect it heuristically by
+                    // the message body produced by TurnstileVerificationError
+                    // ("Verification failed (...)", "human-verification
+                    // challenge", "verification service") and keep the user on
+                    // the consent panel with an inline retry. Other failures
+                    // fall back to the existing save-error toast so the user
+                    // still sees something.
+                    const message = err instanceof Error ? err.message : String(err);
+                    const isVerify = /verif(?:y|ication)|challenge/i.test(message);
+                    if (isVerify) {
+                      setVerifyError(message);
+                    } else {
+                      toast.error(pickText(UI.errorSave, lang));
+                    }
+                  }
+                };
+                // Show "Continue anyway" only in dev or local preview hosts.
+                // The server still gates on ALLOW_TURNSTILE_BYPASS, so flipping
+                // this client flag in production has no effect.
+                const allowBypass =
+                  import.meta.env.DEV ||
+                  (typeof window !== "undefined" &&
+                    /localhost|127\.0\.0\.1/.test(window.location.hostname));
+                return (
+                  <OptionalConsentPanel
+                    items={optional}
+                    lang={lang}
+                    values={consent}
+                    busy={busy}
+                    onToggle={(id, v) => setConsent((s) => ({ ...s, [id]: v }))}
+                    onBack={() => setStage("consent")}
+                    onContinue={continueOptional}
+                    verifyError={verifyError}
+                    onRetryVerify={() => {
+                      setVerifyError(null);
+                      return continueOptional();
+                    }}
+                    allowBypass={allowBypass}
+                    onBypass={() => {
+                      setVerifyError(null);
+                      return continueOptional({ bypassTurnstile: true });
+                    }}
+                  />
+                );
+              })()}
+
+            {stage === "questions" && current && (
+              <div
+                key={current.id}
+                data-testid="question-swipe-surface"
+                className="touch-pan-y"
+                onPointerDown={onSwipePointerDown}
+                onPointerUp={onSwipePointerUp}
+                onPointerCancel={onSwipePointerCancel}
+              >
+                <QuestionView
+                  q={current}
+                  value={answers[current.id]}
+                  direction={navDirection}
+                  onChange={(v) => {
+                    setAnswer(current.id, v);
+                    // Auto-advance on single-select question types so respondents
+                    // don't have to tap Next after picking the only allowed answer.
+                    if (current.type === "single_choice" || current.type === "yes_no") {
+                      setTimeout(() => goNextRef.current(), 220);
+                    }
+                  }}
+                  error={validationError}
+                />
+              </div>
+            )}
+
+            {stage === "review" && (
+              <ReviewPanel
+                survey={survey}
+                answers={answers}
+                lang={lang}
+                onEdit={jumpToEdit}
+                onContinue={() => setStage("contact")}
+              />
+            )}
+
+            {stage === "contact" && (
+              <motion.section
+                key="contact"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 className="space-y-4"
               >
-                <h2 className="text-xl font-semibold">{pickText(UI.requirementsTitle, lang)}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {pickText(UI.requirementsLead, lang)}
-                </p>
-                <Accordion type="single" collapsible className="rounded-2xl border bg-card">
-                  {ordered.map((c) => (
-                    <AccordionItem key={c.id} value={c.id} className="px-4">
-                      <AccordionTrigger className="text-left text-sm font-medium">
-                        {pickText(c.shortLabel ?? c.label, lang)}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
-                        {pickText(c.label, lang)}
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-                <Button
-                  size="lg"
-                  className="h-14 w-full rounded-2xl"
-                  disabled={busy}
-                  onClick={() => {
-                    setConsent((s) => {
-                      const next = { ...s };
-                      for (const c of required) next[c.id] = true;
-                      return next;
-                    });
-                    setStage("consent-optional");
-                  }}
-                >
-                  {busy ? <Loader2 className="size-5 animate-spin" /> : pickText(UI.consentAgree, lang)}
-                </Button>
+                <h2 className="text-xl font-semibold">{pickText(UI.thanksTitle, lang)}</h2>
+                <p className="text-sm text-muted-foreground">{pickText(UI.thanksLead, lang)}</p>
+                <div className="space-y-3">
+                  <div>
+                    <Label>{pickText(UI.nameLabel, lang)}</Label>
+                    <Input
+                      className="mt-1 h-12"
+                      value={contact.name}
+                      onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>{pickText(UI.emailLabel, lang)}</Label>
+                    <Input
+                      type="email"
+                      className="mt-1 h-12"
+                      value={contact.email}
+                      onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>{pickText(UI.orgLabel, lang)}</Label>
+                    <Input
+                      className="mt-1 h-12"
+                      value={contact.organization}
+                      onChange={(e) => setContact((c) => ({ ...c, organization: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="h-14 rounded-2xl"
+                    onClick={() => setStage("review")}
+                    disabled={busy}
+                  >
+                    <ArrowLeft className="size-5" />
+                  </Button>
+                  <Button
+                    size="lg"
+                    className="h-14 flex-1 rounded-2xl"
+                    onClick={submitAll}
+                    disabled={busy || (contact.email !== "" && !EMAIL_RE.test(contact.email))}
+                  >
+                    {busy ? <Loader2 className="size-5 animate-spin" /> : pickText(UI.submit, lang)}
+                  </Button>
+                </div>
               </motion.section>
-            );
-          })()}
+            )}
 
-          {stage === "consent-optional" && (() => {
-            const optional = survey.consent.filter((c) => !c.required);
-            const continueOptional = async (opts?: { bypassTurnstile?: boolean }) => {
-              try {
-                await beginIfNeeded(opts);
-                setStage("questions");
-              } catch (err) {
-                // Server-side Turnstile rejection surfaces here as a thrown
-                // Error from the serverFn RPC. Detect it heuristically by
-                // the message body produced by TurnstileVerificationError
-                // ("Verification failed (...)", "human-verification
-                // challenge", "verification service") and keep the user on
-                // the consent panel with an inline retry. Other failures
-                // fall back to the existing save-error toast so the user
-                // still sees something.
-                const message = err instanceof Error ? err.message : String(err);
-                const isVerify = /verif(?:y|ication)|challenge/i.test(message);
-                if (isVerify) {
-                  setVerifyError(message);
-                } else {
-                  toast.error(pickText(UI.errorSave, lang));
-                }
-              }
-            };
-            // Show "Continue anyway" only in dev or local preview hosts.
-            // The server still gates on ALLOW_TURNSTILE_BYPASS, so flipping
-            // this client flag in production has no effect.
-            const allowBypass =
-              import.meta.env.DEV ||
-              (typeof window !== "undefined" &&
-                /localhost|127\.0\.0\.1/.test(window.location.hostname));
-            return (
-              <OptionalConsentPanel
-                items={optional}
-                lang={lang}
-                values={consent}
-                busy={busy}
-                onToggle={(id, v) => setConsent((s) => ({ ...s, [id]: v }))}
-                onBack={() => setStage("consent")}
-                onContinue={continueOptional}
-                verifyError={verifyError}
-                onRetryVerify={() => {
-                  setVerifyError(null);
-                  return continueOptional();
-                }}
-                allowBypass={allowBypass}
-                onBypass={() => {
-                  setVerifyError(null);
-                  return continueOptional({ bypassTurnstile: true });
-                }}
-              />
-            );
-          })()}
-
-          {stage === "questions" && current && (
-            <div
-              key={current.id}
-              data-testid="question-swipe-surface"
-              className="touch-pan-y"
-              onPointerDown={onSwipePointerDown}
-              onPointerUp={onSwipePointerUp}
-              onPointerCancel={onSwipePointerCancel}
-            >
-              <QuestionView
-                q={current}
-                value={answers[current.id]}
-                direction={navDirection}
-                onChange={(v) => {
-                  setAnswer(current.id, v);
-                  // Auto-advance on single-select question types so respondents
-                  // don't have to tap Next after picking the only allowed answer.
-                  if (current.type === "single_choice" || current.type === "yes_no") {
-                    setTimeout(() => goNextRef.current(), 220);
-                  }
-                }}
-                error={validationError}
-              />
-            </div>
-          )}
-
-          {stage === "review" && (
-            <ReviewPanel
-              survey={survey}
-              answers={answers}
-              lang={lang}
-              onEdit={jumpToEdit}
-              onContinue={() => setStage("contact")}
-            />
-          )}
-
-          {stage === "contact" && (
-            <motion.section
-              key="contact"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              className="space-y-4"
-            >
-              <h2 className="text-xl font-semibold">{pickText(UI.thanksTitle, lang)}</h2>
-              <p className="text-sm text-muted-foreground">{pickText(UI.thanksLead, lang)}</p>
-              <div className="space-y-3">
-                <div>
-                  <Label>{pickText(UI.nameLabel, lang)}</Label>
-                  <Input
-                    className="mt-1 h-12"
-                    value={contact.name}
-                    onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>{pickText(UI.emailLabel, lang)}</Label>
-                  <Input
-                    type="email"
-                    className="mt-1 h-12"
-                    value={contact.email}
-                    onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>{pickText(UI.orgLabel, lang)}</Label>
-                  <Input
-                    className="mt-1 h-12"
-                    value={contact.organization}
-                    onChange={(e) => setContact((c) => ({ ...c, organization: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-14 rounded-2xl"
-                  onClick={() => setStage("review")}
-                  disabled={busy}
-                >
-                  <ArrowLeft className="size-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  className="h-14 flex-1 rounded-2xl"
-                  onClick={submitAll}
-                  disabled={busy || (contact.email !== "" && !EMAIL_RE.test(contact.email))}
-                >
-                  {busy ? <Loader2 className="size-5 animate-spin" /> : pickText(UI.submit, lang)}
-                </Button>
-              </div>
-            </motion.section>
-          )}
-
-          {stage === "done" && (
-            <motion.section
-              key="done"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="space-y-6 text-center"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200 }}
-                className="mx-auto grid size-20 place-items-center rounded-full gradient-eco text-primary-foreground shadow-soft"
+            {stage === "done" && (
+              <motion.section
+                key="done"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="space-y-6 text-center"
               >
-                <Check className="size-10" />
-              </motion.div>
-              <h2 className="text-2xl font-semibold">{pickText(UI.thanksTitle, lang)}</h2>
-              <p className="text-sm text-muted-foreground">{pickText(UI.thanksLead, lang)}</p>
-              <ResponseVisualSummary survey={survey} answers={answers} />
-            </motion.section>
-          )}
-        </AnimatePresence>
-      </main>
-
-      {/* Sticky bottom action bar */}
-      {stage === "questions" && current && (
-        <nav
-          // Thumb-zone CTA bar. The elevated shadow lifts it visually off
-          // the question card so the eye finds it without hunting, and the
-          // safe-bottom utility keeps the buttons clear of the iOS home bar.
-          className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 shadow-[0_-12px_32px_-16px_rgba(0,0,0,0.18)] backdrop-blur supports-[backdrop-filter]:bg-background/80"
-        >
-          <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 py-3">
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-12 rounded-xl"
-              aria-label={pickText(UI.back, lang)}
-              onClick={goBack}
-              disabled={idx === 0}
-              ref={backButtonRef}
-            >
-              <ArrowLeft className="size-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="lg"
-              className="h-12 rounded-xl"
-              aria-label={pickText(UI.saveExit, lang)}
-              onClick={manualSave}
-              disabled={busy || !token}
-            >
-              <Save className="size-4" />
-              <span className="ml-2 hidden sm:inline">{pickText(UI.saveExit, lang)}</span>
-            </Button>
-            {(() => {
-              const requiredEmpty =
-                !!current && !!current.required && !isAnswered(current, answers);
-              const formatErr =
-                !!current && validateAnswer(current, answers[current.id], lang) !== null;
-              const blocked = requiredEmpty || formatErr;
-              
-              return (
-                <Button
-                  size="lg"
-                  // Primary CTA — taller (h-14 = 56px) than the secondary
-                  // controls so the thumb finds it first, and slightly
-                  // bolder text to match the visual weight increase.
-                  className="h-14 flex-1 rounded-xl text-base font-semibold"
-                  onClick={goNext}
-                  disabled={busy || blocked}
-                  aria-disabled={busy || blocked}
-                  data-testid="next-button"
-                  ref={nextButtonRef}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                  className="mx-auto grid size-20 place-items-center rounded-full gradient-eco text-primary-foreground shadow-soft"
                 >
-                  {pickText(UI.next, lang)}
-                  <ArrowRight className="ml-1 size-5" />
-                </Button>
-              );
-            })()}
-          </div>
-          {resumeUrl && (
-            <ResumeStrip
-              url={resumeUrl}
-              label={pickText(UI.resumeLink, lang)}
-              copyLabel={pickText(UI.copy, lang)}
-              copiedLabel={pickText(UI.copied, lang)}
-            />
-          )}
-      </nav>
-      )}
+                  <Check className="size-10" />
+                </motion.div>
+                <h2 className="text-2xl font-semibold">{pickText(UI.thanksTitle, lang)}</h2>
+                <p className="text-sm text-muted-foreground">{pickText(UI.thanksLead, lang)}</p>
+                <ResponseVisualSummary survey={survey} answers={answers} />
+              </motion.section>
+            )}
+          </AnimatePresence>
+        </main>
+
+        {/* Sticky bottom action bar */}
+        {stage === "questions" && current && (
+          <nav
+            // Thumb-zone CTA bar. The elevated shadow lifts it visually off
+            // the question card so the eye finds it without hunting, and the
+            // safe-bottom utility keeps the buttons clear of the iOS home bar.
+            className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 shadow-[0_-12px_32px_-16px_rgba(0,0,0,0.18)] backdrop-blur supports-[backdrop-filter]:bg-background/80"
+          >
+            <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 py-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-12 rounded-xl"
+                aria-label={pickText(UI.back, lang)}
+                onClick={goBack}
+                disabled={idx === 0}
+                ref={backButtonRef}
+              >
+                <ArrowLeft className="size-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="h-12 rounded-xl"
+                aria-label={pickText(UI.saveExit, lang)}
+                onClick={manualSave}
+                disabled={busy || !token}
+              >
+                <Save className="size-4" />
+                <span className="ml-2 hidden sm:inline">{pickText(UI.saveExit, lang)}</span>
+              </Button>
+              {(() => {
+                const requiredEmpty =
+                  !!current && !!current.required && !isAnswered(current, answers);
+                const formatErr =
+                  !!current && validateAnswer(current, answers[current.id], lang) !== null;
+                const blocked = requiredEmpty || formatErr;
+                const keepFocusable =
+                  !!current && blocked && focusableBlockedQuestionId === current.id;
+
+                return (
+                  <Button
+                    size="lg"
+                    // Primary CTA — taller (h-14 = 56px) than the secondary
+                    // controls so the thumb finds it first, and slightly
+                    // bolder text to match the visual weight increase.
+                    className="h-14 flex-1 rounded-xl text-base font-semibold data-[blocked=true]:cursor-not-allowed data-[blocked=true]:opacity-50"
+                    onClick={goNext}
+                    disabled={busy || (blocked && !keepFocusable)}
+                    aria-disabled={busy || blocked}
+                    data-blocked={blocked || undefined}
+                    data-testid="next-button"
+                    ref={nextButtonRef}
+                  >
+                    {pickText(UI.next, lang)}
+                    <ArrowRight className="ml-1 size-5" />
+                  </Button>
+                );
+              })()}
+            </div>
+            {token && (
+              <ResumeStrip
+                surveySlug={survey.slug}
+                resumeToken={token}
+                label={pickText(UI.resumeLink, lang)}
+                copyLabel={pickText(UI.copy, lang)}
+                copiedLabel={pickText(UI.copied, lang)}
+              />
+            )}
+          </nav>
+        )}
       </FocusTrap>
     </div>
   );
 }
-
 
 // Silence unused-import warning when t() helper isn't referenced.
 void t;

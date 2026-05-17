@@ -33,10 +33,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  buildExportColumns,
-  buildExportHeaderRow,
-} from "@/lib/csv-export-shape";
+import { buildExportColumns, buildExportHeaderRow } from "@/lib/csv-export-shape";
 
 // ---------------------------------------------------------------------------
 // Filename rule mirror — kept in sync with the inline rule baked into
@@ -52,15 +49,15 @@ function filteredFilenameStem(d: {
   dateTo?: string;
   date: Date;
 }): string {
-  const effectiveStatus = d.validOnly ? "completed" : d.statusFilter ?? "completed";
+  const effectiveStatus = d.validOnly ? "completed" : (d.statusFilter ?? "completed");
   const stamp = d.date.toISOString().slice(0, 10);
   const statusPart = d.validOnly
     ? "valid-completed"
     : effectiveStatus === "completed"
-    ? "completed"
-    : effectiveStatus === "in_progress"
-    ? "in-progress"
-    : "all-statuses";
+      ? "completed"
+      : effectiveStatus === "in_progress"
+        ? "in-progress"
+        : "all-statuses";
   const dateTag = d.dateField === "completed_at" ? "completed" : "started";
   const parts = [
     d.surveySlug ?? "all-surveys",
@@ -101,13 +98,8 @@ function csvEscape(v: unknown): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-function buildFilteredCsvForRows(
-  surveySlug: string | undefined,
-  rows: FixtureRow[],
-): string {
-  const slugs = surveySlug
-    ? [surveySlug]
-    : Array.from(new Set(rows.map((r) => r.survey_slug)));
+function buildFilteredCsvForRows(surveySlug: string | undefined, rows: FixtureRow[]): string {
+  const slugs = surveySlug ? [surveySlug] : Array.from(new Set(rows.map((r) => r.survey_slug)));
   const cols = buildExportColumns(slugs);
   const baseHeader = buildExportHeaderRow(cols);
   const headerRow = [
@@ -125,11 +117,7 @@ function buildFilteredCsvForRows(
       ? Math.max(0, Math.round((completedAt.getTime() - startedAt.getTime()) / 1000))
       : "";
     const statusLabel =
-      r.status === "completed"
-        ? "Completed"
-        : r.status === "in_progress"
-        ? "In progress"
-        : "Other";
+      r.status === "completed" ? "Completed" : r.status === "in_progress" ? "In progress" : "Other";
     const row: unknown[] = [
       r.survey_slug,
       r.id,
@@ -240,11 +228,7 @@ function ExportButtonsHarness(props: {
 
   return (
     <div>
-      <select
-        data-testid="survey"
-        value={fSurvey}
-        onChange={(e) => setFSurvey(e.target.value)}
-      >
+      <select data-testid="survey" value={fSurvey} onChange={(e) => setFSurvey(e.target.value)}>
         <option value="__all__">All surveys</option>
         <option value="phase-1">phase-1</option>
         <option value="phase-3">phase-3</option>
@@ -283,24 +267,20 @@ type Captured = {
 function installDownloadCapture(): Captured {
   const captured: Captured = { blobs: [], filenames: [], urls: [], revoked: [] };
   let n = 0;
-  const createSpy = vi
-    .spyOn(URL, "createObjectURL")
-    .mockImplementation((b: Blob | MediaSource) => {
-      captured.blobs.push(b as Blob);
-      const url = `blob:test/${++n}`;
-      captured.urls.push(url);
-      return url;
-    });
-  const revokeSpy = vi
-    .spyOn(URL, "revokeObjectURL")
-    .mockImplementation((u: string) => {
-      captured.revoked.push(u);
-    });
-  const clickSpy = vi
-    .spyOn(HTMLAnchorElement.prototype, "click")
-    .mockImplementation(function (this: HTMLAnchorElement) {
-      captured.filenames.push(this.download);
-    });
+  const createSpy = vi.spyOn(URL, "createObjectURL").mockImplementation((b: Blob | MediaSource) => {
+    captured.blobs.push(b as Blob);
+    const url = `blob:test/${++n}`;
+    captured.urls.push(url);
+    return url;
+  });
+  const revokeSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation((u: string) => {
+    captured.revoked.push(u);
+  });
+  const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    captured.filenames.push(this.download);
+  });
   // Park the spies so afterEach can restore.
   installedSpies.push(createSpy, revokeSpy, clickSpy);
   return captured;
@@ -365,49 +345,45 @@ const FIXTURE: FixtureRow[] = [
 ];
 
 function makeServerFns() {
-  const exportCsvFn = vi.fn(
-    async ({ data }: { data: ExportPayload }): Promise<CsvResult> => {
-      const matching = FIXTURE.filter(
-        (r) =>
-          (!data.surveySlug || r.survey_slug === data.surveySlug) &&
-          (!data.language || r.language === data.language),
-      );
-      const csv = buildFilteredCsvForRows(data.surveySlug, matching);
-      const stem = filteredFilenameStem({ ...data, date: FIXED_NOW });
-      return {
-        csv,
-        filename: `${stem}.csv`,
-        rowCount: matching.length,
-        droppedInvalid: 0,
-        droppedUnknownSurvey: 0,
-      };
-    },
-  );
-  const exportXlsxFn = vi.fn(
-    async ({ data }: { data: ExportPayload }): Promise<XlsxResult> => {
-      const matching = FIXTURE.filter(
-        (r) =>
-          (!data.surveySlug || r.survey_slug === data.surveySlug) &&
-          (!data.language || r.language === data.language),
-      );
-      // The real server fn returns a real .xlsx; for the wiring test we
-      // just need bytes-roundtrip through base64 to confirm the harness
-      // reconstructs them faithfully. Use the CSV bytes as the payload
-      // marker so the assertion can compare against the CSV builder.
-      const csv = buildFilteredCsvForRows(data.surveySlug, matching);
-      const bin = new TextEncoder().encode(csv);
-      let s = "";
-      for (let i = 0; i < bin.length; i++) s += String.fromCharCode(bin[i]);
-      const stem = filteredFilenameStem({ ...data, date: FIXED_NOW });
-      return {
-        base64: btoa(s),
-        filename: `${stem}.xlsx`,
-        rowCount: matching.length,
-        droppedInvalid: 0,
-        droppedUnknownSurvey: 0,
-      };
-    },
-  );
+  const exportCsvFn = vi.fn(async ({ data }: { data: ExportPayload }): Promise<CsvResult> => {
+    const matching = FIXTURE.filter(
+      (r) =>
+        (!data.surveySlug || r.survey_slug === data.surveySlug) &&
+        (!data.language || r.language === data.language),
+    );
+    const csv = buildFilteredCsvForRows(data.surveySlug, matching);
+    const stem = filteredFilenameStem({ ...data, date: FIXED_NOW });
+    return {
+      csv,
+      filename: `${stem}.csv`,
+      rowCount: matching.length,
+      droppedInvalid: 0,
+      droppedUnknownSurvey: 0,
+    };
+  });
+  const exportXlsxFn = vi.fn(async ({ data }: { data: ExportPayload }): Promise<XlsxResult> => {
+    const matching = FIXTURE.filter(
+      (r) =>
+        (!data.surveySlug || r.survey_slug === data.surveySlug) &&
+        (!data.language || r.language === data.language),
+    );
+    // The real server fn returns a real .xlsx; for the wiring test we
+    // just need bytes-roundtrip through base64 to confirm the harness
+    // reconstructs them faithfully. Use the CSV bytes as the payload
+    // marker so the assertion can compare against the CSV builder.
+    const csv = buildFilteredCsvForRows(data.surveySlug, matching);
+    const bin = new TextEncoder().encode(csv);
+    let s = "";
+    for (let i = 0; i < bin.length; i++) s += String.fromCharCode(bin[i]);
+    const stem = filteredFilenameStem({ ...data, date: FIXED_NOW });
+    return {
+      base64: btoa(s),
+      filename: `${stem}.xlsx`,
+      rowCount: matching.length,
+      droppedInvalid: 0,
+      droppedUnknownSurvey: 0,
+    };
+  });
   return { exportCsvFn, exportXlsxFn };
 }
 
@@ -422,20 +398,17 @@ describe("admin export buttons — CSV download", () => {
     {
       survey: "phase-1",
       lang: "en" as const,
-      expectedFilename:
-        "eip-insight-phase-1_completed_en_started-any_started-any_2026-05-15.csv",
+      expectedFilename: "eip-insight-phase-1_completed_en_started-any_started-any_2026-05-15.csv",
     },
     {
       survey: "phase-1",
       lang: "si" as const,
-      expectedFilename:
-        "eip-insight-phase-1_completed_si_started-any_started-any_2026-05-15.csv",
+      expectedFilename: "eip-insight-phase-1_completed_si_started-any_started-any_2026-05-15.csv",
     },
     {
       survey: "phase-3",
       lang: "ta" as const,
-      expectedFilename:
-        "eip-insight-phase-3_completed_ta_started-any_started-any_2026-05-15.csv",
+      expectedFilename: "eip-insight-phase-3_completed_ta_started-any_started-any_2026-05-15.csv",
     },
   ])(
     "survey=$survey lang=$lang → payload + filename + bytes match the CSV builder",
@@ -500,14 +473,12 @@ describe("admin export buttons — XLSX download", () => {
     {
       survey: "phase-1",
       lang: "si" as const,
-      expectedFilename:
-        "eip-insight-phase-1_completed_si_started-any_started-any_2026-05-15.xlsx",
+      expectedFilename: "eip-insight-phase-1_completed_si_started-any_started-any_2026-05-15.xlsx",
     },
     {
       survey: "phase-3",
       lang: "ta" as const,
-      expectedFilename:
-        "eip-insight-phase-3_completed_ta_started-any_started-any_2026-05-15.xlsx",
+      expectedFilename: "eip-insight-phase-3_completed_ta_started-any_started-any_2026-05-15.xlsx",
     },
   ])(
     "survey=$survey lang=$lang → filename uses the same stem as CSV with .xlsx, bytes round-trip through base64",
@@ -562,12 +533,7 @@ describe("admin export buttons — switching selection re-targets the download",
   it("changing survey + language between clicks updates payload, filename, and bytes", async () => {
     const captured = installDownloadCapture();
     const { exportCsvFn, exportXlsxFn } = makeServerFns();
-    render(
-      <ExportButtonsHarness
-        exportCsvFn={exportCsvFn}
-        exportXlsxFn={exportXlsxFn}
-      />,
-    );
+    render(<ExportButtonsHarness exportCsvFn={exportCsvFn} exportXlsxFn={exportXlsxFn} />);
 
     // First click: defaults (all/all).
     await userEvent.click(screen.getByTestId("export-csv"));
@@ -593,10 +559,7 @@ describe("admin export buttons — switching selection re-targets the download",
 
     // Each download's bytes match the builder for that selection.
     const subsets = [
-      buildFilteredCsvForRows(
-        undefined,
-        FIXTURE,
-      ),
+      buildFilteredCsvForRows(undefined, FIXTURE),
       buildFilteredCsvForRows(
         "phase-1",
         FIXTURE.filter((r) => r.survey_slug === "phase-1" && r.language === "si"),
