@@ -149,9 +149,7 @@ describe("SurveyRunner — mid-survey language toggle preserves answers", () => 
 
     // Sanity: the three localized question labels are genuinely different
     // (so the assertions above are not all matching the EN fallback).
-    const labels = (["en", "si", "ta"] as const).map((l) =>
-      pickText(SURVEY.questions[0].label, l),
-    );
+    const labels = (["en", "si", "ta"] as const).map((l) => pickText(SURVEY.questions[0].label, l));
     expect(new Set(labels).size).toBe(3);
   });
 

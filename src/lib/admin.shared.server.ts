@@ -115,10 +115,7 @@ export type StreamAllValidEvent =
 /** Injected dependencies for the streaming generator (real or fake). */
 export interface StreamAllValidDeps {
   countCompleted(): Promise<number>;
-  fetchPage(
-    page: number,
-    pageSize: number,
-  ): Promise<Record<string, unknown>[]>;
+  fetchPage(page: number, pageSize: number): Promise<Record<string, unknown>[]>;
   /** Sleep override; defaults to setTimeout. Pass `() => Promise.resolve()` in tests. */
   sleep?: (ms: number) => Promise<void>;
   /** Date override for deterministic filename. */
@@ -199,9 +196,7 @@ export async function* streamAllValidCsvImpl(
     );
   }
 
-  const total = yield* withRetry("Counting completed responses", () =>
-    deps.countCompleted(),
-  );
+  const total = yield* withRetry("Counting completed responses", () => deps.countCompleted());
   const stamp = now().toISOString().slice(0, 10);
   const filename = `eip-insight-all-valid-responses-${stamp}.csv`;
 
@@ -273,9 +268,17 @@ export async function* streamAllValidCsvImpl(
           ? Math.max(0, Math.round((completedAt.getTime() - startedAt.getTime()) / 1000))
           : "";
       const row: unknown[] = [
-        slug, r.id, r.status, r.language, r.progress_pct,
-        r.started_at, r.completed_at ?? "", durationSec,
-        c.name ?? "", c.email ?? "", c.organization ?? "",
+        slug,
+        r.id,
+        r.status,
+        r.language,
+        r.progress_pct,
+        r.started_at,
+        r.completed_at ?? "",
+        durationSec,
+        c.name ?? "",
+        c.email ?? "",
+        c.organization ?? "",
       ];
       for (const col of cols) {
         if (col.slug !== slug) {
@@ -410,9 +413,7 @@ export async function* streamAllValidXlsxImpl(
     );
   }
 
-  const total = yield* withRetry("Counting completed responses", () =>
-    deps.countCompleted(),
-  );
+  const total = yield* withRetry("Counting completed responses", () => deps.countCompleted());
   const stamp = now().toISOString().slice(0, 10);
   const filename = `eip-insight-all-valid-responses-${stamp}.xlsx`;
 
@@ -523,17 +524,21 @@ export type FilteredExportInput = {
 export const filteredExportSchema = z.object({
   surveySlug: z.string().min(1).max(64).optional(),
   language: z.enum(["en", "si", "ta"]).optional(),
-  dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  dateFrom: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  dateTo: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   dateField: z.enum(["started_at", "completed_at"]).default("started_at"),
   completedOnly: z.boolean().default(true),
   statusFilter: z.enum(["completed", "in_progress", "all"]).optional(),
   validOnly: z.boolean().default(false),
 });
 
-export async function buildFilteredExportRows(
-  data: z.infer<typeof filteredExportSchema>,
-): Promise<{
+export async function buildFilteredExportRows(data: z.infer<typeof filteredExportSchema>): Promise<{
   headerRow: string[];
   dataRows: unknown[][];
   filenameStem: string;
@@ -547,7 +552,7 @@ export async function buildFilteredExportRows(
   // Otherwise honor `statusFilter`; fall back to legacy `completedOnly`.
   const effectiveStatus: "completed" | "in_progress" | "all" = data.validOnly
     ? "completed"
-    : data.statusFilter ?? (data.completedOnly ? "completed" : "all");
+    : (data.statusFilter ?? (data.completedOnly ? "completed" : "all"));
   const dateCol = data.dateField;
 
   const PAGE = 500;
@@ -555,7 +560,9 @@ export async function buildFilteredExportRows(
   for (let page = 0; page < 400; page += 1) {
     let q = supabaseAdmin
       .from("responses")
-      .select("id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers")
+      .select(
+        "id, survey_slug, language, status, progress_pct, started_at, completed_at, contact, answers",
+      )
       .order("started_at", { ascending: false })
       .range(page * PAGE, page * PAGE + PAGE - 1);
     if (effectiveStatus !== "all") q = q.eq("status", effectiveStatus);
@@ -623,9 +630,7 @@ export async function buildFilteredExportRows(
     const survey = SURVEYS[slug];
     const answers = (r.answers ?? {}) as Record<string, unknown>;
     const isValid =
-      r.status === "completed" && survey
-        ? isValidCompletedResponse(survey, answers)
-        : false;
+      r.status === "completed" && survey ? isValidCompletedResponse(survey, answers) : false;
     const c = (r.contact ?? {}) as Record<string, unknown>;
     const startedAt = r.started_at ? new Date(String(r.started_at)) : null;
     const completedAt = r.completed_at ? new Date(String(r.completed_at)) : null;
@@ -634,15 +639,19 @@ export async function buildFilteredExportRows(
         ? Math.max(0, Math.round((completedAt.getTime() - startedAt.getTime()) / 1000))
         : "";
     const statusLabel =
-      r.status === "completed"
-        ? "Completed"
-        : r.status === "in_progress"
-        ? "In progress"
-        : "Other";
+      r.status === "completed" ? "Completed" : r.status === "in_progress" ? "In progress" : "Other";
     const row: unknown[] = [
-      slug, r.id, r.status, r.language, r.progress_pct,
-      r.started_at, r.completed_at ?? "", durationSec,
-      c.name ?? "", c.email ?? "", c.organization ?? "",
+      slug,
+      r.id,
+      r.status,
+      r.language,
+      r.progress_pct,
+      r.started_at,
+      r.completed_at ?? "",
+      durationSec,
+      c.name ?? "",
+      c.email ?? "",
+      c.organization ?? "",
       isValid ? "true" : "false",
       statusLabel,
     ];
@@ -664,15 +673,14 @@ export async function buildFilteredExportRows(
     dataRows.push(row);
   }
 
-
   const stamp = new Date().toISOString().slice(0, 10);
   const statusPart = data.validOnly
     ? "valid-completed"
     : effectiveStatus === "completed"
-    ? "completed"
-    : effectiveStatus === "in_progress"
-    ? "in-progress"
-    : "all-statuses";
+      ? "completed"
+      : effectiveStatus === "in_progress"
+        ? "in-progress"
+        : "all-statuses";
   const dateTag = dateCol === "completed_at" ? "completed" : "started";
   const parts = [
     data.surveySlug ?? "all-surveys",
@@ -714,7 +722,7 @@ export function assembleZipBundle(input: {
 
   const effectiveStatus: "completed" | "in_progress" | "all" = data.validOnly
     ? "completed"
-    : data.statusFilter ?? (data.completedOnly ? "completed" : "all");
+    : (data.statusFilter ?? (data.completedOnly ? "completed" : "all"));
   const dateCol = data.dateField;
 
   const slugs = Object.keys(rowsBySlug);
@@ -741,10 +749,7 @@ export function assembleZipBundle(input: {
     const includedRows =
       data.validOnly && survey
         ? rows.filter((r) =>
-            isValidCompletedResponse(
-              survey,
-              (r.answers ?? {}) as Record<string, unknown>,
-            ),
+            isValidCompletedResponse(survey, (r.answers ?? {}) as Record<string, unknown>),
           )
         : rows;
 
@@ -759,9 +764,17 @@ export function assembleZipBundle(input: {
           ? Math.max(0, Math.round((completedAt.getTime() - startedAt.getTime()) / 1000))
           : "";
       const out: unknown[] = [
-        slug, r.id, r.status, r.language, r.progress_pct,
-        r.started_at, r.completed_at ?? "", durationSec,
-        c.name ?? "", c.email ?? "", c.organization ?? "",
+        slug,
+        r.id,
+        r.status,
+        r.language,
+        r.progress_pct,
+        r.started_at,
+        r.completed_at ?? "",
+        durationSec,
+        c.name ?? "",
+        c.email ?? "",
+        c.organization ?? "",
       ];
       for (const col of cols) {
         const val = answers[col.qid];
@@ -820,22 +833,35 @@ export function assembleZipBundle(input: {
     `date_to=${data.dateTo ?? "any"}`,
   ];
   const summaryHeaders = [
-    "survey_slug", "survey_title_en",
-    "total_responses", "completed", "in_progress",
-    "responses_en", "responses_si", "responses_ta",
-    "first_started_at", "last_started_at",
+    "survey_slug",
+    "survey_title_en",
+    "total_responses",
+    "completed",
+    "in_progress",
+    "responses_en",
+    "responses_si",
+    "responses_ta",
+    "first_started_at",
+    "last_started_at",
   ];
-  const summaryLines: string[] = [
-    `# filters: ${filterParts.join(", ")}`,
-    summaryHeaders.join(","),
-  ];
+  const summaryLines: string[] = [`# filters: ${filterParts.join(", ")}`, summaryHeaders.join(",")];
   for (const s of summary) {
-    summaryLines.push([
-      s.slug, s.title_en,
-      s.total, s.completed, s.in_progress,
-      s.lang_en, s.lang_si, s.lang_ta,
-      s.first_started_at, s.last_started_at,
-    ].map(escape).join(","));
+    summaryLines.push(
+      [
+        s.slug,
+        s.title_en,
+        s.total,
+        s.completed,
+        s.in_progress,
+        s.lang_en,
+        s.lang_si,
+        s.lang_ta,
+        s.first_started_at,
+        s.last_started_at,
+      ]
+        .map(escape)
+        .join(","),
+    );
   }
   files.unshift({ name: "summary.csv", csv: "\uFEFF" + summaryLines.join("\n") });
 
@@ -843,10 +869,10 @@ export function assembleZipBundle(input: {
   const statusPart = data.validOnly
     ? "valid-completed"
     : effectiveStatus === "completed"
-    ? "completed"
-    : effectiveStatus === "in_progress"
-    ? "in-progress"
-    : "all-statuses";
+      ? "completed"
+      : effectiveStatus === "in_progress"
+        ? "in-progress"
+        : "all-statuses";
   const dateTag = dateCol === "completed_at" ? "completed" : "started";
   const filenameParts = [
     data.surveySlug ?? "all-surveys",

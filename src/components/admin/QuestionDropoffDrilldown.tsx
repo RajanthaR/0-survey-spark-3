@@ -54,9 +54,7 @@ export function QuestionDropoffDrilldown({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-base">
-            {q?.label ?? "Question details"}
-          </DialogTitle>
+          <DialogTitle className="text-base">{q?.label ?? "Question details"}</DialogTitle>
           {q && (
             <DialogDescription className="text-xs">
               {q.section ? `${q.section} · ` : ""}
@@ -75,9 +73,8 @@ export function QuestionDropoffDrilldown({
               <Stat label="Drop-off" value={`${q.dropPct}%`} accent={q.dropPct > 0} />
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Based on {total.toLocaleString()} {total === 1 ? "respondent" : "respondents"} in
-              the current filter. Drop-off is the percentage-point loss vs. the previous
-              question.
+              Based on {total.toLocaleString()} {total === 1 ? "respondent" : "respondents"} in the
+              current filter. Drop-off is the percentage-point loss vs. the previous question.
             </p>
 
             {/* Top N selected answers */}
@@ -115,8 +112,8 @@ export function QuestionDropoffDrilldown({
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                No per-answer distribution for this question type (free text, numeric,
-                consent, etc.).
+                No per-answer distribution for this question type (free text, numeric, consent,
+                etc.).
               </p>
             )}
           </div>
@@ -128,15 +125,7 @@ export function QuestionDropoffDrilldown({
   );
 }
 
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
+function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>

@@ -18,7 +18,12 @@ export function AdminResponseDetail({ responseId }: { responseId: string }) {
   const [state, setState] = useState<
     | { kind: "loading" }
     | { kind: "error"; message: string }
-    | { kind: "ready"; surveySlug: string; lang: "en" | "si" | "ta"; answers: Record<string, unknown> }
+    | {
+        kind: "ready";
+        surveySlug: string;
+        lang: "en" | "si" | "ta";
+        answers: Record<string, unknown>;
+      }
   >({ kind: "loading" });
 
   useEffect(() => {
@@ -59,9 +64,7 @@ export function AdminResponseDetail({ responseId }: { responseId: string }) {
     );
   }
   if (state.kind === "error") {
-    return (
-      <div className="px-3 py-3 text-xs text-destructive">{state.message}</div>
-    );
+    return <div className="px-3 py-3 text-xs text-destructive">{state.message}</div>;
   }
   const survey = getSurvey(state.surveySlug);
   if (!survey) {

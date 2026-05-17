@@ -123,9 +123,7 @@ function snapshot(): AnalyticsSnapshot {
 
 async function expectPosition(lang: Lang, current: number) {
   await waitFor(() =>
-    expect(position().textContent?.trim()).toBe(
-      formatQuestionPosition(current, TOTAL, lang),
-    ),
+    expect(position().textContent?.trim()).toBe(formatQuestionPosition(current, TOTAL, lang)),
   );
 }
 

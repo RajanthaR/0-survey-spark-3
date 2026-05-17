@@ -46,13 +46,7 @@ describe("validateAssembledCsv", () => {
   });
 
   it("rejects a duplicated header line mid-stream", () => {
-    const result = ok([
-      "\uFEFF",
-      `${HEADER}\n`,
-      "1,alice,30\n",
-      `${HEADER}\n`,
-      "2,bob,28\n",
-    ]);
+    const result = ok(["\uFEFF", `${HEADER}\n`, "1,alice,30\n", `${HEADER}\n`, "2,bob,28\n"]);
     expect(result).toMatchObject({ ok: false });
     if (!result.ok) expect(result.reason).toMatch(/duplicate header/);
   });

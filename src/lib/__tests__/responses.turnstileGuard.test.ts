@@ -33,7 +33,7 @@ vi.mock("@/integrations/supabase/client.server", () => {
   return { supabaseAdmin: { from: () => buildFrom() } };
 });
 
-import { startResponse } from "@/lib/responses.functions";
+import { startResponseImpl } from "@/lib/responses.impl.server";
 
 vi.mock("@/lib/rate-limit.server", () => ({
   getClientIp: vi.fn(() => "203.0.113.42"),
@@ -81,9 +81,7 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
     globalThis.fetch = fetchSpy as typeof fetch;
 
     await expect(
-      startResponse({
-        data: { surveySlug: "demo", language: "en", consent: {} },
-      }),
+      startResponseImpl({ surveySlug: "demo", language: "en", consent: {} }),
     ).rejects.toThrow(/verif|challenge/i);
 
     expect(insertCalls).toHaveLength(0);
@@ -96,13 +94,11 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
     });
 
     await expect(
-      startResponse({
-        data: {
-          surveySlug: "demo",
-          language: "en",
-          consent: {},
-          turnstileToken: "x".repeat(40),
-        },
+      startResponseImpl({
+        surveySlug: "demo",
+        language: "en",
+        consent: {},
+        turnstileToken: "x".repeat(40),
       }),
     ).rejects.toThrow(/invalid-input-response|Verification failed/i);
 
@@ -115,13 +111,11 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
     });
 
     await expect(
-      startResponse({
-        data: {
-          surveySlug: "demo",
-          language: "en",
-          consent: {},
-          turnstileToken: "x".repeat(40),
-        },
+      startResponseImpl({
+        surveySlug: "demo",
+        language: "en",
+        consent: {},
+        turnstileToken: "x".repeat(40),
       }),
     ).rejects.toThrow(/timeout-or-duplicate/i);
 
@@ -132,13 +126,11 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
     mockSiteverify({ reject: new Error("ECONNRESET") });
 
     await expect(
-      startResponse({
-        data: {
-          surveySlug: "demo",
-          language: "en",
-          consent: {},
-          turnstileToken: "x".repeat(40),
-        },
+      startResponseImpl({
+        surveySlug: "demo",
+        language: "en",
+        consent: {},
+        turnstileToken: "x".repeat(40),
       }),
     ).rejects.toThrow(/verification service|verif/i);
 
@@ -149,13 +141,11 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
     mockSiteverify({ ok: false, body: { success: false } });
 
     await expect(
-      startResponse({
-        data: {
-          surveySlug: "demo",
-          language: "en",
-          consent: {},
-          turnstileToken: "x".repeat(40),
-        },
+      startResponseImpl({
+        surveySlug: "demo",
+        language: "en",
+        consent: {},
+        turnstileToken: "x".repeat(40),
       }),
     ).rejects.toThrow();
 
@@ -165,13 +155,11 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
   it("inserts exactly one row when siteverify returns success:true (positive control)", async () => {
     mockSiteverify({ body: { success: true } });
 
-    await startResponse({
-      data: {
-        surveySlug: "demo",
-        language: "en",
-        consent: { c13: true },
-        turnstileToken: "x".repeat(40),
-      },
+    await startResponseImpl({
+      surveySlug: "demo",
+      language: "en",
+      consent: { c13: true },
+      turnstileToken: "x".repeat(40),
     });
 
     expect(insertCalls).toHaveLength(1);
@@ -188,13 +176,11 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
     globalThis.fetch = fetchSpy as typeof fetch;
 
     await expect(
-      startResponse({
-        data: {
-          surveySlug: "demo",
-          language: "en",
-          consent: {},
-          bypassTurnstile: true,
-        },
+      startResponseImpl({
+        surveySlug: "demo",
+        language: "en",
+        consent: {},
+        bypassTurnstile: true,
       }),
     ).rejects.toThrow(/verif|challenge/i);
 
@@ -208,13 +194,11 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as typeof fetch;
 
-    await startResponse({
-      data: {
-        surveySlug: "demo",
-        language: "en",
-        consent: { c14: true },
-        bypassTurnstile: true,
-      },
+    await startResponseImpl({
+      surveySlug: "demo",
+      language: "en",
+      consent: { c14: true },
+      bypassTurnstile: true,
     });
 
     expect(insertCalls).toHaveLength(1);
@@ -228,25 +212,20 @@ describe("startResponse — Turnstile guard blocks Supabase writes on verificati
   });
 
   it("includes remoteip in the siteverify request body when getClientIp returns a real IP", async () => {
-    const fetchSpy = vi.fn(async () =>
-      new Response(JSON.stringify({ success: true }), { status: 200 }),
+    const fetchSpy = vi.fn(
+      async () => new Response(JSON.stringify({ success: true }), { status: 200 }),
     );
     globalThis.fetch = fetchSpy as typeof fetch;
 
-    await startResponse({
-      data: {
-        surveySlug: "demo",
-        language: "en",
-        consent: { c13: true },
-        turnstileToken: "x".repeat(40),
-      },
+    await startResponseImpl({
+      surveySlug: "demo",
+      language: "en",
+      consent: { c13: true },
+      turnstileToken: "x".repeat(40),
     });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
-    const [, reqInit] = fetchSpy.mock.calls[0] as unknown as [
-      string,
-      { body: URLSearchParams },
-    ];
+    const [, reqInit] = fetchSpy.mock.calls[0] as unknown as [string, { body: URLSearchParams }];
     expect(reqInit.body.get("secret")).toBe("test-secret-do-not-use");
     expect(reqInit.body.get("response")).toBe("x".repeat(40));
     expect(reqInit.body.get("remoteip")).toBe("203.0.113.42");

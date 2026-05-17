@@ -62,11 +62,8 @@ vi.mock("@/integrations/supabase/client.server", () => {
   };
 });
 
-import {
-  startResponse,
-  saveAnswers,
-  completeResponse,
-} from "@/lib/responses.functions";
+import { startResponseImpl } from "@/lib/responses.impl.server";
+import { saveAnswers, completeResponse } from "@/lib/responses.functions";
 
 beforeEach(() => {
   insertCalls.length = 0;
@@ -77,9 +74,7 @@ describe("responses persistence — language is recorded on every write", () => 
   it.each(["en", "si", "ta"] as const)(
     "startResponse(%s) inserts the language column",
     async (lang) => {
-      await startResponse({
-        data: { surveySlug: "demo", language: lang, consent: {} },
-      });
+      await startResponseImpl({ surveySlug: "demo", language: lang, consent: {} });
       expect(insertCalls).toHaveLength(1);
       expect(insertCalls[0]).toMatchObject({
         survey_slug: "demo",
@@ -139,12 +134,8 @@ describe("responses persistence — language is recorded on every write", () => 
       });
     }
     expect(updateCalls).toHaveLength(sequence.length);
-    expect(updateCalls.map((u) => u.language)).toEqual(
-      sequence.map((s) => s.lang),
-    );
-    expect(updateCalls.map((u) => u.progress_pct)).toEqual(
-      sequence.map((s) => s.pct),
-    );
+    expect(updateCalls.map((u) => u.language)).toEqual(sequence.map((s) => s.lang));
+    expect(updateCalls.map((u) => u.progress_pct)).toEqual(sequence.map((s) => s.pct));
   });
 
   it("completeResponse marks status=completed and progress=100 (language preserved from prior saves)", async () => {

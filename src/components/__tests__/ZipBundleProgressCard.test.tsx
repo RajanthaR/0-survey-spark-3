@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import {
-  ZipBundleProgressCard,
-  type ZipBundleProgress,
-} from "../admin/ZipBundleProgressCard";
+import { ZipBundleProgressCard, type ZipBundleProgress } from "../admin/ZipBundleProgressCard";
 
 const base: ZipBundleProgress = {
   phase: "preparing",
@@ -57,9 +54,7 @@ describe("ZipBundleProgressCard", () => {
     expect(screen.getByText(/Step 3 \/ 3 · 100%/)).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
     // Singular noun forms when counts are 1.
-    expect(screen.getByTestId("zip-bundle-meta")).toHaveTextContent(
-      "1 survey · 1 row",
-    );
+    expect(screen.getByTestId("zip-bundle-meta")).toHaveTextContent("1 survey · 1 row");
   });
 
   it("uses role='status' + aria-live='polite' so SR users hear updates", () => {

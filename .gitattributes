@@ -1,0 +1,2 @@
+src/integrations/supabase/types.ts linguist-generated=true
+src/routeTree.gen.ts linguist-generated=true merge=union

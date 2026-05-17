@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  escapeCsvCell,
-  buildResponsesCsv,
-  type ResponseRow,
-} from "../responses-csv";
+import { escapeCsvCell, buildResponsesCsv, type ResponseRow } from "../responses-csv";
 
 /**
  * RFC-4180-ish CSV escaping + UTF-8 BOM handling.
@@ -59,7 +55,7 @@ describe("escapeCsvCell — must-quote cases", () => {
   it("quotes and doubles embedded double-quotes", () => {
     expect(escapeCsvCell('say "hi"')).toBe('"say ""hi"""');
     expect(escapeCsvCell('"')).toBe('""""');
-    expect(escapeCsvCell("\"\"")).toBe("\"\"\"\"\"\"");
+    expect(escapeCsvCell('""')).toBe('""""""');
   });
 
   it("handles all three delimiters in one cell", () => {
@@ -102,9 +98,7 @@ describe("UTF-8 BOM handling", () => {
     expect(Array.from(bytes.slice(0, 3))).toEqual([0xef, 0xbb, 0xbf]);
     // Body bytes follow the BOM unchanged. (TextDecoder strips a leading
     // BOM by default — pass ignoreBOM so we observe the raw round-trip.)
-    expect(
-      new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes),
-    ).toBe(BOM + "id,name\n1,a");
+    expect(new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes)).toBe(BOM + "id,name\n1,a");
   });
 
   it("BOM does not corrupt downstream CSV parsing of the first cell", () => {
@@ -189,9 +183,7 @@ describe("buildResponsesCsv — escaping in real rows", () => {
   it("JSON-encodes object answers and escapes the resulting quotes", () => {
     const { csv } = buildResponsesCsv(rows, "demo");
     // {"tags":["a,b","c\"d"]} → all internal " doubled, whole cell quoted.
-    expect(csv).toContain(
-      '"{""tags"":[""a,b"",""c\\""d""]}"',
-    );
+    expect(csv).toContain('"{""tags"":[""a,b"",""c\\""d""]}"');
   });
 
   it("emits empty cells for null/missing answers without breaking column count", () => {

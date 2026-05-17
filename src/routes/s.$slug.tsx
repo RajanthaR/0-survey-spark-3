@@ -16,9 +16,7 @@ export const Route = createFileRoute("/s/$slug")({
   component: SurveyPage,
   head: ({ params }) => {
     const survey = getSurvey(params.slug);
-    const title = survey
-      ? `${survey.title.en} — EIP Insight`
-      : "Survey — EIP Insight";
+    const title = survey ? `${survey.title.en} — EIP Insight` : "Survey — EIP Insight";
     const desc = survey?.subtitle.en ?? "Anonymous research survey.";
     return {
       meta: [

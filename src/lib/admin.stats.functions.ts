@@ -14,22 +14,29 @@ import { assertAdmin, fillDays } from "@/lib/admin.shared.server";
 
 export const getStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
-    surveySlug?: string;
-    statusFilter?: "completed" | "in_progress" | "all";
-    language?: "en" | "si" | "ta";
-    dateFrom?: string;
-    dateTo?: string;
-  }) =>
-    z
-      .object({
-        surveySlug: z.string().max(64).optional(),
-        statusFilter: z.enum(["completed", "in_progress", "all"]).optional(),
-        language: z.enum(["en", "si", "ta"]).optional(),
-        dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-        dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      })
-      .parse(d),
+  .inputValidator(
+    (d: {
+      surveySlug?: string;
+      statusFilter?: "completed" | "in_progress" | "all";
+      language?: "en" | "si" | "ta";
+      dateFrom?: string;
+      dateTo?: string;
+    }) =>
+      z
+        .object({
+          surveySlug: z.string().max(64).optional(),
+          statusFilter: z.enum(["completed", "in_progress", "all"]).optional(),
+          language: z.enum(["en", "si", "ta"]).optional(),
+          dateFrom: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
+          dateTo: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
@@ -156,11 +163,7 @@ export const getStats = createServerFn({ method: "POST" })
               const s = String(v).trim();
               if (!s) continue;
               answered += 1;
-              if (
-                q.type === "single_choice" ||
-                q.type === "likert_5" ||
-                q.type === "yes_no"
-              ) {
+              if (q.type === "single_choice" || q.type === "likert_5" || q.type === "yes_no") {
                 dist.set(labelOf(s), (dist.get(labelOf(s)) ?? 0) + 1);
               }
             }
@@ -178,9 +181,7 @@ export const getStats = createServerFn({ method: "POST" })
             section: pickText(q.section, "en"),
             answered,
             total: totalRespondents,
-            answeredPct: totalRespondents
-              ? Math.round((answered / totalRespondents) * 100)
-              : 0,
+            answeredPct: totalRespondents ? Math.round((answered / totalRespondents) * 100) : 0,
             distribution,
           };
         });
@@ -202,24 +203,31 @@ export const getStats = createServerFn({ method: "POST" })
 
 export const listResponses = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
-    surveySlug?: string;
-    page?: number;
-    pageSize?: number;
-    language?: "en" | "si" | "ta";
-    dateFrom?: string;
-    dateTo?: string;
-  }) =>
-    z
-      .object({
-        surveySlug: z.string().max(64).optional(),
-        page: z.number().int().min(0).max(10_000).default(0),
-        pageSize: z.number().int().min(1).max(200).default(50),
-        language: z.enum(["en", "si", "ta"]).optional(),
-        dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-        dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      })
-      .parse(d),
+  .inputValidator(
+    (d: {
+      surveySlug?: string;
+      page?: number;
+      pageSize?: number;
+      language?: "en" | "si" | "ta";
+      dateFrom?: string;
+      dateTo?: string;
+    }) =>
+      z
+        .object({
+          surveySlug: z.string().max(64).optional(),
+          page: z.number().int().min(0).max(10_000).default(0),
+          pageSize: z.number().int().min(1).max(200).default(50),
+          language: z.enum(["en", "si", "ta"]).optional(),
+          dateFrom: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
+          dateTo: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
@@ -227,9 +235,12 @@ export const listResponses = createServerFn({ method: "POST" })
     const to = from + data.pageSize - 1;
     let q = supabaseAdmin
       .from("responses")
-      .select("id, survey_slug, language, status, progress_pct, started_at, completed_at, contact", {
-        count: "exact",
-      })
+      .select(
+        "id, survey_slug, language, status, progress_pct, started_at, completed_at, contact",
+        {
+          count: "exact",
+        },
+      )
       .order("started_at", { ascending: false })
       .range(from, to);
     if (data.surveySlug) q = q.eq("survey_slug", data.surveySlug);
@@ -254,9 +265,7 @@ export const listResponses = createServerFn({ method: "POST" })
  */
 export const getResponseAnswers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) =>
-    z.object({ id: z.string().uuid() }).parse(d),
-  )
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     const { data: row, error } = await supabaseAdmin
@@ -282,28 +291,35 @@ export const getResponseAnswers = createServerFn({ method: "POST" })
 
 export const previewFilteredCount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
-    surveySlug?: string;
-    language?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    dateField?: "started_at" | "completed_at";
-    completedOnly?: boolean;
-    statusFilter?: "completed" | "in_progress" | "all";
-    validOnly?: boolean;
-  }) =>
-    z
-      .object({
-        surveySlug: z.string().min(1).max(64).optional(),
-        language: z.enum(["en", "si", "ta"]).optional(),
-        dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-        dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-        dateField: z.enum(["started_at", "completed_at"]).default("started_at"),
-        completedOnly: z.boolean().default(true),
-        statusFilter: z.enum(["completed", "in_progress", "all"]).optional(),
-        validOnly: z.boolean().default(false),
-      })
-      .parse(d),
+  .inputValidator(
+    (d: {
+      surveySlug?: string;
+      language?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      dateField?: "started_at" | "completed_at";
+      completedOnly?: boolean;
+      statusFilter?: "completed" | "in_progress" | "all";
+      validOnly?: boolean;
+    }) =>
+      z
+        .object({
+          surveySlug: z.string().min(1).max(64).optional(),
+          language: z.enum(["en", "si", "ta"]).optional(),
+          dateFrom: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
+          dateTo: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
+          dateField: z.enum(["started_at", "completed_at"]).default("started_at"),
+          completedOnly: z.boolean().default(true),
+          statusFilter: z.enum(["completed", "in_progress", "all"]).optional(),
+          validOnly: z.boolean().default(false),
+        })
+        .parse(d),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
@@ -313,10 +329,16 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
     // `completedOnly` boolean for older clients that haven't migrated yet.
     const effectiveStatus: "completed" | "in_progress" | "all" = data.validOnly
       ? "completed"
-      : data.statusFilter ?? (data.completedOnly ? "completed" : "all");
+      : (data.statusFilter ?? (data.completedOnly ? "completed" : "all"));
     const dateCol = data.dateField;
 
-    const applyFilters = <T extends { eq: Function; gte: Function; lte: Function }>(q: T): T => {
+    type FilterQuery<T> = T & {
+      eq(column: string, value: unknown): FilterQuery<T>;
+      gte(column: string, value: string): FilterQuery<T>;
+      lte(column: string, value: string): FilterQuery<T>;
+    };
+
+    const applyFilters = <T>(q: FilterQuery<T>): FilterQuery<T> => {
       let out = q;
       if (effectiveStatus !== "all") out = out.eq("status", effectiveStatus);
       if (data.surveySlug) out = out.eq("survey_slug", data.surveySlug);
@@ -332,7 +354,10 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
      * out before charting). Mirrors the date-filter contract above so the
      * timeseries the chart draws maps 1:1 to what the export will emit.
      */
-    const dateBucket = (r: { started_at?: string | null; completed_at?: string | null }): string => {
+    const dateBucket = (r: {
+      started_at?: string | null;
+      completed_at?: string | null;
+    }): string => {
       const v = dateCol === "completed_at" ? r.completed_at : r.started_at;
       return v ? String(v).slice(0, 10) : "";
     };
@@ -385,10 +410,8 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
     // Fast path: no per-row validation needed. Use one count head query
     // for the total, plus one bounded select for sample + breakdowns.
     if (!data.validOnly) {
-      const headBase = supabaseAdmin
-        .from("responses")
-        .select("*", { count: "exact", head: true });
-      const { count, error: headErr } = await applyFilters(headBase as any);
+      const headBase = supabaseAdmin.from("responses").select("*", { count: "exact", head: true });
+      const { count, error: headErr } = await applyFilters(headBase);
       if (headErr) throw new Error(headErr.message);
       const matched = count ?? 0;
 
@@ -402,14 +425,9 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
         byStatusCounts.in_progress = matched;
       } else {
         for (const s of ["completed", "in_progress"] as const) {
-          const sBase = supabaseAdmin
-            .from("responses")
-            .select("*", { count: "exact", head: true });
+          const sBase = supabaseAdmin.from("responses").select("*", { count: "exact", head: true });
           // Apply non-status filters by reusing applyFilters then forcing status.
-          const { count: sCount, error: sErr } = await applyFilters(sBase as any).eq(
-            "status",
-            s,
-          );
+          const { count: sCount, error: sErr } = await applyFilters(sBase).eq("status", s);
           if (sErr) throw new Error(sErr.message);
           byStatusCounts[s] = sCount ?? 0;
         }
@@ -428,7 +446,7 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
         .select("id, survey_slug, language, status, started_at, completed_at, contact")
         .order("started_at", { ascending: false })
         .range(0, BREAKDOWN_CAP - 1);
-      const { data: rows, error: bErr } = await applyFilters(breakdownBase as any);
+      const { data: rows, error: bErr } = await applyFilters(breakdownBase);
       if (bErr) throw new Error(bErr.message);
       for (const r of (rows ?? []) as Record<string, unknown>[]) {
         const slug = String(r.survey_slug ?? "");
@@ -446,8 +464,9 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
         totalFetched: matched,
         droppedInvalid: 0,
         droppedUnknownSurvey: 0,
-        bySurvey: Array.from(bySurveyMap, ([slug, count]) => ({ slug, count }))
-          .sort((a, b) => b.count - a.count),
+        bySurvey: Array.from(bySurveyMap, ([slug, count]) => ({ slug, count })).sort(
+          (a, b) => b.count - a.count,
+        ),
         byStatus: byStatusCounts,
         byDay: inWindow ? fillDays(inWindow.from, inWindow.to, byDayMap) : [],
         sample,
@@ -471,7 +490,7 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
         .select("id, survey_slug, language, status, started_at, completed_at, contact, answers")
         .order("started_at", { ascending: false })
         .range(page * PAGE, page * PAGE + PAGE - 1);
-      const { data: chunk, error } = await applyFilters(base as any);
+      const { data: chunk, error } = await applyFilters(base);
       if (error) throw new Error(error.message);
       const rows = (chunk ?? []) as Array<Record<string, unknown>>;
       totalFetched += rows.length;
@@ -503,8 +522,9 @@ export const previewFilteredCount = createServerFn({ method: "POST" })
       totalFetched,
       droppedInvalid,
       droppedUnknownSurvey,
-      bySurvey: Array.from(bySurveyMap, ([slug, count]) => ({ slug, count }))
-        .sort((a, b) => b.count - a.count),
+      bySurvey: Array.from(bySurveyMap, ([slug, count]) => ({ slug, count })).sort(
+        (a, b) => b.count - a.count,
+      ),
       byStatus: byStatusCounts,
       byDay: inWindow ? fillDays(inWindow.from, inWindow.to, byDayMap) : [],
       sample,
@@ -559,8 +579,7 @@ export const analyticsReportSchema = z
       const from = new Date(`${data.dateFrom}T00:00:00.000Z`);
       const to = new Date(`${data.dateTo}T00:00:00.000Z`);
       if (!Number.isNaN(from.getTime()) && !Number.isNaN(to.getTime())) {
-        const days =
-          Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1;
+        const days = Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1;
         if (days > 366) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -572,11 +591,7 @@ export const analyticsReportSchema = z
     }
   });
 
-function validateDate(
-  v: string | undefined,
-  ctx: z.RefinementCtx,
-  label: string,
-) {
+function validateDate(v: string | undefined, ctx: z.RefinementCtx, label: string) {
   if (v === undefined) return;
   if (typeof v !== "string" || v.trim() === "") {
     ctx.addIssue({

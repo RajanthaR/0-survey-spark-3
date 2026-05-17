@@ -1,8 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getClientIp, rateLimit } from "@/lib/rate-limit.server";
-import { verifyTurnstile } from "@/lib/turnstile.server";
 
 // Hard cap to prevent abusive payloads. ~64 KB is plenty for any realistic
 // survey response (text fields are short; long_text is the only large field).
@@ -16,6 +13,7 @@ function assertAnswersSize(answers: unknown) {
 }
 
 async function assertNotCompleted(resumeToken: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("responses")
     .select("status")
@@ -44,57 +42,13 @@ const StartInput = z.object({
   bypassTurnstile: z.boolean().optional(),
 });
 
+type StartData = z.infer<typeof StartInput>;
+
 export const startResponse = createServerFn({ method: "POST" })
   .inputValidator((data) => StartInput.parse(data))
   .handler(async ({ data }) => {
-    rateLimit(getClientIp(), { name: "startResponse", capacity: 30, windowMs: 10 * 60 * 1000 });
-    // Order matters: rate-limit first (cheap, blocks spam before we spend a
-    // siteverify roundtrip), THEN Turnstile (blocks bots before we touch the
-    // database), THEN insert. saveAnswers / completeResponse don't re-verify
-    // because they're already gated by the rotating resume_token issued
-    // here — re-prompting on every autosave would be hostile.
-    await verifyTurnstile(data.turnstileToken, {
-      bypassRequested: data.bypassTurnstile === true,
-    });
-    // Track when the preview bypass escape hatch was actually used so
-    // admins can filter / audit those rows. Only true when (a) the client
-    // requested a bypass AND (b) the deploy opted in via
-    // ALLOW_TURNSTILE_BYPASS=true. Without that env, verifyTurnstile
-    // throws before this line, so it can never silently flip on in prod.
-    const previewBypassUsed =
-      data.bypassTurnstile === true &&
-      process.env.ALLOW_TURNSTILE_BYPASS === "true";
-    if (previewBypassUsed) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        JSON.stringify({
-          tag: "preview_bypass_used",
-          surveySlug: data.surveySlug,
-          language: data.language,
-          ip: getClientIp(),
-          userAgent: data.userAgent ?? null,
-          at: new Date().toISOString(),
-        }),
-      );
-    }
-    const { data: row, error } = await supabaseAdmin
-      .from("responses")
-      .insert({
-        survey_slug: data.surveySlug,
-        language: data.language,
-        consent: data.consent,
-        user_agent: data.userAgent ?? null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        preview_bypass: previewBypassUsed,
-      } as any)
-      .select("id, resume_token")
-      .single();
-    if (error || !row) throw new Error(error?.message ?? "Failed to start");
-    return {
-      id: row.id,
-      resumeToken: row.resume_token,
-      previewBypass: previewBypassUsed,
-    };
+    const { startResponseImpl } = await import("@/lib/responses.impl.server");
+    return startResponseImpl(data);
   });
 
 const SaveInput = z.object({
@@ -107,6 +61,8 @@ const SaveInput = z.object({
 export const saveAnswers = createServerFn({ method: "POST" })
   .inputValidator((data) => SaveInput.parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getClientIp, rateLimit } = await import("@/lib/rate-limit.server");
     rateLimit(getClientIp(), { name: "saveAnswers", capacity: 120, windowMs: 60 * 1000 });
     assertAnswersSize(data.answers);
     await assertNotCompleted(data.resumeToken);
@@ -117,8 +73,7 @@ export const saveAnswers = createServerFn({ method: "POST" })
     if (data.language) update.language = data.language;
     const { error } = await supabaseAdmin
       .from("responses")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update(update as any)
+      .update(update as never)
       .eq("resume_token", data.resumeToken);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -139,6 +94,8 @@ const CompleteInput = z.object({
 export const completeResponse = createServerFn({ method: "POST" })
   .inputValidator((data) => CompleteInput.parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getClientIp, rateLimit } = await import("@/lib/rate-limit.server");
     rateLimit(getClientIp(), { name: "completeResponse", capacity: 10, windowMs: 10 * 60 * 1000 });
     assertAnswersSize(data.answers);
     await assertNotCompleted(data.resumeToken);
@@ -146,7 +103,6 @@ export const completeResponse = createServerFn({ method: "POST" })
     const rotatedToken = crypto.randomUUID().replace(/-/g, "");
     const { error } = await supabaseAdmin
       .from("responses")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .update({
         answers: data.answers,
         contact: data.contact ?? null,
@@ -154,7 +110,7 @@ export const completeResponse = createServerFn({ method: "POST" })
         status: "completed",
         completed_at: new Date().toISOString(),
         resume_token: rotatedToken,
-      } as any)
+      } as never)
       .eq("resume_token", data.resumeToken);
     if (error) throw new Error(error.message);
     return { ok: true, rotatedToken };
@@ -167,6 +123,8 @@ const ResumeInput = z.object({
 export const resumeResponse = createServerFn({ method: "POST" })
   .inputValidator((data) => ResumeInput.parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getClientIp, rateLimit } = await import("@/lib/rate-limit.server");
     rateLimit(getClientIp(), { name: "resumeResponse", capacity: 60, windowMs: 10 * 60 * 1000 });
     const { data: row, error } = await supabaseAdmin
       .from("responses")

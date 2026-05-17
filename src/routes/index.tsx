@@ -52,9 +52,7 @@ function Index() {
               search={{ token: undefined }}
               className="block rounded-2xl border bg-card p-5 transition hover:bg-accent/30"
             >
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                {s.slug}
-              </p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">{s.slug}</p>
               <h2 className="mt-1 text-lg font-semibold">{pickText(s.title, lang)}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{pickText(s.subtitle, lang)}</p>
               <div className="mt-3 flex items-center justify-between text-sm">

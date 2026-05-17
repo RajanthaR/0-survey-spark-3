@@ -22,14 +22,8 @@
  *      (no fetch calls), and emits `meta` → `done`.
  */
 import { describe, it, expect } from "vitest";
-import {
-  streamAllValidXlsxImpl,
-  type StreamAllValidXlsxEvent,
-} from "@/lib/admin.functions";
-import {
-  buildExportColumns,
-  buildExportHeaderRow,
-} from "@/lib/csv-export-shape";
+import { streamAllValidXlsxImpl, type StreamAllValidXlsxEvent } from "@/lib/admin.shared.server";
+import { buildExportColumns, buildExportHeaderRow } from "@/lib/csv-export-shape";
 
 const FIXED_NOW = () => new Date("2026-05-15T00:00:00.000Z");
 const EXPECTED_HEADER_ROW = buildExportHeaderRow(buildExportColumns());
@@ -60,15 +54,11 @@ const chunksOf = (
   events: StreamAllValidXlsxEvent[],
 ): Extract<StreamAllValidXlsxEvent, { type: "chunk" }>[] =>
   events.filter(
-    (e): e is Extract<StreamAllValidXlsxEvent, { type: "chunk" }> =>
-      e.type === "chunk",
+    (e): e is Extract<StreamAllValidXlsxEvent, { type: "chunk" }> => e.type === "chunk",
   );
 
 const metaOf = (events: StreamAllValidXlsxEvent[]) =>
-  events.find(
-    (e): e is Extract<StreamAllValidXlsxEvent, { type: "meta" }> =>
-      e.type === "meta",
-  )!;
+  events.find((e): e is Extract<StreamAllValidXlsxEvent, { type: "meta" }> => e.type === "meta")!;
 
 describe("streamAllValidXlsxImpl — resume from last page", () => {
   it("does not re-fetch pages before `startPage`", async () => {
@@ -105,8 +95,7 @@ describe("streamAllValidXlsxImpl — resume from last page", () => {
     const events = await collect(
       streamAllValidXlsxImpl({
         countCompleted: async () => 4,
-        fetchPage: async (page) =>
-          page === 1 ? [makeRow("c"), makeRow("d")] : [],
+        fetchPage: async (page) => (page === 1 ? [makeRow("c"), makeRow("d")] : []),
         sleep: async () => {},
         now: FIXED_NOW,
         pageSize: 2,
@@ -128,8 +117,7 @@ describe("streamAllValidXlsxImpl — resume from last page", () => {
     const events = await collect(
       streamAllValidXlsxImpl({
         countCompleted: async () => 6,
-        fetchPage: async (page) =>
-          page === 2 ? [makeRow("e"), makeRow("f")] : [],
+        fetchPage: async (page) => (page === 2 ? [makeRow("e"), makeRow("f")] : []),
         sleep: async () => {},
         now: FIXED_NOW,
         pageSize: 2,

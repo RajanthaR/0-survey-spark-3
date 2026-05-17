@@ -85,7 +85,9 @@ const SURVEY: Survey = {
 function clickMainCta(container: HTMLElement) {
   const btn = container.querySelector("main button.h-14") as HTMLButtonElement;
   if (!btn) throw new Error("No main CTA button found");
-  act(() => { btn.click(); });
+  act(() => {
+    btn.click();
+  });
 }
 
 function renderAtRequiredConsent() {
@@ -102,9 +104,7 @@ function renderAtRequiredConsent() {
 function getTriggers(): HTMLButtonElement[] {
   // Radix tags accordion triggers with data-radix-collection-item.
   return Array.from(
-    document.querySelectorAll<HTMLButtonElement>(
-      'button[aria-expanded][aria-controls]',
-    ),
+    document.querySelectorAll<HTMLButtonElement>("button[aria-expanded][aria-controls]"),
   );
 }
 
@@ -153,7 +153,9 @@ describe("Required consent accordion — keyboard + screen-reader a11y", () => {
     // Click via keyboard: Radix listens for click on the underlying <button>,
     // which both Space and Enter dispatch natively. Simulate the click that
     // those keys produce.
-    act(() => { first.click(); });
+    act(() => {
+      first.click();
+    });
     await waitFor(() => {
       triggers = getTriggers();
       expect(triggers[0].getAttribute("aria-expanded")).toBe("true");
@@ -166,7 +168,9 @@ describe("Required consent accordion — keyboard + screen-reader a11y", () => {
     expect(panel.textContent).toContain("I have read the information sheet.");
 
     // Single-collapsible: pressing again collapses.
-    act(() => { triggers[0].click(); });
+    act(() => {
+      triggers[0].click();
+    });
     await waitFor(() => {
       triggers = getTriggers();
       expect(triggers[0].getAttribute("aria-expanded")).toBe("false");
@@ -177,12 +181,16 @@ describe("Required consent accordion — keyboard + screen-reader a11y", () => {
   it("opening a different trigger collapses the previously open one (single-collapsible)", async () => {
     renderAtRequiredConsent();
     let triggers = getTriggers();
-    act(() => { triggers[0].click(); });
+    act(() => {
+      triggers[0].click();
+    });
     await waitFor(() => {
       triggers = getTriggers();
       expect(triggers[0].getAttribute("aria-expanded")).toBe("true");
     });
-    act(() => { triggers[1].click(); });
+    act(() => {
+      triggers[1].click();
+    });
     await waitFor(() => {
       triggers = getTriggers();
       expect(triggers[1].getAttribute("aria-expanded")).toBe("true");
@@ -226,9 +234,7 @@ describe("Required consent accordion — keyboard + screen-reader a11y", () => {
     // Advancing past required consent unmounts the accordion triggers and
     // mounts the optional-consent group with role="group".
     await waitFor(() => {
-      expect(
-        document.querySelectorAll('button[aria-expanded][aria-controls]'),
-      ).toHaveLength(0);
+      expect(document.querySelectorAll("button[aria-expanded][aria-controls]")).toHaveLength(0);
     });
   });
 });

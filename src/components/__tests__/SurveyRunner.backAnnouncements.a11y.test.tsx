@@ -169,9 +169,7 @@ describe("SurveyRunner — Back triggers progress + question-change SR announcem
       expect(liveAfter.getAttribute("aria-live")).toBe("polite");
       expect(liveAfter.getAttribute("role")).toBe("status");
       expect(liveAfter.getAttribute("aria-atomic")).toBe("true");
-      expect(liveAfter.textContent?.trim()).toBe(
-        formatQuestionPosition(2, TOTAL, lang),
-      );
+      expect(liveAfter.textContent?.trim()).toBe(formatQuestionPosition(2, TOTAL, lang));
       expect(liveAfter.textContent?.trim()).not.toBe(liveBefore);
 
       // (2) Question-change announcement: the visible question heading
@@ -196,9 +194,7 @@ describe("SurveyRunner — Back triggers progress + question-change SR announcem
       await expectPosition(container, lang, 1);
 
       expect(position(container)).toBe(live); // still the same node
-      expect(position(container).textContent?.trim()).toBe(
-        formatQuestionPosition(1, TOTAL, lang),
-      );
+      expect(position(container).textContent?.trim()).toBe(formatQuestionPosition(1, TOTAL, lang));
       expect(position(container).textContent?.trim()).not.toBe(liveBefore2);
       await waitFor(() => {
         expect(questionHeading(container).textContent).toContain(LABELS[lang][0]);

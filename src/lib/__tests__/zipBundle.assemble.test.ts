@@ -18,7 +18,7 @@
  */
 import { describe, it, expect } from "vitest";
 
-import { assembleZipBundle } from "@/lib/admin.functions";
+import { assembleZipBundle } from "@/lib/admin.shared.server";
 import { SURVEYS } from "@/surveys";
 
 const FIXED_NOW = new Date("2026-05-15T12:00:00.000Z");

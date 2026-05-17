@@ -17,14 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export type AllValidProgress = {
   processed: number;
   total: number;
-  phase:
-    | "starting"
-    | "restored"
-    | "resuming"
-    | "fetching"
-    | "paused"
-    | "finalizing"
-    | "cancelled";
+  phase: "starting" | "restored" | "resuming" | "fetching" | "paused" | "finalizing" | "cancelled";
   /** Smoothed rows/second; 0 until we have a sample. */
   rate: number;
   /** Estimated seconds remaining; null until rate + total are known. */
@@ -129,10 +122,7 @@ export function AllValidProgressCard({
   // rate/ETA — so the card visibly resets while the new stream spins up
   // (or, for `restored`, while it waits for the admin to click Resume).
   const isPreparing = isStarting || isResuming || isRestored;
-  const pct =
-    progress.total > 0
-      ? Math.min(100, (progress.processed / progress.total) * 100)
-      : 0;
+  const pct = progress.total > 0 ? Math.min(100, (progress.processed / progress.total) * 100) : 0;
 
   // Estimated remaining file size: project the average bytes-per-row
   // observed so far across the rows still to fetch. Only meaningful
@@ -142,8 +132,7 @@ export function AllValidProgressCard({
     progress.bytesProcessed && progress.processed > 0
       ? progress.bytesProcessed / progress.processed
       : 0;
-  const remainingBytes =
-    bytesPerRow > 0 && progress.total > 0 ? remainingRows * bytesPerRow : 0;
+  const remainingBytes = bytesPerRow > 0 && progress.total > 0 ? remainingRows * bytesPerRow : 0;
 
   const continuityError = progress.continuityError;
   const hasContinuityError = !!continuityError;
@@ -172,12 +161,9 @@ export function AllValidProgressCard({
           role="alert"
           className="mb-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs"
         >
-          <div className="font-medium text-destructive">
-            CSV continuity check failed
-          </div>
+          <div className="font-medium text-destructive">CSV continuity check failed</div>
           <div className="mt-1 text-muted-foreground">
-            <span className="font-medium text-foreground">Reason:</span>{" "}
-            {continuityError.reason}
+            <span className="font-medium text-foreground">Reason:</span> {continuityError.reason}
           </div>
           {(continuityError.page != null || continuityError.chunkIndex != null) && (
             <div
@@ -246,9 +232,7 @@ export function AllValidProgressCard({
             <>
               {progress.processed.toLocaleString()} row
               {progress.processed === 1 ? "" : "s"} fetched
-              {progress.total > 0 && (
-                <> / {progress.total.toLocaleString()}</>
-              )}
+              {progress.total > 0 && <> / {progress.total.toLocaleString()}</>}
               {" · no file saved"}
             </>
           ) : isRestored ? (
@@ -256,12 +240,9 @@ export function AllValidProgressCard({
               {progress.processed.toLocaleString()} row
               {progress.processed === 1 ? "" : "s"} buffered
               {progress.resumeFromPage != null && (
-                <>
-                  {" "}· resume continues from page{" "}
-                  {progress.resumeFromPage.toLocaleString()}
-                </>
-              )}
-              {" "}· rate/ETA will recompute on resume
+                <> · resume continues from page {progress.resumeFromPage.toLocaleString()}</>
+              )}{" "}
+              · rate/ETA will recompute on resume
             </span>
           ) : isResuming ? (
             <span data-testid="all-valid-resuming-hint">
@@ -271,20 +252,13 @@ export function AllValidProgressCard({
               {progress.resumeFromPage === 1 ? "" : "s"} reused · recalculating rate…
             </span>
           ) : isStarting ? (
-            <span data-testid="all-valid-preparing-hint">
-              Contacting server…
-            </span>
+            <span data-testid="all-valid-preparing-hint">Contacting server…</span>
           ) : (
             <>
               {progress.total > 0
                 ? `${progress.processed.toLocaleString()} / ${progress.total.toLocaleString()}`
                 : `${progress.processed.toLocaleString()}`}
-              {progress.total > 0 && (
-                <>
-                  {" "}
-                  · {Math.round(pct)}%
-                </>
-              )}
+              {progress.total > 0 && <> · {Math.round(pct)}%</>}
             </>
           )}
         </span>
@@ -366,19 +340,12 @@ export function AllValidProgressCard({
             {remainingRows.toLocaleString()} row
             {remainingRows === 1 ? "" : "s"} remaining
           </span>
-          <span>
-            {remainingBytes > 0
-              ? `~${formatBytes(remainingBytes)} left`
-              : "Sizing…"}
-          </span>
+          <span>{remainingBytes > 0 ? `~${formatBytes(remainingBytes)} left` : "Sizing…"}</span>
         </div>
       )}
 
       {!cancelled && !isPreparing && (progress.rateHistory?.length ?? 0) > 1 && (
-        <RateSparkline
-          history={progress.rateHistory ?? []}
-          paused={isPaused}
-        />
+        <RateSparkline history={progress.rateHistory ?? []} paused={isPaused} />
       )}
 
       {(onPause || onResume) && !cancelled && !isPreparing && progress.phase !== "finalizing" && (
@@ -418,9 +385,7 @@ export function AllValidProgressCard({
         </div>
       )}
 
-      {progress.integrity && (
-        <IntegrityReport integrity={progress.integrity} />
-      )}
+      {progress.integrity && <IntegrityReport integrity={progress.integrity} />}
     </div>
   );
 }
@@ -431,11 +396,7 @@ export function AllValidProgressCard({
  * any detected page gaps, and the end-of-file checksum status — so the
  * admin can verify the assembled file is valid before downloading.
  */
-function IntegrityReport({
-  integrity,
-}: {
-  integrity: NonNullable<AllValidProgress["integrity"]>;
-}) {
+function IntegrityReport({ integrity }: { integrity: NonNullable<AllValidProgress["integrity"]> }) {
   const {
     pagesReceived,
     minPage,
@@ -449,11 +410,7 @@ function IntegrityReport({
   const hasGaps = gaps.length > 0;
   const hasMismatch = chunkCrcMismatches > 0 || checksum === "fail" || hasGaps;
   const checksumLabel =
-    checksum === "ok"
-      ? "verified"
-      : checksum === "fail"
-        ? "MISMATCH"
-        : "pending";
+    checksum === "ok" ? "verified" : checksum === "fail" ? "MISMATCH" : "pending";
   const checksumTone =
     checksum === "ok"
       ? "text-foreground"
@@ -465,9 +422,7 @@ function IntegrityReport({
       data-testid="all-valid-integrity-report"
       data-integrity-status={hasMismatch ? "warn" : "ok"}
       className={`mt-2 rounded-md border p-2 text-[11px] ${
-        hasMismatch
-          ? "border-destructive/40 bg-destructive/5"
-          : "border-border/60 bg-muted/30"
+        hasMismatch ? "border-destructive/40 bg-destructive/5" : "border-border/60 bg-muted/30"
       }`}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -485,26 +440,22 @@ function IntegrityReport({
       </div>
       <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 tabular-nums">
         <dt className="text-muted-foreground">Pages received</dt>
-        <dd
-          className="text-right text-foreground"
-          data-testid="all-valid-integrity-pages"
-        >
+        <dd className="text-right text-foreground" data-testid="all-valid-integrity-pages">
           {pagesReceived.toLocaleString()}
           {minPage != null && maxPage != null && (
             <span className="text-muted-foreground">
-              {" "}(range {minPage}–{maxPage})
+              {" "}
+              (range {minPage}–{maxPage})
             </span>
           )}
         </dd>
         <dt className="text-muted-foreground">Continuity checks passed</dt>
-        <dd
-          className="text-right text-foreground"
-          data-testid="all-valid-integrity-checks"
-        >
+        <dd className="text-right text-foreground" data-testid="all-valid-integrity-checks">
           {continuityChecksPassed.toLocaleString()}
           {chunkCrcMismatches > 0 && (
             <span className="text-destructive">
-              {" "}· {chunkCrcMismatches.toLocaleString()} mismatch
+              {" "}
+              · {chunkCrcMismatches.toLocaleString()} mismatch
               {chunkCrcMismatches === 1 ? "" : "es"}
             </span>
           )}
@@ -512,10 +463,7 @@ function IntegrityReport({
         {duplicatesDropped > 0 && (
           <>
             <dt className="text-muted-foreground">Duplicates dropped</dt>
-            <dd
-              className="text-right text-foreground"
-              data-testid="all-valid-integrity-duplicates"
-            >
+            <dd className="text-right text-foreground" data-testid="all-valid-integrity-duplicates">
               {duplicatesDropped.toLocaleString()}
             </dd>
           </>
@@ -530,10 +478,7 @@ function IntegrityReport({
             : "none"}
         </dd>
         <dt className="text-muted-foreground">End-of-file checksum</dt>
-        <dd
-          className={`text-right ${checksumTone}`}
-          data-testid="all-valid-integrity-checksum"
-        >
+        <dd className={`text-right ${checksumTone}`} data-testid="all-valid-integrity-checksum">
           {checksumLabel}
         </dd>
       </dl>
@@ -546,13 +491,7 @@ function IntegrityReport({
  * we don't pull a chart library in just for this readout. Y-axis auto-
  * scales to the max sample so the line fills the available height.
  */
-function RateSparkline({
-  history,
-  paused,
-}: {
-  history: number[];
-  paused: boolean;
-}) {
+function RateSparkline({ history, paused }: { history: number[]; paused: boolean }) {
   const W = 160;
   const H = 28;
   const max = Math.max(...history, 1);

@@ -45,29 +45,29 @@
 :root {
   --radius: 1rem;
   /* Calm sustainability palette: deep forest, cream, warm amber */
-  --background: oklch(0.985 0.012 95);            /* warm cream */
-  --foreground: oklch(0.22 0.04 165);             /* deep forest ink */
+  --background: oklch(0.985 0.012 95); /* warm cream */
+  --foreground: oklch(0.22 0.04 165); /* deep forest ink */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.22 0.04 165);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.04 165);
-  --primary: oklch(0.42 0.10 160);                /* deep eco green */
+  --primary: oklch(0.42 0.1 160); /* deep eco green */
   --primary-foreground: oklch(0.985 0.012 95);
-  --primary-glow: oklch(0.62 0.16 155);           /* vibrant moss */
-  --secondary: oklch(0.94 0.025 110);             /* soft sage */
-  --secondary-foreground: oklch(0.30 0.07 160);
+  --primary-glow: oklch(0.62 0.16 155); /* vibrant moss */
+  --secondary: oklch(0.94 0.025 110); /* soft sage */
+  --secondary-foreground: oklch(0.3 0.07 160);
   --muted: oklch(0.95 0.018 100);
   --muted-foreground: oklch(0.48 0.04 160);
-  --accent: oklch(0.78 0.14 75);                  /* warm amber accent */
+  --accent: oklch(0.78 0.14 75); /* warm amber accent */
   --accent-foreground: oklch(0.22 0.04 165);
   --destructive: oklch(0.58 0.22 25);
   --destructive-foreground: oklch(0.985 0.012 95);
-  --border: oklch(0.90 0.025 110);
+  --border: oklch(0.9 0.025 110);
   --input: oklch(0.92 0.02 110);
   --ring: oklch(0.62 0.16 155);
   --leaf: oklch(0.72 0.18 145);
   --amber-glow: oklch(0.85 0.16 78);
-  --chart-1: oklch(0.42 0.10 160);
+  --chart-1: oklch(0.42 0.1 160);
   --chart-2: oklch(0.62 0.16 155);
   --chart-3: oklch(0.78 0.14 75);
   --chart-4: oklch(0.55 0.12 220);
@@ -87,10 +87,10 @@
   --secondary: oklch(0.28 0.04 165);
   --secondary-foreground: oklch(0.96 0.012 95);
   --muted: oklch(0.28 0.03 165);
-  --muted-foreground: oklch(0.70 0.03 130);
+  --muted-foreground: oklch(0.7 0.03 130);
   --accent: oklch(0.78 0.14 75);
   --accent-foreground: oklch(0.18 0.02 165);
-  --destructive: oklch(0.65 0.20 25);
+  --destructive: oklch(0.65 0.2 25);
   --destructive-foreground: oklch(0.96 0.012 95);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
@@ -100,28 +100,49 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html, body { -webkit-tap-highlight-color: transparent; }
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
   }
-  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
   /* Trilingual font stacks — keep Latin headings tight, but make sure
      Sinhala/Tamil glyphs render in their native fonts. */
-  :lang(si), :lang(si) h1, :lang(si) h2, :lang(si) h3 {
+  :lang(si),
+  :lang(si) h1,
+  :lang(si) h2,
+  :lang(si) h3 {
     font-family: "Noto Sans Sinhala", var(--font-sans);
   }
-  :lang(ta), :lang(ta) h1, :lang(ta) h2, :lang(ta) h3 {
+  :lang(ta),
+  :lang(ta) h1,
+  :lang(ta) h2,
+  :lang(ta) h3 {
     font-family: "Noto Sans Tamil", var(--font-sans);
   }
 }
 
 @layer utilities {
   .gradient-eco {
-    background-image: linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 60%, var(--leaf) 100%);
+    background-image: linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--primary-glow) 60%,
+      var(--leaf) 100%
+    );
   }
   .gradient-sun {
     background-image: linear-gradient(135deg, var(--amber-glow), var(--accent));
@@ -129,8 +150,12 @@
   .shadow-soft {
     box-shadow: 0 12px 40px -16px color-mix(in oklab, var(--primary) 35%, transparent);
   }
-  .text-balance { text-wrap: balance; }
-  .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 1rem); }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
 }
 
 @property --rainbow-angle {
@@ -141,7 +166,9 @@
 
 @layer utilities {
   @keyframes rainbow-spin {
-    to { --rainbow-angle: 360deg; }
+    to {
+      --rainbow-angle: 360deg;
+    }
   }
   /* Clockwise rainbow glow that travels around the card border. */
   .rainbow-glow {
@@ -157,15 +184,22 @@
     padding: 2px;
     background: conic-gradient(
       from var(--rainbow-angle),
-      #ff3b30, #ff9500, #ffcc00, #34c759,
-      #00c7be, #0a84ff, #5e5ce6, #af52de,
-      #ff2d55, #ff3b30
+      #ff3b30,
+      #ff9500,
+      #ffcc00,
+      #34c759,
+      #00c7be,
+      #0a84ff,
+      #5e5ce6,
+      #af52de,
+      #ff2d55,
+      #ff3b30
     );
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
-            mask-composite: exclude;
+    mask-composite: exclude;
     animation: rainbow-spin 3.5s linear infinite;
     pointer-events: none;
     z-index: -1;

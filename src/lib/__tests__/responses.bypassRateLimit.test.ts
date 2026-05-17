@@ -53,7 +53,7 @@ vi.mock("@/lib/rate-limit.server", () => ({
   __resetRateLimitForTests: vi.fn(),
 }));
 
-import { startResponse } from "@/lib/responses.functions";
+import { startResponseImpl } from "@/lib/responses.impl.server";
 
 const ORIGINAL_FETCH = globalThis.fetch;
 const ORIGINAL_ALLOW_BYPASS = process.env.ALLOW_TURNSTILE_BYPASS;
@@ -85,13 +85,11 @@ describe("startResponse — bypass requests stay rate-limited", () => {
     globalThis.fetch = fetchSpy as typeof fetch;
 
     await expect(
-      startResponse({
-        data: {
-          surveySlug: "demo",
-          language: "en",
-          consent: { c14: true },
-          bypassTurnstile: true,
-        },
+      startResponseImpl({
+        surveySlug: "demo",
+        language: "en",
+        consent: { c14: true },
+        bypassTurnstile: true,
       }),
     ).rejects.toMatchObject({ status: 429 });
 
@@ -106,13 +104,11 @@ describe("startResponse — bypass requests stay rate-limited", () => {
     globalThis.fetch = fetchSpy as typeof fetch;
 
     // 1st bypass call — allowed by the limiter, insert succeeds.
-    await startResponse({
-      data: {
-        surveySlug: "demo",
-        language: "en",
-        consent: { c14: true },
-        bypassTurnstile: true,
-      },
+    await startResponseImpl({
+      surveySlug: "demo",
+      language: "en",
+      consent: { c14: true },
+      bypassTurnstile: true,
     });
     expect(insertCalls).toHaveLength(1);
     expect(insertCalls[0]).toMatchObject({
@@ -122,13 +118,11 @@ describe("startResponse — bypass requests stay rate-limited", () => {
 
     // 2nd bypass call — rate-limited, must not reach the DB.
     await expect(
-      startResponse({
-        data: {
-          surveySlug: "demo",
-          language: "en",
-          consent: { c14: true },
-          bypassTurnstile: true,
-        },
+      startResponseImpl({
+        surveySlug: "demo",
+        language: "en",
+        consent: { c14: true },
+        bypassTurnstile: true,
       }),
     ).rejects.toMatchObject({ status: 429 });
 
@@ -141,13 +135,11 @@ describe("startResponse — bypass requests stay rate-limited", () => {
 
     let captured: unknown;
     try {
-      await startResponse({
-        data: {
-          surveySlug: "demo",
-          language: "en",
-          consent: { c14: true },
-          bypassTurnstile: true,
-        },
+      await startResponseImpl({
+        surveySlug: "demo",
+        language: "en",
+        consent: { c14: true },
+        bypassTurnstile: true,
       });
     } catch (e) {
       captured = e;

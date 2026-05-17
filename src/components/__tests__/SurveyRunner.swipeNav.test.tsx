@@ -40,11 +40,7 @@ vi.mock("framer-motion", async () => {
 // last-seen `direction` prop so we can assert nav direction from the DOM.
 vi.mock("@/components/survey/QuestionView", () => ({
   QuestionView: (props: { q: { id: string }; direction: 1 | -1 }) => (
-    <div
-      data-testid="q-stub"
-      data-qid={props.q.id}
-      data-dir={String(props.direction)}
-    />
+    <div data-testid="q-stub" data-qid={props.q.id} data-dir={String(props.direction)} />
   ),
 }));
 
@@ -57,10 +53,34 @@ const SURVEY: Survey = {
   estimatedMinutes: 1,
   consent: [],
   questions: [
-    { id: "q1", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q1", si: "Q1", ta: "Q1" }, required: false },
-    { id: "q2", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q2", si: "Q2", ta: "Q2" }, required: false },
-    { id: "q3", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q3", si: "Q3", ta: "Q3" }, required: false },
-    { id: "q4", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q4", si: "Q4", ta: "Q4" }, required: false },
+    {
+      id: "q1",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q1", si: "Q1", ta: "Q1" },
+      required: false,
+    },
+    {
+      id: "q2",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q2", si: "Q2", ta: "Q2" },
+      required: false,
+    },
+    {
+      id: "q3",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q3", si: "Q3", ta: "Q3" },
+      required: false,
+    },
+    {
+      id: "q4",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q4", si: "Q4", ta: "Q4" },
+      required: false,
+    },
   ],
 };
 
@@ -82,13 +102,16 @@ function activeQ() {
   return document.querySelector('[data-testid="q-stub"]') as HTMLElement;
 }
 function surface() {
-  return document.querySelector(
-    '[data-testid="question-swipe-surface"]',
-  ) as HTMLElement;
+  return document.querySelector('[data-testid="question-swipe-surface"]') as HTMLElement;
 }
 function swipe(el: HTMLElement, fromX: number, toX: number, fromY = 100, toY = 100) {
   act(() => {
-    fireEvent.pointerDown(el, { pointerId: 1, pointerType: "touch", clientX: fromX, clientY: fromY });
+    fireEvent.pointerDown(el, {
+      pointerId: 1,
+      pointerType: "touch",
+      clientX: fromX,
+      clientY: fromY,
+    });
     fireEvent.pointerUp(el, { pointerId: 1, pointerType: "touch", clientX: toX, clientY: toY });
   });
 }
@@ -155,8 +178,18 @@ describe("SurveyRunner — swipe navigation", () => {
   it("mouse pointers do not trigger navigation (buttons own that path)", async () => {
     renderRunner();
     act(() => {
-      fireEvent.pointerDown(surface(), { pointerId: 2, pointerType: "mouse", clientX: 240, clientY: 100 });
-      fireEvent.pointerUp(surface(), { pointerId: 2, pointerType: "mouse", clientX: 60, clientY: 100 });
+      fireEvent.pointerDown(surface(), {
+        pointerId: 2,
+        pointerType: "mouse",
+        clientX: 240,
+        clientY: 100,
+      });
+      fireEvent.pointerUp(surface(), {
+        pointerId: 2,
+        pointerType: "mouse",
+        clientX: 60,
+        clientY: 100,
+      });
     });
     await new Promise((r) => setTimeout(r, 20));
     expect(activeQ().getAttribute("data-qid")).toBe("q1");

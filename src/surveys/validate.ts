@@ -17,8 +17,7 @@ export function findVisualInvariantViolations(survey: Survey): string[] {
     const withoutIdx: number[] = [];
     opts.forEach((o, i) => (o.visual ? withIdx : withoutIdx).push(i));
     if (withIdx.length !== 0 && withoutIdx.length !== 0) {
-      const fmt = (idxs: number[]) =>
-        idxs.map((i) => `#${i} "${opts[i].value}"`).join(", ");
+      const fmt = (idxs: number[]) => idxs.map((i) => `#${i} "${opts[i].value}"`).join(", ");
       errors.push(
         `[${survey.slug}] Question "${q.id}" mixes options with and without visuals ` +
           `(${withIdx.length}/${opts.length} have a visual). ` +
@@ -49,6 +48,5 @@ export function assertSurveyVisualInvariants(surveys: Survey[]): void {
   if (import.meta.env?.DEV) {
     throw new Error(message);
   }
-  // eslint-disable-next-line no-console
   console.error(message);
 }

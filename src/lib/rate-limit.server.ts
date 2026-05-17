@@ -16,6 +16,11 @@ export interface RateLimitConfig {
   windowMs: number;
 }
 
+export interface RateLimitSnapshot {
+  tokens: number;
+  retrySec: number;
+}
+
 export function getClientIp(): string {
   // `getRequestHeader` requires an active H3 request context. In test
   // environments (vitest jsdom) the helpers are invoked directly with no
@@ -59,6 +64,24 @@ export function rateLimit(key: string, cfg: RateLimitConfig): void {
     });
   }
   buckets.set(id, { tokens, updatedAt: now });
+}
+
+/**
+ * Read the current bucket state without consuming a token.
+ */
+export function peekRateLimit(key: string, cfg: RateLimitConfig): RateLimitSnapshot {
+  const now = Date.now();
+  const id = `${cfg.name}:${key}`;
+  const refillPerMs = cfg.capacity / cfg.windowMs;
+  const cur = buckets.get(id);
+  const tokens = cur
+    ? Math.min(cfg.capacity, cur.tokens + (now - cur.updatedAt) * refillPerMs)
+    : cfg.capacity;
+
+  return {
+    tokens,
+    retrySec: tokens > 0 ? 0 : Math.ceil(1 / refillPerMs / 1000),
+  };
 }
 
 // Test-only reset hook.

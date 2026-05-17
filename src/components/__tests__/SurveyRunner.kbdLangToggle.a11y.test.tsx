@@ -118,17 +118,13 @@ function pressEnterOnFocused(expected: HTMLElement) {
 
 function assertAriaPressedExclusively(active: Lang) {
   for (const code of ["en", "si", "ta"] as const) {
-    expect(langPill(code).getAttribute("aria-pressed")).toBe(
-      code === active ? "true" : "false",
-    );
+    expect(langPill(code).getAttribute("aria-pressed")).toBe(code === active ? "true" : "false");
   }
 }
 
 async function expectHeader(lang: Lang, current: number) {
   await waitFor(() =>
-    expect(position().textContent?.trim()).toBe(
-      formatQuestionPosition(current, TOTAL, lang),
-    ),
+    expect(position().textContent?.trim()).toBe(formatQuestionPosition(current, TOTAL, lang)),
   );
 }
 

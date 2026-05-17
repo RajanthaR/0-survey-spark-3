@@ -115,11 +115,7 @@ export function QuestionView({
       initial={{ opacity: 0, x: offset }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -offset }}
-      transition={
-        reduceMotion
-          ? { duration: 0 }
-          : { type: "spring", stiffness: 320, damping: 32, mass: 0.6 }
-      }
+      transition={reduceMotion ? { duration: 0 } : { duration: 0.25 }}
       className="space-y-4"
       // `data-lang` + `data-lang-epoch` are observable in tests so the
       // language-switch transition can be asserted without depending on
@@ -148,11 +144,7 @@ export function QuestionView({
         </div>
       )}
 
-      <div
-        ref={textRef}
-        className={`space-y-3 ${fadeClass}`}
-        data-testid="lang-fade-text"
-      >
+      <div ref={textRef} className={`space-y-3 ${fadeClass}`} data-testid="lang-fade-text">
         <div className="text-xs font-medium uppercase tracking-wider text-primary">
           {pickText(q.section, lang)}
         </div>
@@ -196,7 +188,7 @@ function Field({
   switch (q.type) {
     case "single_choice":
     case "yes_no": {
-      const opts = q.type === "yes_no" ? YES_NO_OPTIONS : q.options ?? [];
+      const opts = q.type === "yes_no" ? YES_NO_OPTIONS : (q.options ?? []);
       const hasVisuals = questionHasVisuals(opts);
       return (
         <div className="grid gap-2" role="radiogroup">
@@ -211,12 +203,16 @@ function Field({
                 aria-checked={active}
                 onClick={() => onChange(o.value)}
                 className={`flex min-h-14 items-center gap-3 rounded-2xl border p-4 text-left transition ${
-                  active ? "border-primary bg-primary/10" : "border-border bg-card hover:bg-accent/30"
+                  active
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-card hover:bg-accent/30"
                 }`}
               >
                 <span
                   className={`grid size-5 place-items-center rounded-full border ${
-                    active ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-muted-foreground/40"
                   }`}
                 >
                   {active && <Check className="size-3.5" />}
@@ -253,7 +249,9 @@ function Field({
               >
                 <span
                   className={`grid size-5 place-items-center rounded-md border ${
-                    active ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-muted-foreground/40"
                   }`}
                 >
                   {active && <Check className="size-3.5" />}
@@ -326,8 +324,8 @@ function Field({
               (q.type === "email"
                 ? UI.placeholderEmail
                 : q.type === "tel"
-                ? UI.placeholderTel
-                : UI.placeholderText),
+                  ? UI.placeholderTel
+                  : UI.placeholderText),
             lang,
           )}
           value={(value as string) ?? ""}
@@ -385,7 +383,9 @@ function Field({
                         aria-pressed={active}
                         onClick={() => onChange({ ...obj, [k]: id })}
                         className={`grid h-10 place-items-center rounded-lg border text-xs font-semibold ${
-                          active ? "gradient-eco text-primary-foreground border-transparent" : "bg-background"
+                          active
+                            ? "gradient-eco text-primary-foreground border-transparent"
+                            : "bg-background"
                         }`}
                       >
                         {n}

@@ -96,22 +96,55 @@ export interface Survey {
   title: LocalizedString;
   subtitle: LocalizedString;
   estimatedMinutes: number;
-  consent: { id: string; label: LocalizedString; shortLabel?: LocalizedString; required?: boolean }[];
+  consent: {
+    id: string;
+    label: LocalizedString;
+    shortLabel?: LocalizedString;
+    required?: boolean;
+  }[];
   questions: Question[];
 }
 
 /** Shared Yes/No option dictionary used by yes_no questions and the codebook. */
 export const YES_NO_OPTIONS: Option[] = [
-  { value: "yes", label: { en: "Yes", si: "ඔව්", ta: "ஆம்" }, visual: { kind: "icon", name: "thumbs-up", tone: "positive" } },
-  { value: "no", label: { en: "No", si: "නැත", ta: "இல்லை" }, visual: { kind: "icon", name: "thumbs-down", tone: "negative" } },
+  {
+    value: "yes",
+    label: { en: "Yes", si: "ඔව්", ta: "ஆம்" },
+    visual: { kind: "icon", name: "thumbs-up", tone: "positive" },
+  },
+  {
+    value: "no",
+    label: { en: "No", si: "නැත", ta: "இல்லை" },
+    visual: { kind: "icon", name: "thumbs-down", tone: "negative" },
+  },
 ];
 
 export const LIKERT_5: Option[] = [
-  { value: "1", label: { en: "Strongly disagree", si: "කිසිසේත් එකඟ නොවේ", ta: "முற்றிலும் ஏற்கவில்லை" }, visual: { kind: "icon", name: "frown", tone: "negative" } },
-  { value: "2", label: { en: "Disagree", si: "එකඟ නොවේ", ta: "ஏற்கவில்லை" }, visual: { kind: "icon", name: "meh", tone: "negative" } },
-  { value: "3", label: { en: "Neutral", si: "මධ්‍යස්ථ", ta: "நடுநிலை" }, visual: { kind: "icon", name: "circle-dot" } },
-  { value: "4", label: { en: "Agree", si: "එකඟයි", ta: "ஏற்கிறேன்" }, visual: { kind: "icon", name: "smile", tone: "positive" } },
-  { value: "5", label: { en: "Strongly agree", si: "සම්පූර්ණයෙන් එකඟයි", ta: "முற்றிலும் ஏற்கிறேன்" }, visual: { kind: "icon", name: "laugh", tone: "positive" } },
+  {
+    value: "1",
+    label: { en: "Strongly disagree", si: "කිසිසේත් එකඟ නොවේ", ta: "முற்றிலும் ஏற்கவில்லை" },
+    visual: { kind: "icon", name: "frown", tone: "negative" },
+  },
+  {
+    value: "2",
+    label: { en: "Disagree", si: "එකඟ නොවේ", ta: "ஏற்கவில்லை" },
+    visual: { kind: "icon", name: "meh", tone: "negative" },
+  },
+  {
+    value: "3",
+    label: { en: "Neutral", si: "මධ්‍යස්ථ", ta: "நடுநிலை" },
+    visual: { kind: "icon", name: "circle-dot" },
+  },
+  {
+    value: "4",
+    label: { en: "Agree", si: "එකඟයි", ta: "ஏற்கிறேன்" },
+    visual: { kind: "icon", name: "smile", tone: "positive" },
+  },
+  {
+    value: "5",
+    label: { en: "Strongly agree", si: "සම්පූර්ණයෙන් එකඟයි", ta: "முற்றிலும் ஏற்கிறேன்" },
+    visual: { kind: "icon", name: "laugh", tone: "positive" },
+  },
 ];
 
 export const MONTHS_12: Option[] = [
@@ -131,21 +164,105 @@ export const MONTHS_12: Option[] = [
 
 /** Documents block — shared by Phase 1 (G) and Phase 3 (H) */
 export const DOC_OPTIONS: Option[] = [
-  { value: "annual_reports", label: { en: "Annual reports", si: "වාර්ෂික වාර්තා", ta: "ஆண்டு அறிக்கைகள்" }, visual: { kind: "icon", name: "file-text" } },
-  { value: "strategic_plans", label: { en: "Strategic plans", si: "ක්‍රමෝපාය සැලසුම්", ta: "மூலோபாய திட்டங்கள்" }, visual: { kind: "icon", name: "map" } },
-  { value: "policy_docs", label: { en: "Policy documents", si: "ප්‍රතිපත්ති ලේඛන", ta: "கொள்கை ஆவணங்கள்" }, visual: { kind: "icon", name: "book-open" } },
-  { value: "project_reports", label: { en: "Project reports", si: "ව්‍යාපෘති වාර්තා", ta: "திட்ட அறிக்கைகள்" }, visual: { kind: "icon", name: "bar-chart" } },
-  { value: "eia", label: { en: "Environmental impact assessments", si: "පාරිසරික බලපෑම් ඇගයීම්", ta: "சுற்றுச்சூழல் தாக்க மதிப்பீடுகள்" }, visual: { kind: "icon", name: "leaf" } },
-  { value: "feasibility", label: { en: "Feasibility studies", si: "හැකියාව අධ්‍යයන", ta: "சாத்தியக்கூறு ஆய்வுகள்" }, visual: { kind: "icon", name: "clipboard-check" } },
-  { value: "training", label: { en: "Training material / courses", si: "පුහුණු ද්‍රව්‍ය / පாඨமாலා", ta: "பயிற்சி பொருட்கள்" }, visual: { kind: "icon", name: "graduation-cap" } },
-  { value: "org_charts", label: { en: "Organisation structure charts", si: "සංවිධාන ව්‍යුහ සටහන්", ta: "அமைப்பு கட்டமைப்பு" }, visual: { kind: "icon", name: "network" } },
-  { value: "budgets", label: { en: "Budget documents", si: "අයවැය ලේඛන", ta: "வரவு செலவு ஆவணங்கள்" }, visual: { kind: "icon", name: "wallet" } },
-  { value: "kpi", label: { en: "Performance / KPI reports", si: "කාර්ය සාධන දර්ශක / KPI වාර්තා", ta: "செயல்திறன் / KPI அறிக்கைகள்" }, visual: { kind: "icon", name: "gauge" } },
+  {
+    value: "annual_reports",
+    label: { en: "Annual reports", si: "වාර්ෂික වාර්තා", ta: "ஆண்டு அறிக்கைகள்" },
+    visual: { kind: "icon", name: "file-text" },
+  },
+  {
+    value: "strategic_plans",
+    label: { en: "Strategic plans", si: "ක්‍රමෝපාය සැලසුම්", ta: "மூலோபாய திட்டங்கள்" },
+    visual: { kind: "icon", name: "map" },
+  },
+  {
+    value: "policy_docs",
+    label: { en: "Policy documents", si: "ප්‍රතිපත්ති ලේඛන", ta: "கொள்கை ஆவணங்கள்" },
+    visual: { kind: "icon", name: "book-open" },
+  },
+  {
+    value: "project_reports",
+    label: { en: "Project reports", si: "ව්‍යාපෘති වාර්තා", ta: "திட்ட அறிக்கைகள்" },
+    visual: { kind: "icon", name: "bar-chart" },
+  },
+  {
+    value: "eia",
+    label: {
+      en: "Environmental impact assessments",
+      si: "පාරිසරික බලපෑම් ඇගයීම්",
+      ta: "சுற்றுச்சூழல் தாக்க மதிப்பீடுகள்",
+    },
+    visual: { kind: "icon", name: "leaf" },
+  },
+  {
+    value: "feasibility",
+    label: { en: "Feasibility studies", si: "හැකියාව අධ්‍යයන", ta: "சாத்தியக்கூறு ஆய்வுகள்" },
+    visual: { kind: "icon", name: "clipboard-check" },
+  },
+  {
+    value: "training",
+    label: {
+      en: "Training material / courses",
+      si: "පුහුණු ද්‍රව්‍ය / පாඨமாலා",
+      ta: "பயிற்சி பொருட்கள்",
+    },
+    visual: { kind: "icon", name: "graduation-cap" },
+  },
+  {
+    value: "org_charts",
+    label: {
+      en: "Organisation structure charts",
+      si: "සංවිධාන ව්‍යුහ සටහන්",
+      ta: "அமைப்பு கட்டமைப்பு",
+    },
+    visual: { kind: "icon", name: "network" },
+  },
+  {
+    value: "budgets",
+    label: { en: "Budget documents", si: "අයවැය ලේඛන", ta: "வரவு செலவு ஆவணங்கள்" },
+    visual: { kind: "icon", name: "wallet" },
+  },
+  {
+    value: "kpi",
+    label: {
+      en: "Performance / KPI reports",
+      si: "කාර්ය සාධන දර්ශක / KPI වාර්තා",
+      ta: "செயல்திறன் / KPI அறிக்கைகள்",
+    },
+    visual: { kind: "icon", name: "gauge" },
+  },
 ];
 
 export const DOC_SHARING_OPTIONS: Option[] = [
-  { value: "all", label: { en: "Yes — all requested documents", si: "ඔව්, ඉල්ලූ සියලු ලේඛන", ta: "ஆம், கோரப்பட்ட அனைத்தும்" }, visual: { kind: "icon", name: "check-check", tone: "positive" } },
-  { value: "some", label: { en: "Yes — some, subject to approval", si: "ඔව්, සමහරක් (අනුමැතියට යටත්ව)", ta: "ஆம், சில (ஒப்புதலுக்கு உட்பட்டு)" }, visual: { kind: "icon", name: "check" } },
-  { value: "none", label: { en: "No — confidential documents", si: "නැත — රහස්‍ය ලේඛන", ta: "இல்லை — ரகசியம்" }, visual: { kind: "icon", name: "lock", tone: "negative" } },
-  { value: "on_request", label: { en: "Available after a formal request", si: "නිල ඉල්ලීමකින් පසු ලබාදිය හැක", ta: "முறையான கோரிக்கையின் பேரில்" }, visual: { kind: "icon", name: "mail" } },
+  {
+    value: "all",
+    label: {
+      en: "Yes — all requested documents",
+      si: "ඔව්, ඉල්ලූ සියලු ලේඛන",
+      ta: "ஆம், கோரப்பட்ட அனைத்தும்",
+    },
+    visual: { kind: "icon", name: "check-check", tone: "positive" },
+  },
+  {
+    value: "some",
+    label: {
+      en: "Yes — some, subject to approval",
+      si: "ඔව්, සමහරක් (අනුමැතියට යටත්ව)",
+      ta: "ஆம், சில (ஒப்புதலுக்கு உட்பட்டு)",
+    },
+    visual: { kind: "icon", name: "check" },
+  },
+  {
+    value: "none",
+    label: { en: "No — confidential documents", si: "නැත — රහස්‍ය ලේඛන", ta: "இல்லை — ரகசியம்" },
+    visual: { kind: "icon", name: "lock", tone: "negative" },
+  },
+  {
+    value: "on_request",
+    label: {
+      en: "Available after a formal request",
+      si: "නිල ඉල්ලීමකින් පසු ලබාදිය හැක",
+      ta: "முறையான கோரிக்கையின் பேரில்",
+    },
+    visual: { kind: "icon", name: "mail" },
+  },
 ];

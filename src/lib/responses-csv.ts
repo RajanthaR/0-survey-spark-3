@@ -98,11 +98,7 @@ import type { Lang, LocalizedString } from "@/lib/i18n";
 import { pickText } from "@/lib/i18n";
 import type { Survey, Question, Option } from "@/surveys/types";
 
-function localizeOptionValue(
-  value: unknown,
-  options: Option[] | undefined,
-  lang: Lang,
-): string {
+function localizeOptionValue(value: unknown, options: Option[] | undefined, lang: Lang): string {
   if (value == null) return "";
   if (!options || options.length === 0) return String(value);
   const hit = options.find((o) => o.value === String(value));
@@ -135,9 +131,7 @@ export function buildLocalizedResponsesCsv(
   // Only include answer columns for questions that this survey actually
   // defines, in survey-declared order — gives the recipient a stable column
   // ordering instead of alphabetical.
-  const questions = survey.questions.filter(
-    (q) => q.type !== "section_header",
-  );
+  const questions = survey.questions.filter((q) => q.type !== "section_header");
 
   const localizedHeaders = questions.map((q) => pickText(q.label, lang));
   const headers = [...RESPONSES_CSV_META_HEADERS, ...localizedHeaders];

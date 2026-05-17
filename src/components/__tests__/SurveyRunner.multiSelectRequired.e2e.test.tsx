@@ -74,8 +74,10 @@ const SURVEY: Survey = {
 
 function SetLang({ lang, children }: { lang: Lang; children: React.ReactNode }) {
   const { setLang } = useLang();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLang(lang); }, []);
+  useEffect(() => {
+    setLang(lang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return <>{children}</>;
 }
 
@@ -113,12 +115,16 @@ describe("SurveyRunner multi-select required validation", () => {
       expect(next().disabled).toBe(true);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
-      await act(async () => { fireEvent.click(optionButton("A")); });
+      await act(async () => {
+        fireEvent.click(optionButton("A"));
+      });
       expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("false");
 
       // Toggle off → no selections → disabled again.
-      await act(async () => { fireEvent.click(optionButton("A")); });
+      await act(async () => {
+        fireEvent.click(optionButton("A"));
+      });
       expect(next().disabled).toBe(true);
       expect(next().getAttribute("aria-disabled")).toBe("true");
       unmount();
@@ -130,34 +136,46 @@ describe("SurveyRunner multi-select required validation", () => {
       const next = () => screen.getByTestId("next-button") as HTMLButtonElement;
 
       // Advance past qReq.
-      await act(async () => { fireEvent.click(next()); });
+      await act(async () => {
+        fireEvent.click(next());
+      });
 
       // Now on qMin3 — empty.
       expect(next().disabled).toBe(true);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Pick A → 1/3 → still disabled.
-      await act(async () => { fireEvent.click(optionButton("A")); });
+      await act(async () => {
+        fireEvent.click(optionButton("A"));
+      });
       expect(next().disabled).toBe(true);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Pick B → 2/3 → still disabled.
-      await act(async () => { fireEvent.click(optionButton("B")); });
+      await act(async () => {
+        fireEvent.click(optionButton("B"));
+      });
       expect(next().disabled).toBe(true);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Pick C → 3/3 → enabled.
-      await act(async () => { fireEvent.click(optionButton("C")); });
+      await act(async () => {
+        fireEvent.click(optionButton("C"));
+      });
       expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("false");
 
       // Deselect C → back to 2/3 → re-disabled.
-      await act(async () => { fireEvent.click(optionButton("C")); });
+      await act(async () => {
+        fireEvent.click(optionButton("C"));
+      });
       expect(next().disabled).toBe(true);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Pick D → 3/3 → enabled again (different combination).
-      await act(async () => { fireEvent.click(optionButton("D")); });
+      await act(async () => {
+        fireEvent.click(optionButton("D"));
+      });
       expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("false");
       unmount();

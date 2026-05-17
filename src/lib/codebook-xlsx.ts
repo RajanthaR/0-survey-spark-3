@@ -60,18 +60,35 @@ export type CodebookXlsxResult = {
 /** Sheet name used in single-sheet (merged) mode. */
 export const CODEBOOK_SHEET_NAME = "Codebook";
 
-/** Convert an `xlsx` ArrayBuffer to base64 in fixed-size chunks (Worker-safe). */
-function bufferToBase64(buf: ArrayBuffer): string {
-  const bytes = new Uint8Array(buf);
+/** Convert bytes to base64 in fixed-size chunks (Worker-safe). */
+function bufferToBase64(buf: ArrayBuffer | Uint8Array): string {
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
   let bin = "";
   const CHUNK = 0x8000;
   for (let i = 0; i < bytes.length; i += CHUNK) {
-    bin += String.fromCharCode.apply(
-      null,
-      Array.from(bytes.subarray(i, i + CHUNK)),
-    );
+    bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
   }
   return btoa(bin);
+}
+
+async function persistFrozenHeaderRows(buf: ArrayBuffer): Promise<Uint8Array> {
+  const { strFromU8, strToU8, unzipSync, zipSync } = await import("fflate");
+  const zip = unzipSync(new Uint8Array(buf));
+  const sheetNames = Object.keys(zip).filter((name) =>
+    /^xl\/worksheets\/sheet\d+\.xml$/.test(name),
+  );
+
+  for (const name of sheetNames) {
+    const xml = strFromU8(zip[name]);
+    const sheetView =
+      '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>';
+    const patched = xml.includes("<sheetViews>")
+      ? xml.replace(/<sheetViews>[\s\S]*?<\/sheetViews>/, sheetView)
+      : xml.replace(/<sheetData>/, `${sheetView}<sheetData>`);
+    zip[name] = strToU8(patched);
+  }
+
+  return zipSync(zip);
 }
 
 /**
@@ -143,9 +160,7 @@ export function codebookXlsxCacheSize(): number {
  * Build the codebook XLSX, returning its base64-encoded body plus
  * structural metadata. Hits the in-process cache on identical inputs.
  */
-export async function buildCodebookXlsx(
-  input: CodebookXlsxInput,
-): Promise<CodebookXlsxResult> {
+export async function buildCodebookXlsx(input: CodebookXlsxInput): Promise<CodebookXlsxResult> {
   const key = cacheKey(input);
   const cached = cache.get(key);
   if (cached) {
@@ -155,8 +170,7 @@ export async function buildCodebookXlsx(
     return { ...cached, cacheHit: true };
   }
 
-  const langs: readonly CodebookLang[] =
-    input.langs.length > 0 ? input.langs : CODEBOOK_LANGS;
+  const langs: readonly CodebookLang[] = input.langs.length > 0 ? input.langs : CODEBOOK_LANGS;
   const slugs = input.slugs;
 
   const XLSX = await import("xlsx");
@@ -201,11 +215,12 @@ export async function buildCodebookXlsx(
   }
 
   const buf: ArrayBuffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-  const base64 = bufferToBase64(buf);
+  const frozenBuf = await persistFrozenHeaderRows(buf);
+  const base64 = bufferToBase64(frozenBuf);
 
   const value: CacheValue = {
     base64,
-    byteLength: buf.byteLength,
+    byteLength: frozenBuf.byteLength,
     sheetNames,
     headerRow,
     questionCount,
@@ -233,14 +248,9 @@ export function buildCodebookFilenameStem(opts: {
   date?: Date;
 }): string {
   const stamp = (opts.date ?? new Date()).toISOString().slice(0, 10);
-  const scope =
-    opts.surveySlug && opts.surveySlug !== "__all__"
-      ? `-${opts.surveySlug}`
-      : "";
-  const langTag =
-    opts.langs.length === CODEBOOK_LANGS.length ? "" : `-${opts.langs.join("")}`;
-  const multi =
-    opts.perLanguageSheets && opts.langs.length > 1 ? "-multisheet" : "";
+  const scope = opts.surveySlug && opts.surveySlug !== "__all__" ? `-${opts.surveySlug}` : "";
+  const langTag = opts.langs.length === CODEBOOK_LANGS.length ? "" : `-${opts.langs.join("")}`;
+  const multi = opts.perLanguageSheets && opts.langs.length > 1 ? "-multisheet" : "";
   return `eip-insight-codebook${scope}${langTag}${multi}-${stamp}`;
 }
 

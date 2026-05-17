@@ -52,7 +52,6 @@ export async function verifyTurnstile(
   // preview can validate the rest of the flow when Cloudflare rejects them
   // (e.g. shared corporate IP, headless browser).
   if (opts?.bypassRequested && process.env.ALLOW_TURNSTILE_BYPASS === "true") {
-    // eslint-disable-next-line no-console
     console.warn(
       "[turnstile] bypass honoured (ALLOW_TURNSTILE_BYPASS=true). Do NOT enable in production.",
     );
@@ -60,10 +59,7 @@ export async function verifyTurnstile(
   }
   if (!secret) {
     // Fail-open: keep the survey usable while the secret is being provisioned.
-    // eslint-disable-next-line no-console
-    console.warn(
-      "[turnstile] TURNSTILE_SECRET is not set — skipping verification (fail-open).",
-    );
+    console.warn("[turnstile] TURNSTILE_SECRET is not set — skipping verification (fail-open).");
     return;
   }
 
@@ -99,7 +95,6 @@ export async function verifyTurnstile(
     result = (await res.json()) as SiteverifyResponse;
   } catch (err) {
     if (err instanceof TurnstileVerificationError) throw err;
-    // eslint-disable-next-line no-console
     console.error("[turnstile] siteverify network error", err);
     throw new TurnstileVerificationError(
       "siteverify-unreachable",

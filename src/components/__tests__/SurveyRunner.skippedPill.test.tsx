@@ -81,10 +81,9 @@ describe("SurveyRunner — skipped progress pill", () => {
 
     // Header advanced to "Question 4 of 5" and the skip pill appears.
     await waitFor(() => {
-      expect(
-        container.querySelector('[data-testid="question-position"]')!
-          .textContent,
-      ).toBe("Question 4 of 5");
+      expect(container.querySelector('[data-testid="question-position"]')!.textContent).toBe(
+        "Question 4 of 5",
+      );
     });
     const pill = await waitFor(() => {
       const el = container.querySelector('[data-testid="skipped-pill"]');
@@ -97,9 +96,7 @@ describe("SurveyRunner — skipped progress pill", () => {
     // Auto-clears after the timeout.
     await waitFor(
       () => {
-        expect(
-          container.querySelector('[data-testid="skipped-pill"]'),
-        ).toBeNull();
+        expect(container.querySelector('[data-testid="skipped-pill"]')).toBeNull();
       },
       { timeout: 2500 },
     );
@@ -114,16 +111,13 @@ describe("SurveyRunner — skipped progress pill", () => {
     type(container, "a");
     clickNext(container);
     await waitFor(() => {
-      expect(
-        container.querySelector('[data-testid="question-position"]')!
-          .textContent,
-      ).toBe("Question 2 of 5");
+      expect(container.querySelector('[data-testid="question-position"]')!.textContent).toBe(
+        "Question 2 of 5",
+      );
     });
     // Give state a moment to settle and assert no pill appeared.
     await new Promise((r) => setTimeout(r, 30));
-    expect(
-      container.querySelector('[data-testid="skipped-pill"]'),
-    ).toBeNull();
+    expect(container.querySelector('[data-testid="skipped-pill"]')).toBeNull();
   });
 
   it("localizes the skipped pill: Sinhala uses 'මඟ හරින ලදී', Tamil uses 'தவிர்க்கப்பட்டது'", async () => {

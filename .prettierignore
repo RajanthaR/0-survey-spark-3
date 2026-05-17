@@ -2,7 +2,12 @@ node_modules
 dist
 .output
 .vinxi
+.tanstack
 pnpm-lock.yaml
 package-lock.json
 bun.lock
-routeTree.gen.ts
+src/routeTree.gen.ts
+src/integrations/supabase/types.ts
+audits
+Codex-audits
+Plans/Unified-Audit-Plan-2026-05-17

@@ -31,20 +31,32 @@ function parseCsv(csv: string): string[][] {
   for (let i = 0; i < csv.length; i += 1) {
     const ch = csv[i];
     if (inQuotes) {
-      if (ch === '"' && csv[i + 1] === '"') { cell += '"'; i += 1; }
-      else if (ch === '"') { inQuotes = false; }
-      else { cell += ch; }
+      if (ch === '"' && csv[i + 1] === '"') {
+        cell += '"';
+        i += 1;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        cell += ch;
+      }
     } else if (ch === '"') {
       inQuotes = true;
     } else if (ch === ",") {
-      row.push(cell); cell = "";
+      row.push(cell);
+      cell = "";
     } else if (ch === "\n") {
-      row.push(cell); rows.push(row); row = []; cell = "";
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
     } else {
       cell += ch;
     }
   }
-  if (cell.length > 0 || row.length > 0) { row.push(cell); rows.push(row); }
+  if (cell.length > 0 || row.length > 0) {
+    row.push(cell);
+    rows.push(row);
+  }
   return rows;
 }
 
@@ -170,11 +182,7 @@ describe("admin Download CSV — localized question + choice labels", () => {
   it.each(["en", "si", "ta"] as const)(
     "%s export uses localized headers, choice labels, and a language-tagged filename",
     (lang) => {
-      const { csv, filename, rowCount } = buildLocalizedResponsesCsv(
-        ROWS,
-        SURVEY,
-        lang,
-      );
+      const { csv, filename, rowCount } = buildLocalizedResponsesCsv(ROWS, SURVEY, lang);
 
       expect(rowCount).toBe(ROWS.length);
       expect(filename).toBe(`loc-export-responses-${lang}.csv`);
@@ -193,9 +201,7 @@ describe("admin Download CSV — localized question + choice labels", () => {
       const expectedQuestionHeaders = SURVEY.questions
         .filter((q) => q.type !== "section_header")
         .map((q) => pickText(q.label, lang));
-      expect(header.slice(RESPONSES_CSV_META_HEADERS.length)).toEqual(
-        expectedQuestionHeaders,
-      );
+      expect(header.slice(RESPONSES_CSV_META_HEADERS.length)).toEqual(expectedQuestionHeaders);
       expect(header).not.toContain(pickText(SURVEY.questions[4].label, lang));
 
       // ── Body rows: choice values are translated to localized labels ──

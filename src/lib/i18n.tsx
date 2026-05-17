@@ -10,13 +10,18 @@ export const LANGS: { code: Lang; label: string; native: string }[] = [
 
 export type LocalizedString = { en: string; si?: string; ta?: string };
 
+export const LANG_LABELS: Record<Lang, LocalizedString> = {
+  en: { en: "English", si: "ඉංග්‍රීසි", ta: "ஆங்கிலம்" },
+  si: { en: "Sinhala", si: "සිංහල", ta: "சிங்களம்" },
+  ta: { en: "Tamil", si: "දෙමළ", ta: "தமிழ்" },
+};
+
 const warned = new Set<string>();
 function warnFallback(key: string, lang: Lang) {
   if (import.meta.env.PROD) return;
   const id = `${lang}:${key}`;
   if (warned.has(id)) return;
   warned.add(id);
-  // eslint-disable-next-line no-console
   console.warn(`[i18n] missing ${lang} translation, falling back to en: "${key.slice(0, 60)}"`);
 }
 
@@ -54,7 +59,11 @@ export const UI = {
     si: "කරුණාකර පහත කරුණු කියවා පිළිගන්න. ඔබේ සහභාගීත්වය ස්වේච්ඡා වේ.",
     ta: "தொடர்வதற்கு முன் கீழே உள்ள உருப்படிகளை ஏற்றுக்கொள்ளவும்.",
   },
-  consentAgree: { en: "I agree and want to continue", si: "මම එකඟ වෙමි", ta: "நான் ஒப்புக்கொள்கிறேன்" },
+  consentAgree: {
+    en: "I agree and want to continue",
+    si: "මම එකඟ වෙමි",
+    ta: "நான் ஒப்புக்கொள்கிறேன்",
+  },
   progress: { en: "Progress", si: "ප්‍රගතිය", ta: "முன்னேற்றம்" },
   question: { en: "Question", si: "ප්‍රශ්නය", ta: "கேள்வி" },
   of: { en: "of", si: "/", ta: "இல்" },
@@ -84,7 +93,11 @@ export const UI = {
     si: "දැන් සුරැකීම අසාර්ථකයි.",
     ta: "சேமிக்க முடியவில்லை.",
   },
-  reviewTitle: { en: "Review your answers", si: "ඔබේ පිළිතුරු සමාලෝචනය කරන්න", ta: "உங்கள் பதில்களை மீளாய்வு செய்யவும்" },
+  reviewTitle: {
+    en: "Review your answers",
+    si: "ඔබේ පිළිතුරු සමාලෝචනය කරන්න",
+    ta: "உங்கள் பதில்களை மீளாய்வு செய்யவும்",
+  },
   reviewLead: {
     en: "Tap any answer to edit. When you're happy, continue to submit.",
     si: "සංස්කරණය කිරීමට ඕනෑම පිළිතුරක් තට්ටු කරන්න.",
@@ -92,9 +105,21 @@ export const UI = {
   },
   edit: { en: "Edit", si: "සංස්කරණය", ta: "திருத்து" },
   notAnswered: { en: "Not answered", si: "පිළිතුරු නොදුන්", ta: "பதிலளிக்கப்படவில்லை" },
-  invalidEmail: { en: "Please enter a valid email address.", si: "වලංගු ඊමේල් ලිපිනයක් ඇතුළත් කරන්න.", ta: "சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்." },
-  invalidTel: { en: "Please enter a valid phone number.", si: "වලංගු දුරකථන අංකයක් ඇතුළත් කරන්න.", ta: "சரியான தொலைபேசி எண்ணை உள்ளிடவும்." },
-  invalidNumber: { en: "Please enter a valid number.", si: "වලංගු අංකයක් ඇතුළත් කරන්න.", ta: "சரியான எண்ணை உள்ளிடவும்." },
+  invalidEmail: {
+    en: "Please enter a valid email address.",
+    si: "වලංගු ඊමේල් ලිපිනයක් ඇතුළත් කරන්න.",
+    ta: "சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.",
+  },
+  invalidTel: {
+    en: "Please enter a valid phone number.",
+    si: "වලංගු දුරකථන අංකයක් ඇතුළත් කරන්න.",
+    ta: "சரியான தொலைபேசி எண்ணை உள்ளிடவும்.",
+  },
+  invalidNumber: {
+    en: "Please enter a valid number.",
+    si: "වලංගු අංකයක් ඇතුළත් කරන්න.",
+    ta: "சரியான எண்ணை உள்ளிடவும்.",
+  },
   selectAtLeast: {
     en: "Please select at least {n} options.",
     si: "අවම වශයෙන් විකල්ප {n}ක් තෝරන්න.",
@@ -114,7 +139,11 @@ export const UI = {
     ta: "இவை விருப்பமானவை. தேர்வு செய்யாமலும் தொடரலாம்.",
   },
   continueLabel: { en: "Continue", si: "ඉදිරියට", ta: "தொடரவும்" },
-  tapToSelect: { en: "Tap card to select", si: "තේරීමට කාඩ්පත තට්ටු කරන්න", ta: "தேர்வு செய்ய அட்டையைத் தட்டவும்" },
+  tapToSelect: {
+    en: "Tap card to select",
+    si: "තේරීමට කාඩ්පත තට්ටු කරන්න",
+    ta: "தேர்வு செய்ய அட்டையைத் தட்டவும்",
+  },
   selected: { en: "Selected", si: "තෝරාගන්නා ලදී", ta: "தேர்ந்தெடுக்கப்பட்டது" },
   deselected: { en: "Deselected", si: "තේරීම ඉවත් කරන ලදී", ta: "தேர்வு நீக்கப்பட்டது" },
   optionalHintIdle: {
@@ -194,6 +223,9 @@ export const UI = {
     ta: "எந்த கேள்விக்கும் செல்லவும். பதிலளிக்கப்பட்டவை குறிக்கப்பட்டுள்ளன; தற்போதையது சிறப்பிக்கப்பட்டுள்ளது.",
   },
   answered: { en: "Answered", si: "පිළිතුරු දී ඇත", ta: "பதிலளிக்கப்பட்டது" },
+  skipped: { en: "skipped", si: "මඟ හරින ලදී", ta: "தவிர்க்கப்பட்டது" },
+  responseVisualHeading: { en: "Your selections", si: "ඔබේ තේරීම්", ta: "உங்கள் தேர்வுகள்" },
+  responseVisualTapHint: { en: "Tap to expand", si: "විස්තර බලන්න", ta: "விரிவாக்க தட்டவும்" },
   current: { en: "Current", si: "වත්මන්", ta: "தற்போதையது" },
   jumpToNextUnanswered: {
     en: "Jump to next unanswered",
@@ -273,9 +305,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ lang, setLang, adoptServerLang, langTouched }}>
-      {children}
-    </Ctx.Provider>
+    <Ctx.Provider value={{ lang, setLang, adoptServerLang, langTouched }}>{children}</Ctx.Provider>
   );
 }
 

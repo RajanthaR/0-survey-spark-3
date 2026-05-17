@@ -1,5 +1,7 @@
 # Survey Spark 3
 
+[![PR checks](https://github.com/RajanthaR/survey-spark-3/actions/workflows/pr.yml/badge.svg)](https://github.com/RajanthaR/survey-spark-3/actions/workflows/pr.yml)
+
 Trilingual research survey runner and admin analytics dashboard for EIP Insight.
 The app supports English, Sinhala, and Tamil questionnaires, save-and-resume
 flows, Supabase-backed response persistence, CSV/XLSX exports, codebooks, and
@@ -23,8 +25,8 @@ proprietary and fully owned by Rajantha R Ambegala. See [LICENSE](./LICENSE).
 
 ## Requirements
 
-- Bun 1.x
-- Node.js 22+ when using Node-based tooling
+- Bun 1.3.14
+- Node.js 24.15.0 when using Node-based tooling
 - Supabase project with the migrations in `supabase/migrations`
 - Cloudflare account if deploying to Workers
 
@@ -42,13 +44,20 @@ Useful scripts:
 
 ```bash
 bun run dev
+bun run typecheck
 bun run build
 bun run preview
 bun run lint
+bun run lint:fix
+bun run format:check
 bun run test
 bun run test:e2e
 bun run smoke
 ```
+
+See [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) if Bun is missing,
+Rollup native loading fails on macOS, or package-manager audit tooling expects
+a non-Bun lockfile.
 
 ## Environment
 

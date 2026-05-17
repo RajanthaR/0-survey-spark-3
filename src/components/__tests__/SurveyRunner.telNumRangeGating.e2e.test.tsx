@@ -94,8 +94,10 @@ const SURVEY: Survey = {
 
 function SetLang({ lang, children }: { lang: Lang; children: React.ReactNode }) {
   const { setLang } = useLang();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLang(lang); }, []);
+  useEffect(() => {
+    setLang(lang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return <>{children}</>;
 }
 

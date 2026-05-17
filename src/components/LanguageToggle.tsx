@@ -4,7 +4,9 @@ import { LANGS, useLang } from "@/lib/i18n";
 export function LanguageToggle({ compact = false }: { compact?: boolean }) {
   const { lang, setLang } = useLang();
   return (
-    <div className={`inline-flex items-center gap-1 rounded-full border bg-card p-1 ${compact ? "" : "shadow-soft"}`}>
+    <div
+      className={`inline-flex items-center gap-1 rounded-full border bg-card p-1 ${compact ? "" : "shadow-soft"}`}
+    >
       {LANGS.map((l) => {
         const active = l.code === lang;
         return (
@@ -22,7 +24,9 @@ export function LanguageToggle({ compact = false }: { compact?: boolean }) {
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
               />
             )}
-            <span className={`relative z-10 ${active ? "text-primary-foreground" : "text-foreground/70"}`}>
+            <span
+              className={`relative z-10 ${active ? "text-primary-foreground" : "text-foreground/70"}`}
+            >
               {l.label}
             </span>
           </button>

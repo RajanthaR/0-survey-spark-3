@@ -55,10 +55,34 @@ const SURVEY: Survey = {
   estimatedMinutes: 1,
   consent: [],
   questions: [
-    { id: "q1", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q1", si: "Q1", ta: "Q1" }, required: false },
-    { id: "q2", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q2", si: "Q2", ta: "Q2" }, required: false },
-    { id: "q3", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q3", si: "Q3", ta: "Q3" }, required: false },
-    { id: "q4", type: "text", section: { en: "S", si: "S", ta: "S" }, label: { en: "Q4", si: "Q4", ta: "Q4" }, required: false },
+    {
+      id: "q1",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q1", si: "Q1", ta: "Q1" },
+      required: false,
+    },
+    {
+      id: "q2",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q2", si: "Q2", ta: "Q2" },
+      required: false,
+    },
+    {
+      id: "q3",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q3", si: "Q3", ta: "Q3" },
+      required: false,
+    },
+    {
+      id: "q4",
+      type: "text",
+      section: { en: "S", si: "S", ta: "S" },
+      label: { en: "Q4", si: "Q4", ta: "Q4" },
+      required: false,
+    },
   ],
 };
 
@@ -86,7 +110,9 @@ function getNavButtons() {
 }
 
 function getQuestionInput(): HTMLInputElement {
-  const input = document.querySelector('main input[type="text"], main input:not([type])') as HTMLInputElement | null;
+  const input = document.querySelector(
+    'main input[type="text"], main input:not([type])',
+  ) as HTMLInputElement | null;
   if (!input) throw new Error("Question input not found");
   return input;
 }
@@ -118,9 +144,15 @@ describe("Survey question step — keyboard navigation a11y", () => {
     expect(next.tagName).toBe("BUTTON");
     // Accessible names: icon-only Back uses aria-label; Save has both icon
     // and visible text label; Next has visible text + icon.
-    expect((back.getAttribute("aria-label") ?? back.textContent ?? "").trim().length).toBeGreaterThan(0);
-    expect((save.getAttribute("aria-label") ?? save.textContent ?? "").trim().length).toBeGreaterThan(0);
-    expect((next.getAttribute("aria-label") ?? next.textContent ?? "").trim().length).toBeGreaterThan(0);
+    expect(
+      (back.getAttribute("aria-label") ?? back.textContent ?? "").trim().length,
+    ).toBeGreaterThan(0);
+    expect(
+      (save.getAttribute("aria-label") ?? save.textContent ?? "").trim().length,
+    ).toBeGreaterThan(0);
+    expect(
+      (next.getAttribute("aria-label") ?? next.textContent ?? "").trim().length,
+    ).toBeGreaterThan(0);
     // No positive tabindex hacks — all default (0).
     for (const b of buttons) expect(b.tabIndex).toBe(0);
     // Back is disabled on the first question; Next is enabled.
@@ -149,7 +181,9 @@ describe("Survey question step — keyboard navigation a11y", () => {
     const next = getNavButtons()[2];
     next.focus();
     expect(document.activeElement).toBe(next);
-    act(() => { next.click(); }); // Enter on a <button> dispatches click
+    act(() => {
+      next.click();
+    }); // Enter on a <button> dispatches click
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q2"));
   });
 
@@ -158,12 +192,16 @@ describe("Survey question step — keyboard navigation a11y", () => {
     await waitFor(() => getNavButtons().length === 3);
     let [back, , next] = getNavButtons();
     expect(back.disabled).toBe(true);
-    act(() => { next.click(); });
+    act(() => {
+      next.click();
+    });
     await waitFor(() => {
       [back, , next] = getNavButtons();
       expect(back.disabled).toBe(false);
     });
-    act(() => { back.click(); });
+    act(() => {
+      back.click();
+    });
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q1"));
     [back] = getNavButtons();
     expect(back.disabled).toBe(true);
@@ -174,16 +212,24 @@ describe("Survey question step — keyboard navigation a11y", () => {
     await waitFor(() => getNavButtons().length === 3);
     // Move forward two steps so Home has work to do.
     const next = getNavButtons()[2];
-    act(() => { next.click(); });
+    act(() => {
+      next.click();
+    });
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q2"));
-    act(() => { getNavButtons()[2].click(); });
+    act(() => {
+      getNavButtons()[2].click();
+    });
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q3"));
 
     // Fire End on the document body (not inside an input).
-    act(() => { fireEvent.keyDown(window, { key: "End" }); });
+    act(() => {
+      fireEvent.keyDown(window, { key: "End" });
+    });
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q4"));
 
-    act(() => { fireEvent.keyDown(window, { key: "Home" }); });
+    act(() => {
+      fireEvent.keyDown(window, { key: "Home" });
+    });
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q1"));
   });
 
@@ -191,7 +237,9 @@ describe("Survey question step — keyboard navigation a11y", () => {
     renderRunner();
     await waitFor(() => getNavButtons().length === 3);
     // Advance to Q2 via Next so we can prove Home doesn't reset us.
-    act(() => { getNavButtons()[2].click(); });
+    act(() => {
+      getNavButtons()[2].click();
+    });
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q2"));
     const input = getQuestionInput();
     input.focus();
@@ -207,7 +255,9 @@ describe("Survey question step — keyboard navigation a11y", () => {
   it("Home/End modifier-key combos are ignored (e.g. Ctrl+Home)", async () => {
     renderRunner();
     await waitFor(() => getNavButtons().length === 3);
-    act(() => { getNavButtons()[2].click(); });
+    act(() => {
+      getNavButtons()[2].click();
+    });
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q2"));
     fireEvent.keyDown(window, { key: "Home", ctrlKey: true });
     expect(getCurrentQuestionLabel()).toBe("Q2");
@@ -222,7 +272,9 @@ describe("Survey question step — keyboard navigation a11y", () => {
     fireEvent.keyDown(window, { key: "End" });
     await waitFor(() => expect(getCurrentQuestionLabel()).toBe("Q4"));
     const next = getNavButtons()[2];
-    act(() => { next.click(); });
+    act(() => {
+      next.click();
+    });
     await waitFor(() => {
       expect(document.querySelector("nav")).toBeNull();
     });
@@ -235,7 +287,9 @@ describe("Survey question step — keyboard navigation a11y", () => {
     expect(bar.getAttribute("aria-label")?.length ?? 0).toBeGreaterThan(0);
     const initial = Number(bar.getAttribute("aria-valuenow") ?? "0");
     // Advance and confirm value changes (monotonic for non-required text fields).
-    act(() => { getNavButtons()[2].click(); });
+    act(() => {
+      getNavButtons()[2].click();
+    });
     await waitFor(() => {
       const after = Number(getProgressBar().getAttribute("aria-valuenow") ?? "0");
       expect(after).toBeGreaterThanOrEqual(initial);

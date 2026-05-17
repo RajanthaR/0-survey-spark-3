@@ -48,9 +48,7 @@ const SURVEY: Survey = {
   title: { en: "T", si: "T", ta: "T" },
   subtitle: { en: "", si: "", ta: "" },
   estimatedMinutes: 1,
-  consent: [
-    { id: "o1", required: false, label: { en: "Opt", si: "Opt", ta: "Opt" } },
-  ],
+  consent: [{ id: "o1", required: false, label: { en: "Opt", si: "Opt", ta: "Opt" } }],
   questions: [
     {
       id: "q1",
@@ -74,9 +72,7 @@ function clickMainCta(container: HTMLElement) {
 // Continue button, both `.h-14`. `clickMainCta` would grab Back. This
 // helper targets the flex-1 Continue button instead.
 function clickOptionalContinue(container: HTMLElement) {
-  const btn = container.querySelector(
-    "main button.h-14.flex-1",
-  ) as HTMLButtonElement | null;
+  const btn = container.querySelector("main button.h-14.flex-1") as HTMLButtonElement | null;
   if (!btn) throw new Error("No optional-continue CTA found");
   act(() => {
     btn.click();
@@ -96,7 +92,9 @@ describe("SurveyRunner — preview Turnstile bypass e2e", () => {
     // 2nd call: bypass honoured, response persisted with a resumeToken.
     startResponse
       .mockRejectedValueOnce(
-        new Error("Verification failed (invalid-input-response). Please refresh the challenge and try again."),
+        new Error(
+          "Verification failed (invalid-input-response). Please refresh the challenge and try again.",
+        ),
       )
       .mockResolvedValueOnce({
         id: "row-id",
@@ -146,12 +144,10 @@ describe("SurveyRunner — preview Turnstile bypass e2e", () => {
 
     // Runner advanced past the consent panel — the first question is mounted.
     await waitFor(() => {
-      const q = document.querySelector('input, textarea');
+      const q = document.querySelector("input, textarea");
       expect(q).toBeTruthy();
       // The bypass button is no longer in the DOM.
-      expect(
-        document.querySelector('[data-testid="consent-verify-bypass"]'),
-      ).toBeNull();
+      expect(document.querySelector('[data-testid="consent-verify-bypass"]')).toBeNull();
     });
   });
 });

@@ -23,11 +23,7 @@
  */
 import { describe, it, expect } from "vitest";
 
-import {
-  buildCodebookHeaders,
-  buildCodebookRows,
-  CODEBOOK_LANGS,
-} from "@/lib/csv-export-shape";
+import { buildCodebookHeaders, buildCodebookRows, CODEBOOK_LANGS } from "@/lib/csv-export-shape";
 import { SURVEYS } from "@/surveys";
 
 function headerIdx(headers: readonly string[], h: string): number {
@@ -53,12 +49,8 @@ describe("codebook shown_if / max_select — language-agnostic invariance", () =
       expect(rows.length, `lang=${lang} row count`).toBe(full.rows.length);
 
       for (let i = 0; i < rows.length; i += 1) {
-        expect(rows[i][shownIdx], `row ${i} shown_if @ ${lang}`).toBe(
-          full.rows[i][fullShown],
-        );
-        expect(rows[i][maxIdx], `row ${i} max_select @ ${lang}`).toBe(
-          full.rows[i][fullMax],
-        );
+        expect(rows[i][shownIdx], `row ${i} shown_if @ ${lang}`).toBe(full.rows[i][fullShown]);
+        expect(rows[i][maxIdx], `row ${i} max_select @ ${lang}`).toBe(full.rows[i][fullMax]);
       }
     }
   });
@@ -178,14 +170,10 @@ describe("codebook shown_if — value shape and JSON round-trip", () => {
     const shownCol = headerIdx(headers, "shown_if");
 
     // p3_q5_months — legacy `{ questionId, equals: "high_some" }`
-    const monthsRows = rows.filter(
-      (r) => r[slugCol] === "phase-3" && r[qidCol] === "p3_q5_months",
-    );
+    const monthsRows = rows.filter((r) => r[slugCol] === "phase-3" && r[qidCol] === "p3_q5_months");
     expect(monthsRows.length).toBeGreaterThan(0);
     for (const r of monthsRows) {
-      expect(r[shownCol]).toBe(
-        '{"questionId":"p3_q5_seasonal","equals":"high_some"}',
-      );
+      expect(r[shownCol]).toBe('{"questionId":"p3_q5_seasonal","equals":"high_some"}');
     }
 
     // p3_q19_exchanges_with — `{ questionId, equals: ["same","other"] }`
@@ -194,9 +182,7 @@ describe("codebook shown_if — value shape and JSON round-trip", () => {
     );
     expect(exRows.length).toBeGreaterThan(0);
     for (const r of exRows) {
-      expect(r[shownCol]).toBe(
-        '{"questionId":"p3_q18_exchanges","equals":["same","other"]}',
-      );
+      expect(r[shownCol]).toBe('{"questionId":"p3_q18_exchanges","equals":["same","other"]}');
     }
   });
 });
@@ -258,9 +244,7 @@ describe("codebook max_select — null vs value rendering", () => {
       const qidCol = headerIdx(headers, "question_id");
       const maxCol = headerIdx(headers, "max_select");
       for (const [qid, want] of Object.entries(expected)) {
-        const matches = rows.filter(
-          (r) => r[slugCol] === "phase-3" && r[qidCol] === qid,
-        );
+        const matches = rows.filter((r) => r[slugCol] === "phase-3" && r[qidCol] === qid);
         expect(matches.length, `${qid} @ ${lang}`).toBeGreaterThan(0);
         for (const r of matches) {
           expect(r[maxCol], `${qid} @ ${lang}`).toBe(want);

@@ -14,10 +14,7 @@
  */
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
-import {
-  streamAllValidXlsxImpl,
-  type StreamAllValidXlsxEvent,
-} from "@/lib/admin.functions";
+import { streamAllValidXlsxImpl, type StreamAllValidXlsxEvent } from "@/lib/admin.shared.server";
 
 const FIXED_NOW = () => new Date("2026-05-15T00:00:00.000Z");
 const PAGE_SIZE = 2;
@@ -53,14 +50,10 @@ async function collect(
 
 const chunksOf = (events: StreamAllValidXlsxEvent[]) =>
   events.filter(
-    (e): e is Extract<StreamAllValidXlsxEvent, { type: "chunk" }> =>
-      e.type === "chunk",
+    (e): e is Extract<StreamAllValidXlsxEvent, { type: "chunk" }> => e.type === "chunk",
   );
 const metaOf = (events: StreamAllValidXlsxEvent[]) =>
-  events.find(
-    (e): e is Extract<StreamAllValidXlsxEvent, { type: "meta" }> =>
-      e.type === "meta",
-  )!;
+  events.find((e): e is Extract<StreamAllValidXlsxEvent, { type: "meta" }> => e.type === "meta")!;
 
 function assembleSheet(
   headerRow: string[],
@@ -113,8 +106,7 @@ describe("XLSX export — duplicate resume (same startPage replayed) does not du
     const firstAttempt = await collect(
       streamAllValidXlsxImpl({
         countCompleted: async () => 6,
-        fetchPage: async (page) =>
-          page === 0 || page === 1 ? PAGES[page] : [],
+        fetchPage: async (page) => (page === 0 || page === 1 ? PAGES[page] : []),
         sleep: async () => {},
         now: FIXED_NOW,
         pageSize: PAGE_SIZE,
