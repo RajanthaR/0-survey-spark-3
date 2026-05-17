@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 
 import { resumeResponse } from "@/lib/responses.functions";
+import { setStoredResumeToken } from "@/lib/resume-token-storage";
 
 export const Route = createFileRoute("/r/$token")({
   component: ResumePage,
@@ -23,12 +24,8 @@ function ResumePage() {
           navigate({ to: "/" });
           return;
         }
-        navigate({
-          to: "/s/$slug",
-          params: { slug: row.surveySlug },
-          search: { token },
-          replace: true,
-        });
+        setStoredResumeToken(row.surveySlug, token);
+        navigate({ to: "/s/$slug", params: { slug: row.surveySlug }, replace: true });
       })
       .catch(() => navigate({ to: "/" }));
     return () => {

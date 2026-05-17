@@ -37,6 +37,7 @@ import { OptionalConsentPanel } from "@/components/survey/OptionalConsentPanel";
 import { ResponseVisualSummary } from "@/components/survey/ResponseVisualSummary";
 import { QuestionMap } from "@/components/survey/QuestionMap";
 import { prefetchUpcomingOptionImages } from "@/surveys/visuals/prefetch";
+import { clearStoredResumeToken, setStoredResumeToken } from "@/lib/resume-token-storage";
 
 type Answers = Record<string, unknown>;
 type Stage = "intro" | "consent" | "consent-optional" | "questions" | "review" | "contact" | "done";
@@ -49,8 +50,6 @@ interface Props {
   initialConsent?: Record<string, boolean>;
   initialStatus?: string;
 }
-
-const LS_KEY = (slug: string) => `eip.token.${slug}`;
 
 export function SurveyRunner({
   survey,
@@ -153,15 +152,10 @@ export function SurveyRunner({
     prefetchUpcomingOptionImages(visible, idx);
   }, [stage, idx, visible]);
 
-  const resumeUrl =
-    typeof window !== "undefined" && token
-      ? `${window.location.origin}/s/${survey.slug}?token=${encodeURIComponent(token)}`
-      : "";
-
   // Persist token locally so a refresh on the same device resumes.
   useEffect(() => {
     if (token && typeof window !== "undefined") {
-      window.localStorage.setItem(LS_KEY(survey.slug), token);
+      setStoredResumeToken(survey.slug, token);
     }
   }, [token, survey.slug]);
 
@@ -233,12 +227,8 @@ export function SurveyRunner({
       });
       setToken(res.resumeToken);
       setVerifyError(null);
-      navigate({
-        to: "/s/$slug",
-        params: { slug: survey.slug },
-        search: { token: res.resumeToken },
-        replace: true,
-      });
+      setStoredResumeToken(survey.slug, res.resumeToken);
+      navigate({ to: "/s/$slug", params: { slug: survey.slug }, replace: true });
       return res.resumeToken;
     } finally {
       setBusy(false);
@@ -267,7 +257,7 @@ export function SurveyRunner({
     try {
       await completeFn({ data: { resumeToken: token, answers, contact } });
       setStage("done");
-      if (typeof window !== "undefined") window.localStorage.removeItem(LS_KEY(survey.slug));
+      clearStoredResumeToken(survey.slug);
     } catch {
       toast.error(pickText(UI.errorSave, lang));
     } finally {
@@ -856,9 +846,10 @@ export function SurveyRunner({
                 );
               })()}
             </div>
-            {resumeUrl && (
+            {token && (
               <ResumeStrip
-                url={resumeUrl}
+                surveySlug={survey.slug}
+                resumeToken={token}
                 label={pickText(UI.resumeLink, lang)}
                 copyLabel={pickText(UI.copy, lang)}
                 copiedLabel={pickText(UI.copied, lang)}

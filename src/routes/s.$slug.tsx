@@ -6,6 +6,11 @@ import { Loader2 } from "lucide-react";
 import { SurveyRunner } from "@/components/SurveyRunner";
 import { getSurvey } from "@/surveys";
 import { resumeResponse } from "@/lib/responses.functions";
+import {
+  clearStoredResumeToken,
+  getStoredResumeToken,
+  persistSearchTokenAndCleanUrl,
+} from "@/lib/resume-token-storage";
 
 type Search = { token?: string };
 
@@ -48,11 +53,16 @@ function SurveyPage() {
   } | null>(null);
 
   useEffect(() => {
-    if (token) return;
     if (typeof window === "undefined") return;
-    const local = window.localStorage.getItem(`eip.token.${slug}`);
+    if (searchToken) {
+      persistSearchTokenAndCleanUrl(slug, searchToken);
+      setToken(searchToken);
+      return;
+    }
+    if (token) return;
+    const local = getStoredResumeToken(slug);
     if (local) setToken(local);
-  }, [slug, token]);
+  }, [slug, searchToken, token]);
 
   useEffect(() => {
     if (!token) return;
@@ -70,7 +80,7 @@ function SurveyPage() {
       })
       .catch(() => {
         // invalid token — clear and start fresh
-        if (typeof window !== "undefined") window.localStorage.removeItem(`eip.token.${slug}`);
+        clearStoredResumeToken(slug);
         setToken(undefined);
       })
       .finally(() => !cancelled && setLoading(false));
