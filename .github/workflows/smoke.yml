@@ -1,0 +1,76 @@
+name: SSR smoke (deploy gate)
+
+# Smoke runs ONLY on push to main (post-merge). It used to live in `pr.yml`
+# but added ~70 s to every PR push. The risk window is small: a PR can now
+# merge with a CSP / SSR regression that smoke would have caught, but this
+# job runs immediately on the merge commit and surfaces the failure within
+# ~2 min, so a revert is cheap. The smoke script (`scripts/smoke-ssr.mjs`)
+# enforces the Phase 2 security-header contract (HSTS, Permissions-Policy,
+# Referrer-Policy, X-Frame-Options, X-Content-Type-Options, CSP nonce, no
+# unsafe-inline), so a smoke failure on main MUST be treated as a deploy
+# blocker — revert before any further pushes.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "audits/**"
+      - "Codex-audits/**"
+      - "Plans/**"
+      - "docs/**"
+      - "LICENSE"
+      - ".gitignore"
+      - ".gitattributes"
+      - ".editorconfig"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Build + preview + SSR smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.15.0
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Start preview
+        run: |
+          bun run preview -- --host 127.0.0.1 --port 4173 > preview.log 2>&1 &
+          echo $! > preview.pid
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat preview.log
+          exit 1
+
+      - name: Smoke
+        run: BASE_URL=http://127.0.0.1:4173 bun run smoke
+
+      - name: Upload preview log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-log
+          path: preview.log
+          retention-days: 7
