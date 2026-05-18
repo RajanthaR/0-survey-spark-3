@@ -23,23 +23,23 @@ describe("survey option visuals", () => {
   it("detects mixed-state questions", () => {
     const fake = {
       slug: "fake",
-      title: { en: "" },
-      subtitle: { en: "" },
+      title: { en: "", si: "", ta: "" },
+      subtitle: { en: "", si: "", ta: "" },
       estimatedMinutes: 0,
       consent: [],
       questions: [
         {
           id: "mixed",
           type: "single_choice" as const,
-          section: { en: "" },
-          label: { en: "" },
+          section: { en: "", si: "", ta: "" },
+          label: { en: "", si: "", ta: "" },
           options: [
             {
               value: "a",
-              label: { en: "a" },
+              label: { en: "a", si: "a", ta: "a" },
               visual: { kind: "icon" as const, name: "check" as const },
             },
-            { value: "b", label: { en: "b" } },
+            { value: "b", label: { en: "b", si: "b", ta: "b" } },
           ],
         },
       ],
@@ -52,19 +52,19 @@ describe("survey option visuals", () => {
   describe("error message detail", () => {
     const fake = (extras: { id: string; opts: Array<{ value: string; visual?: boolean }> }) => ({
       slug: "demo",
-      title: { en: "" },
-      subtitle: { en: "" },
+      title: { en: "", si: "", ta: "" },
+      subtitle: { en: "", si: "", ta: "" },
       estimatedMinutes: 0,
       consent: [],
       questions: [
         {
           id: extras.id,
           type: "single_choice" as const,
-          section: { en: "" },
-          label: { en: "" },
+          section: { en: "", si: "", ta: "" },
+          label: { en: "", si: "", ta: "" },
           options: extras.opts.map((o) => ({
             value: o.value,
-            label: { en: o.value },
+            label: { en: o.value, si: o.value, ta: o.value },
             ...(o.visual ? { visual: { kind: "icon" as const, name: "check" as const } } : {}),
           })),
         },
@@ -109,23 +109,23 @@ describe("survey option visuals", () => {
 
     const badSurvey = {
       slug: "bad",
-      title: { en: "" },
-      subtitle: { en: "" },
+      title: { en: "", si: "", ta: "" },
+      subtitle: { en: "", si: "", ta: "" },
       estimatedMinutes: 0,
       consent: [],
       questions: [
         {
           id: "bad-q",
           type: "single_choice" as const,
-          section: { en: "" },
-          label: { en: "" },
+          section: { en: "", si: "", ta: "" },
+          label: { en: "", si: "", ta: "" },
           options: [
             {
               value: "one",
-              label: { en: "one" },
+              label: { en: "one", si: "one", ta: "one" },
               visual: { kind: "icon" as const, name: "check" as const },
             },
-            { value: "two", label: { en: "two" } },
+            { value: "two", label: { en: "two", si: "two", ta: "two" } },
           ],
         },
       ],

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { adminPasswordSignIn } from "@/lib/admin-login-guard.functions";
 
-import { CenteredCard } from "./primitives";
+import { CenteredCard } from "./-primitives";
 
 /**
  * Admin sign-in / sign-up / forgot-password panel. Extracted from

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
 import { getClientIp, rateLimit } from "@/lib/rate-limit.server";
 import { verifyTurnstile } from "@/lib/turnstile.server";
 
@@ -45,15 +46,16 @@ export async function startResponseImpl(data: StartResponseData) {
     );
   }
   const supabaseAdmin = createAdminClient("responses.startResponse");
+  const insert: Database["public"]["Tables"]["responses"]["Insert"] = {
+    survey_slug: data.surveySlug,
+    language: data.language,
+    consent: data.consent,
+    user_agent: data.userAgent ?? null,
+    preview_bypass: previewBypassUsed,
+  };
   const { data: row, error } = await supabaseAdmin
     .from("responses")
-    .insert({
-      survey_slug: data.surveySlug,
-      language: data.language,
-      consent: data.consent,
-      user_agent: data.userAgent ?? null,
-      preview_bypass: previewBypassUsed,
-    } as never)
+    .insert(insert)
     .select("id, resume_token")
     .single();
   if (error || !row) throw new Error(error?.message ?? "Failed to start");

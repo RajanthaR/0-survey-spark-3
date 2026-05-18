@@ -15,7 +15,7 @@
  */
 
 import { SURVEYS } from "@/surveys";
-import { pickText } from "@/lib/i18n";
+import { pickText, type LocalizedString } from "@/lib/i18n";
 import { type Question, YES_NO_OPTIONS } from "@/surveys/types";
 
 export type ExportColumn = {
@@ -165,8 +165,7 @@ export function buildCodebookRows(
   // Preserve canonical EN→SI→TA ordering even if the caller passes them out of order.
   const langSet = new Set(langs);
   const orderedLangs = CODEBOOK_LANGS.filter((l) => langSet.has(l));
-  const pickLangs = (t: { en: string; si?: string; ta?: string } | undefined) =>
-    orderedLangs.map((l) => pickText(t, l));
+  const pickLangs = (t: LocalizedString | undefined) => orderedLangs.map((l) => pickText(t, l));
 
   for (const slug of slugs) {
     const survey = SURVEYS[slug];
@@ -191,13 +190,7 @@ export function buildCodebookRows(
         q.maxSelect != null ? String(q.maxSelect) : "",
       ];
 
-      const opts =
-        q.type === "yes_no"
-          ? (YES_NO_OPTIONS as unknown as Array<{
-              value: string;
-              label: { en: string; si?: string; ta?: string };
-            }>)
-          : (q.options ?? null);
+      const opts = q.type === "yes_no" ? YES_NO_OPTIONS : (q.options ?? null);
 
       if (opts && opts.length > 0) {
         for (const opt of opts) {

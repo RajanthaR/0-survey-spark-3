@@ -59,6 +59,9 @@ See [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) if Bun is missing,
 Rollup native loading fails on macOS, or package-manager audit tooling expects
 a non-Bun lockfile.
 
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the route map, server
+function boundaries, Supabase access rules, and contributor placement guide.
+
 ## Environment
 
 Required for local app usage:

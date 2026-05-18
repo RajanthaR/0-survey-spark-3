@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 // Hard cap to prevent abusive payloads. ~64 KB is plenty for any realistic
 // survey response (text fields are short; long_text is the only large field).
@@ -59,6 +60,13 @@ const SaveInput = z.object({
   language: z.enum(["en", "si", "ta"]).optional(),
 });
 
+type ResponseUpdate = Database["public"]["Tables"]["responses"]["Update"];
+type JsonRecord = Record<string, Json>;
+
+function toJsonRecord(value: Record<string, unknown>): Json {
+  return value as Json;
+}
+
 export const saveAnswers = createServerFn({ method: "POST" })
   .inputValidator((data) => SaveInput.parse(data))
   .handler(async ({ data }) => {
@@ -68,14 +76,14 @@ export const saveAnswers = createServerFn({ method: "POST" })
     assertAnswersSize(data.answers);
     await assertNotCompleted(data.resumeToken);
     const supabaseAdmin = createAdminClient("responses.saveAnswers");
-    const update: Record<string, unknown> = {
-      answers: data.answers,
+    const update: ResponseUpdate = {
+      answers: toJsonRecord(data.answers),
       progress_pct: data.progressPct,
     };
     if (data.language) update.language = data.language;
     const { error } = await supabaseAdmin
       .from("responses")
-      .update(update as never)
+      .update(update)
       .eq("resume_token", data.resumeToken);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -108,16 +116,17 @@ export const completeResponse = createServerFn({ method: "POST" })
     const supabaseAdmin = createAdminClient("responses.completeResponse");
     // Rotate resume_token on completion so any leaked URL is invalidated.
     const rotatedToken = crypto.randomUUID().replace(/-/g, "");
+    const update: ResponseUpdate = {
+      answers: toJsonRecord(data.answers),
+      contact: (data.contact ?? null) as Json | null,
+      progress_pct: 100,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      resume_token: rotatedToken,
+    };
     const { error } = await supabaseAdmin
       .from("responses")
-      .update({
-        answers: data.answers,
-        contact: data.contact ?? null,
-        progress_pct: 100,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-        resume_token: rotatedToken,
-      } as never)
+      .update(update)
       .eq("resume_token", data.resumeToken);
     if (error) throw new Error(error.message);
     return { ok: true, rotatedToken };
@@ -150,7 +159,7 @@ export const resumeResponse = createServerFn({ method: "POST" })
       surveySlug: row.survey_slug,
       language: row.language as "en" | "si" | "ta",
       status: row.status,
-      answers: (row.answers ?? {}) as Record<string, unknown> as never,
+      answers: (row.answers ?? {}) as JsonRecord,
       progressPct: row.progress_pct,
       consent: row.consent,
     };

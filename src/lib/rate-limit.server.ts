@@ -41,9 +41,10 @@ function bucketId(key: string, cfg: RateLimitConfig): string {
 
 function snapshotForBucket(bucket: Bucket | undefined, cfg: RateLimitConfig, now: number) {
   const refillPerMs = cfg.capacity / cfg.windowMs;
-  const tokens = bucket
+  const rawTokens = bucket
     ? Math.min(cfg.capacity, bucket.tokens + (now - bucket.updatedAt) * refillPerMs)
     : cfg.capacity;
+  const tokens = rawTokens < 0.01 ? 0 : rawTokens;
 
   return {
     tokens,

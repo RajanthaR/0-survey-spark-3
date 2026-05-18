@@ -1,10 +1,10 @@
 import type { Question } from "@/surveys/types";
 import { pickText, UI, type Lang } from "@/lib/i18n";
+import { isAnswered } from "@/lib/survey-logic";
+export { isAnswered } from "@/lib/survey-logic";
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const TEL_RE = /^[+()\-\s\d]{6,}$/;
-
-type Answers = Record<string, unknown>;
 
 export type ValidationError =
   | { code: "selectAtLeast"; min: number }
@@ -23,14 +23,6 @@ export function formatValidationError(err: ValidationError, lang: Lang): string 
     case "invalidNumber":
       return pickText(UI.invalidNumber, lang);
   }
-}
-
-export function isAnswered(q: Question, answers: Answers): boolean {
-  const v = answers[q.id];
-  if (v == null) return false;
-  if (Array.isArray(v)) return v.length > 0;
-  if (typeof v === "object") return Object.keys(v as object).length > 0;
-  return String(v).trim().length > 0;
 }
 
 /**

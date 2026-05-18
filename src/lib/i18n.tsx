@@ -8,7 +8,8 @@ export const LANGS: { code: Lang; label: string; native: string }[] = [
   { code: "ta", label: "த", native: "தமிழ்" },
 ];
 
-export type LocalizedString = { en: string; si?: string; ta?: string };
+export type LocalizedString = Record<Lang, string>;
+export type Translatable<T> = { [K in Lang]: T };
 
 export const LANG_LABELS: Record<Lang, LocalizedString> = {
   en: { en: "English", si: "ඉංග්‍රීසි", ta: "ஆங்கிலம்" },
@@ -28,8 +29,8 @@ function warnFallback(key: string, lang: Lang) {
 export function pickText(s: LocalizedString | string | undefined, lang: Lang): string {
   if (!s) return "";
   if (typeof s === "string") return s;
-  if (lang !== "en" && !s[lang] && s.en) warnFallback(s.en, lang);
-  return s[lang] || s.en || "";
+  if (lang !== "en" && !s[lang]) warnFallback(s.en, lang);
+  return s[lang] || s.en;
 }
 
 // UI strings

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isVisible, progressFor, sectionBreakdown, visibleQuestions } from "@/lib/survey-logic";
 import type { Question, Survey } from "@/surveys/types";
 
-const txt = (s: string) => ({ en: s });
+const txt = (s: string) => ({ en: s, si: s, ta: s });
 
 const baseSurvey: Survey = {
   slug: "test",

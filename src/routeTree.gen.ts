@@ -14,6 +14,11 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as AdminStatsRouteImport } from './routes/admin/stats'
+import { Route as AdminResponsesRouteImport } from './routes/admin/responses'
+import { Route as AdminReportsRouteImport } from './routes/admin/reports'
+import { Route as AdminExportsRouteImport } from './routes/admin/exports'
+import { Route as AdminAlertsRouteImport } from './routes/admin/alerts'
 import { Route as ApiAdminExportDotcsvRouteImport } from './routes/api/admin/export[.]csv'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -41,6 +46,31 @@ const RTokenRoute = RTokenRouteImport.update({
   path: '/r/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminStatsRoute = AdminStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminResponsesRoute = AdminResponsesRouteImport.update({
+  id: '/responses',
+  path: '/responses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminExportsRoute = AdminExportsRouteImport.update({
+  id: '/exports',
+  path: '/exports',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAlertsRoute = AdminAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiAdminExportDotcsvRoute = ApiAdminExportDotcsvRouteImport.update({
   id: '/api/admin/export.csv',
   path: '/api/admin/export.csv',
@@ -49,16 +79,26 @@ const ApiAdminExportDotcsvRoute = ApiAdminExportDotcsvRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/exports': typeof AdminExportsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/responses': typeof AdminResponsesRoute
+  '/admin/stats': typeof AdminStatsRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/exports': typeof AdminExportsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/responses': typeof AdminResponsesRoute
+  '/admin/stats': typeof AdminStatsRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
@@ -66,8 +106,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/exports': typeof AdminExportsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/responses': typeof AdminResponsesRoute
+  '/admin/stats': typeof AdminStatsRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
@@ -78,6 +123,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/reset-password'
+    | '/admin/alerts'
+    | '/admin/exports'
+    | '/admin/reports'
+    | '/admin/responses'
+    | '/admin/stats'
     | '/r/$token'
     | '/s/$slug'
     | '/api/admin/export.csv'
@@ -86,6 +136,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/reset-password'
+    | '/admin/alerts'
+    | '/admin/exports'
+    | '/admin/reports'
+    | '/admin/responses'
+    | '/admin/stats'
     | '/r/$token'
     | '/s/$slug'
     | '/api/admin/export.csv'
@@ -94,6 +149,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/reset-password'
+    | '/admin/alerts'
+    | '/admin/exports'
+    | '/admin/reports'
+    | '/admin/responses'
+    | '/admin/stats'
     | '/r/$token'
     | '/s/$slug'
     | '/api/admin/export.csv'
@@ -101,7 +161,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   RTokenRoute: typeof RTokenRoute
   SSlugRoute: typeof SSlugRoute
@@ -145,6 +205,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/stats': {
+      id: '/admin/stats'
+      path: '/stats'
+      fullPath: '/admin/stats'
+      preLoaderRoute: typeof AdminStatsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/responses': {
+      id: '/admin/responses'
+      path: '/responses'
+      fullPath: '/admin/responses'
+      preLoaderRoute: typeof AdminResponsesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/exports': {
+      id: '/admin/exports'
+      path: '/exports'
+      fullPath: '/admin/exports'
+      preLoaderRoute: typeof AdminExportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/alerts': {
+      id: '/admin/alerts'
+      path: '/alerts'
+      fullPath: '/admin/alerts'
+      preLoaderRoute: typeof AdminAlertsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/admin/export.csv': {
       id: '/api/admin/export.csv'
       path: '/api/admin/export.csv'
@@ -155,9 +250,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminAlertsRoute: typeof AdminAlertsRoute
+  AdminExportsRoute: typeof AdminExportsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminResponsesRoute: typeof AdminResponsesRoute
+  AdminStatsRoute: typeof AdminStatsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAlertsRoute: AdminAlertsRoute,
+  AdminExportsRoute: AdminExportsRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminResponsesRoute: AdminResponsesRoute,
+  AdminStatsRoute: AdminStatsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   RTokenRoute: RTokenRoute,
   SSlugRoute: SSlugRoute,
