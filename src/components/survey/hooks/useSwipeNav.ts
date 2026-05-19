@@ -1,5 +1,7 @@
 import { useCallback, useRef, type PointerEvent } from "react";
 
+const SWIPE_DIRECTION_THRESHOLD = 1.2;
+
 function isInteractiveTarget(target: HTMLElement | null): boolean {
   if (!target) return false;
   const tag = target.tagName;
@@ -38,7 +40,7 @@ export function useSwipeNav({
       const dx = e.clientX - start.x;
       const dy = e.clientY - start.y;
       if (Math.abs(dx) < threshold) return;
-      if (Math.abs(dx) <= Math.abs(dy) * 1.2) return;
+      if (Math.abs(dx) <= Math.abs(dy) * SWIPE_DIRECTION_THRESHOLD) return;
       if (dx < 0) onNext();
       else onBack();
     },

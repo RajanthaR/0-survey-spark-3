@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
 
+import type { Lang } from "@/lib/i18n";
+
 export type AutoSavePayload = {
   answers: Record<string, unknown>;
   progressPct: number;
-  language: "en" | "si" | "ta";
+  language: Lang;
 };
 
 export function useAutoSave({

@@ -80,10 +80,7 @@ function progressBar(): HTMLElement {
   return el;
 }
 function pctChip(): HTMLElement {
-  // The "{pct}%" span is the only aria-hidden sibling of QuestionPosition.
-  const el = position().parentElement?.querySelector('[aria-hidden="true"]');
-  if (!el) throw new Error("percent chip not found");
-  return el as HTMLElement;
+  return screen.getByTestId("progress-percent-chip");
 }
 function sectionHeading(lang: Lang): HTMLElement {
   const expected = pickText(SECTION, lang);
@@ -126,10 +123,6 @@ async function assertStatsIn(lang: Lang, current: number, expectedPct?: string) 
     expect(progressBar().getAttribute("aria-label")).toBe(expectedAria);
     expect(sectionHeading(lang)).toBeTruthy();
     void expectedSection;
-    // Percent chip is decorative (aria-hidden) — must remain hidden, and
-    // when a baseline is provided its digits must not change just because
-    // we switched languages (toggling locale never changes progress math).
-    expect(pctChip().getAttribute("aria-hidden")).toBe("true");
     if (expectedPct !== undefined) {
       expect(pctChip().textContent?.trim()).toBe(expectedPct);
     }

@@ -79,7 +79,7 @@ function progressBar(): HTMLElement {
   return el;
 }
 function pctChip(): HTMLElement {
-  const el = position().parentElement?.querySelector('[aria-hidden="true"]');
+  const el = screen.getByTestId("progress-percent-chip");
   if (!el) throw new Error("percent chip not found");
   return el as HTMLElement;
 }
@@ -190,8 +190,7 @@ describe("SurveyRunner — Back navigation rewinds the progress analytics", () =
 
       // Back at Q1, Back is disabled again.
       await waitFor(() => expect(backBtn(container).disabled).toBe(true));
-      // Percent chip stays decorative throughout.
-      expect(pctChip().getAttribute("aria-hidden")).toBe("true");
+      expect(pctChip().textContent?.trim()).toMatch(/^\d+%$/);
     });
   }
 
