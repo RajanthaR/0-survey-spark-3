@@ -11,7 +11,7 @@
   - `bun run test`
   - `bun run build`
 - If `bun` is not on `PATH` (fresh Codex shell), prepend `~/.bun/bin` first, e.g. `export PATH="$HOME/.bun/bin:$PATH"`. If Bun is missing entirely, install with `curl -fsSL https://bun.sh/install | bash`; the installer pins itself into `~/.zshrc`.
-- If the Codex app bundled Node rejects Rollup's native package on macOS (`ERR_DLOPEN_FAILED` / invalid code signature on `@rollup/rollup-darwin-*`), run build/test commands with the local NVM Node first on `PATH`, e.g. `export PATH="/Users/rajantha/.nvm/versions/node/v24.14.1/bin:$PATH"`. Bun and NVM Node should both be ahead of the bundled Node.
+- If the Codex app bundled Node rejects Rollup's native package on macOS (`ERR_DLOPEN_FAILED` / invalid code signature on `@rollup/rollup-darwin-*`), run build/test commands with the local NVM Node first on `PATH`, e.g. `export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$PATH"`. Bun and NVM Node should both be ahead of the bundled Node.
 
 ## Formatting And Generated Files
 
