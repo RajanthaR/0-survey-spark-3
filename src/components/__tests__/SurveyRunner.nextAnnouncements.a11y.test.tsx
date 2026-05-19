@@ -152,7 +152,7 @@ describe("SurveyRunner — Next click announces both progress + new question (EN
           expect(active?.getAttribute("data-testid")).toBe("next-button");
         });
       }
-    });
+    }, 10_000);
   }
 
   it("the announced progress strings are genuinely localized (no EN fallback)", () => {

@@ -33,6 +33,8 @@ type SwipeHandlers = Pick<
   "onPointerDown" | "onPointerUp" | "onPointerCancel"
 >;
 
+const AUTO_ADVANCE_DELAY_MS = 220;
+
 interface SurveyRunnerViewProps {
   survey: Survey;
   lang: Lang;
@@ -164,7 +166,7 @@ export function SurveyRunnerView({
                     </motion.span>
                   )}
                 </AnimatePresence>
-                <span aria-hidden="true" className="sr-only tabular-nums">
+                <span data-testid="progress-percent-chip" className="sr-only tabular-nums">
                   {pct}%
                 </span>
               </div>
@@ -310,7 +312,7 @@ export function SurveyRunnerView({
                   onChange={(v) => {
                     onQuestionChange(v);
                     if (current.type === "single_choice" || current.type === "yes_no") {
-                      setTimeout(onAutoAdvance, 220);
+                      setTimeout(onAutoAdvance, AUTO_ADVANCE_DELAY_MS);
                     }
                   }}
                   error={validationError}

@@ -117,7 +117,7 @@ function progressBar(container: HTMLElement): HTMLElement {
   return el;
 }
 function pctChipText(container: HTMLElement): string {
-  const sib = position(container).parentElement?.querySelector('[aria-hidden="true"]');
+  const sib = container.querySelector('[data-testid="progress-percent-chip"]');
   return sib?.textContent?.trim() ?? "";
 }
 
