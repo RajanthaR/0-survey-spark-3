@@ -88,7 +88,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      survey_stats: {
+        Row: {
+          completed: number
+          day: string
+          duration_count: number
+          duration_ms_sum: number
+          in_progress: number
+          language: string
+          n: number
+          status: string
+          survey_slug: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

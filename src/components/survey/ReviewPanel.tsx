@@ -37,17 +37,19 @@ export function formatAnswer(q: Question, value: unknown, lang: Lang): string {
 export function ReviewPanel({
   survey,
   answers,
+  visible: providedVisible,
   lang,
   onEdit,
   onContinue,
 }: {
   survey: Survey;
   answers: Answers;
+  visible?: Question[];
   lang: Lang;
   onEdit: (id: string) => void;
   onContinue: () => void;
 }) {
-  const visible = visibleQuestions(survey, answers);
+  const visible = providedVisible ?? visibleQuestions(survey, answers);
 
   // Group by section
   const groups = new Map<string, Question[]>();

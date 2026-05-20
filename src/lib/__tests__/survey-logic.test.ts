@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isVisible, progressFor, sectionBreakdown, visibleQuestions } from "@/lib/survey-logic";
+import {
+  isVisible,
+  progressFor,
+  sectionBreakdown,
+  visibilityAnswerSignature,
+  visibleQuestions,
+} from "@/lib/survey-logic";
 import type { Question, Survey } from "@/surveys/types";
 
 const txt = (s: string) => ({ en: s });
@@ -88,6 +94,15 @@ describe("visibleQuestions", () => {
   it("filters hidden branches", () => {
     const v = visibleQuestions(baseSurvey, { q1: "a" }).map((q) => q.id);
     expect(v).toEqual(["q1", "q2", "q4"]);
+  });
+
+  it("visibility signature changes only when showIf source answers change", () => {
+    const first = visibilityAnswerSignature(baseSurvey, { q1: "a", q2: "draft" });
+    const same = visibilityAnswerSignature(baseSurvey, { q1: "a", q2: "edited" });
+    const changed = visibilityAnswerSignature(baseSurvey, { q1: "b", q2: "edited" });
+
+    expect(same).toBe(first);
+    expect(changed).not.toBe(first);
   });
 });
 

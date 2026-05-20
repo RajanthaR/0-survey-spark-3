@@ -57,6 +57,39 @@ CREATE INDEX IF NOT EXISTS idx_responses_survey      ON public.responses (survey
 CREATE INDEX IF NOT EXISTS idx_responses_status      ON public.responses (status);
 CREATE INDEX IF NOT EXISTS idx_responses_started_at  ON public.responses (started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_responses_resume      ON public.responses (resume_token);
+CREATE INDEX IF NOT EXISTS idx_responses_stats_filter
+  ON public.responses (survey_slug, language, status, started_at);
+
+CREATE OR REPLACE VIEW public.survey_stats AS
+SELECT
+  survey_slug,
+  language,
+  status,
+  (date_trunc('day', started_at AT TIME ZONE 'UTC'))::date AS day,
+  count(*)::bigint AS n,
+  count(*) FILTER (WHERE status = 'completed')::bigint AS completed,
+  count(*) FILTER (WHERE status = 'in_progress')::bigint AS in_progress,
+  coalesce(
+    sum(
+      CASE
+        WHEN completed_at IS NOT NULL
+          AND started_at IS NOT NULL
+          AND completed_at > started_at
+          AND completed_at - started_at < interval '6 hours'
+        THEN floor(extract(epoch FROM (completed_at - started_at)) * 1000)::bigint
+        ELSE 0
+      END
+    ),
+    0
+  )::bigint AS duration_ms_sum,
+  count(*) FILTER (
+    WHERE completed_at IS NOT NULL
+      AND started_at IS NOT NULL
+      AND completed_at > started_at
+      AND completed_at - started_at < interval '6 hours'
+  )::bigint AS duration_count
+FROM public.responses
+GROUP BY survey_slug, language, status, (date_trunc('day', started_at AT TIME ZONE 'UTC'))::date;
 
 -- updated_at trigger
 CREATE OR REPLACE FUNCTION public.touch_updated_at()

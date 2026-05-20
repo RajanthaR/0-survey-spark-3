@@ -27,7 +27,6 @@ import {
   streamAllValidCsv,
   streamAllValidXlsx,
 } from "@/lib/admin.functions";
-import { Zip, AsyncZipDeflate, strToU8 } from "fflate";
 import { SURVEY_LIST, SURVEYS } from "@/surveys";
 import { buildCodebookHeaders, type CodebookLang } from "@/lib/csv-export-shape";
 import { LANG_LABELS, pickText, useLang } from "@/lib/i18n";
@@ -2279,6 +2278,7 @@ function Dashboard({ email }: { email: string }) {
         totalRows,
         filename,
       });
+      const { Zip, AsyncZipDeflate, strToU8 } = await import("fflate");
       await new Promise((resolve) => setTimeout(resolve, 0));
       const chunks: Uint8Array[] = [];
       const zipDone = new Promise<void>((resolve, reject) => {

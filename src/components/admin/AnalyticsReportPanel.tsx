@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Download, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,7 +57,8 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function buildPdf(report: Report): Blob {
+async function buildPdf(report: Report): Promise<Blob> {
+  const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const margin = 40;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -274,7 +274,7 @@ export function AnalyticsReportPanel({ surveySlug }: { surveySlug?: string }) {
           `${fileBase()}.csv`,
         );
       } else {
-        downloadBlob(buildPdf(report), `${fileBase()}.pdf`);
+        downloadBlob(await buildPdf(report), `${fileBase()}.pdf`);
       }
       toast.success(`${kind.toUpperCase()} — ${tx("downloaded")}`);
     } catch (e) {

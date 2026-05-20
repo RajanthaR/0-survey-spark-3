@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { progressFor, visibleQuestions } from "@/lib/survey-logic";
+import {
+  progressForVisible,
+  visibilityAnswerSignature,
+  visibleQuestions,
+} from "@/lib/survey-logic";
 import type { Survey } from "@/surveys/types";
 
 export type SurveyStage =
@@ -26,8 +30,22 @@ export function useStageMachine({
   const [stage, setStage] = useState<SurveyStage>(
     initialStatus === "completed" ? "done" : initialToken ? "questions" : "intro",
   );
-  const visible = useMemo(() => visibleQuestions(survey, answers), [answers, survey]);
-  const pct = useMemo(() => progressFor(survey, answers), [answers, survey]);
+  const visibleCacheRef = useRef<{
+    survey: Survey;
+    signature: string;
+    visible: ReturnType<typeof visibleQuestions>;
+  } | null>(null);
+  const visibilitySignature = visibilityAnswerSignature(survey, answers);
+  const visible = useMemo(() => {
+    const cached = visibleCacheRef.current;
+    if (cached && cached.survey === survey && cached.signature === visibilitySignature) {
+      return cached.visible;
+    }
+    const next = visibleQuestions(survey, answers);
+    visibleCacheRef.current = { survey, signature: visibilitySignature, visible: next };
+    return next;
+  }, [answers, survey, visibilitySignature]);
+  const pct = useMemo(() => progressForVisible(visible, answers), [answers, visible]);
   const [currentId, setCurrentId] = useState<string | undefined>(() => visible[0]?.id);
 
   useEffect(() => {

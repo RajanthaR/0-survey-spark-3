@@ -32,4 +32,33 @@ describe("useStageMachine", () => {
     act(() => result.current.jumpToEdit("q1"));
     expect(result.current.stage).toBe("questions");
   });
+
+  it("keeps the visible question array stable when unrelated answers change", () => {
+    const conditionalSurvey: Survey = {
+      ...survey,
+      questions: [
+        survey.questions[0],
+        {
+          id: "q2",
+          type: "text",
+          section: { en: "A", si: "A", ta: "A" },
+          label: { en: "Two", si: "Two", ta: "Two" },
+          showIf: { questionId: "gate", equals: "yes" },
+        },
+      ],
+    };
+    const { result, rerender } = renderHook(
+      ({ answers }) =>
+        useStageMachine({ survey: conditionalSurvey, answers, initialToken: "token" }),
+      {
+        initialProps: { answers: { gate: "yes", q1: "a" } as Record<string, unknown> },
+      },
+    );
+
+    const firstVisible = result.current.visible;
+    rerender({ answers: { gate: "yes", q1: "typed more" } });
+
+    expect(result.current.visible).toBe(firstVisible);
+    expect(result.current.pct).toBe(50);
+  });
 });
