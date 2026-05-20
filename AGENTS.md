@@ -10,6 +10,11 @@
   - `bun run format:check`
   - `bun run test`
   - `bun run build`
+  - `bun run deploy:preflight:static`
+  - `bun run deploy:preflight`
+  - `bun run smoke:db`
+  - `bun run db:diff`
+  - `bun run db:diff:check`
   - `bun run size`
   - `bun run bundle:shape`
   - `bun run test:a11y`
@@ -27,8 +32,8 @@
 
 Five workflows under `.github/workflows/`:
 
-- `pr.yml` — runs on PR + push: main. Parallel jobs include `static` (typecheck + format + lint + service-role grep), `test` (vitest), and `build` (vite). The build job uploads `dist`; dependent `bundle` and `a11y` jobs download that artifact to run `bun run size`, `bun run bundle:shape`, and unauthenticated axe scans for `/`, `/s/phase-1`, and `/admin`. Fan-out is for wall-clock; do not collapse jobs back together without measuring.
-- `nightly.yml` — runs on schedule and manual dispatch. It validates `vars.STAGING_BASE_URL`, then runs Lighthouse thresholds, axe scans on the same critical routes, and `bun audit --audit-level=moderate`. Keep `STAGING_BASE_URL` as a GitHub Actions repository variable, not a secret consumed from app code.
+- `pr.yml` — runs on PR + push: main. Parallel jobs include `static` (typecheck + format + lint + `bun run deploy:preflight:static` + service-role grep), `test` (vitest), and `build` (vite). The build job uploads `dist`; dependent `bundle` and `a11y` jobs download that artifact to run `bun run size`, `bun run bundle:shape`, and unauthenticated axe scans for `/`, `/s/phase-1`, and `/admin`. Fan-out is for wall-clock; do not collapse jobs back together without measuring.
+- `nightly.yml` — runs on schedule and manual dispatch. It validates `vars.STAGING_BASE_URL` plus staging Supabase/Turnstile deploy-gate inputs, then runs Lighthouse thresholds, axe scans on the same critical routes, `bun run deploy:preflight`, `bun run smoke:db`, `bun run db:diff:check`, and `bun audit --audit-level=moderate`. Keep `STAGING_BASE_URL`, `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_PUBLISHABLE_KEY`, `STAGING_ADMIN_BOOTSTRAP_EMAIL`, and `STAGING_TURNSTILE_SITE_KEY` as GitHub Actions repository variables. Keep `STAGING_SUPABASE_SERVICE_ROLE_KEY`, `STAGING_TURNSTILE_SECRET`, and either `STAGING_SUPABASE_DB_URL` or `STAGING_SUPABASE_ACCESS_TOKEN` as secrets.
 - `smoke.yml` — runs on push: main only. Builds, starts the preview server, runs `scripts/smoke-ssr.mjs` against the 5 canonical routes. **This is a deploy gate**: a smoke failure on main MUST be reverted before any further pushes. Do not move it onto PRs without a deliberate compute-vs-feedback decision.
 - `guardrails.yml` — strict subset of `pr.yml`'s `bun run test`. Runs on PR only. Keep intact.
 - `csv-export-shape.yml` — strict subset of `pr.yml`'s `bun run test`. Runs on PR only. Keep intact.
@@ -45,6 +50,10 @@ All workflows declare `concurrency: cancel-in-progress: true` on `${{ github.wor
 ## Verification Notes
 
 - Run focused tests near the changed behavior, then the strict tooling gate (`bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build`).
+- Deploy-gate changes should run `bun run deploy:preflight:static` locally. Run live `bun run deploy:preflight`, `bun run smoke:db`, and `bun run db:diff:check` only when staging Supabase/Turnstile env vars are present.
+- `bun run deploy:preflight` requires `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `TURNSTILE_SECRET`, `ADMIN_BOOTSTRAP_EMAIL`, `VITE_TURNSTILE_SITE_KEY`, and `APP_ENV`/`ENVIRONMENT`/`NODE_ENV` set to `staging` or `production`; it rejects `ALLOW_TURNSTILE_BYPASS=true` and verifies Supabase Auth email confirmation via `/auth/v1/settings`.
+- `bun run smoke:db` verifies Supabase Auth email confirmation and expects an anon/publishable-key insert into `public.responses` to fail with 401/403.
+- `bun run db:diff` writes timestamped Supabase CLI output under `test-results/db-diff/`; `bun run db:diff:check` fails on reported drift. Provide `SUPABASE_DB_URL` or `SUPABASE_ACCESS_TOKEN` for remote/staging checks.
 - Phase 4 performance changes should also run `bun run size` and `bun run bundle:shape` after `bun run build`; both scripts consume fresh `dist/bundle-shape.json`.
 - Local axe verification is `bun run build`, start preview on `127.0.0.1:4173`, then `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 bun run test:a11y`. The default axe routes are `/`, `/s/phase-1`, and unauthenticated `/admin`.
 - `bunx playwright install chromium` may time out downloading Chromium in this Codex macOS environment. Treat that as a local browser-install blocker if it retries and stalls; CI installs Chromium before running axe.

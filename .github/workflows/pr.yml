@@ -67,6 +67,9 @@ jobs:
       - name: Lint
         run: bun run lint -- --max-warnings 0
 
+      - name: Deploy preflight static fixture
+        run: bun run deploy:preflight:static
+
       - name: Service-role client import guard
         run: |
           hits="$(grep -RInE 'createAdminClient|supabaseAdmin' src --include='*.tsx' || true)"

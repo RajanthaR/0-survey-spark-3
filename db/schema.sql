@@ -2,6 +2,8 @@
 -- EIP Survey · Portable PostgreSQL schema
 -- Vendor-agnostic. Runs on any Postgres 14+. Supabase-friendly (uncomment the
 -- auth.uid() policies at the bottom to enforce row-level security there).
+-- Last compared with supabase/migrations on 2026-05-21.
+-- Run `bun run db:diff` to write a timestamped drift report under test-results/.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- for gen_random_bytes / gen_random_uuid

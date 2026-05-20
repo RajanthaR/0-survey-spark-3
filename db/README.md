@@ -37,6 +37,11 @@ drift, the migrations win. To regenerate this file from the live database run
 `supabase db diff --schema public > db/schema.sql` against a project linked to
 the same Supabase instance.
 
+The top of `db/schema.sql` includes the last comparison date. Run
+`bun run db:diff` after changing migrations to write a timestamped drift report
+under `test-results/db-diff/`. CI runs `bun run db:diff:check` against staging
+from the nightly workflow when staging Supabase credentials are configured.
+
 ## Wiring it to a backend later
 
 - **Supabase / any Postgres with `auth.uid()`** — uncomment the two `CREATE POLICY` blocks at the bottom of `schema.sql`. Inserts / updates from anonymous respondents go through a server function (e.g. PostgREST RPC, edge function, your own API) that holds a service-role connection and validates the `resume_token`.
@@ -52,6 +57,10 @@ the Supabase dashboard, confirm:
 - **Leaked password protection (HIBP):** ON. Blocks signups/password changes
   whose password appears in the Have I Been Pwned breach corpus.
 - **Anonymous sign-ins:** OFF.
+
+`bun run deploy:preflight` and `bun run smoke:db` verify email confirmation by
+probing `/auth/v1/settings` and requiring `autoconfirm` or
+`mailer_autoconfirm` to be `false`.
 
 `db/schema.sql` is a _reference_ snapshot of the portable schema. The live
 RLS policies, indexes, and any post-launch alterations are owned by the
