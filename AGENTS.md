@@ -40,6 +40,7 @@ All workflows declare `concurrency: cancel-in-progress: true` on `${{ github.wor
 - TanStack Start route modules are client-imported. Do not statically import `*.server.*` modules from files that can enter the client graph.
 - Put testable server-only implementations in `*.impl.server.ts` or `*.shared.server.ts`, and import them inside `createServerFn().handler(...)`.
 - Keep client-facing files limited to RPC wrappers, types, schemas, and browser-safe code.
+- Avoid module-level mutable diagnostics in shared client/server modules. If a helper such as `pickText` needs test-only miss accounting, gate it to `import.meta.env.MODE === "test"` and skip SSR/production accumulation so requests never share growing global arrays or counters.
 
 ## Verification Notes
 
