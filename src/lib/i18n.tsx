@@ -20,10 +20,16 @@ const warned = new Set<string>();
 let pickTextMissCount = 0;
 const pickTextMisses: string[] = [];
 
+function shouldTrackPickTextMisses() {
+  return import.meta.env.MODE === "test";
+}
+
 function warnFallback(key: string, lang: Lang) {
-  pickTextMissCount += 1;
-  pickTextMisses.push(`${lang}:${key}`);
-  if (import.meta.env.PROD) return;
+  if (shouldTrackPickTextMisses()) {
+    pickTextMissCount += 1;
+    pickTextMisses.push(`${lang}:${key}`);
+  }
+  if (import.meta.env.PROD || import.meta.env.SSR) return;
   const id = `${lang}:${key}`;
   if (warned.has(id)) return;
   warned.add(id);
