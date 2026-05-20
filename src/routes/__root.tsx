@@ -10,11 +10,17 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { I18nProvider, type Lang } from "@/lib/i18n";
+import { I18nProvider, useLang, type Lang } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { registerOptionImageSW } from "@/lib/sw-register";
 import { PerfDebugOverlay } from "@/components/PerfDebugOverlay";
+import {
+  NOTO_FONT_STYLESHEET_HREF,
+  NOTO_FONT_STYLESHEET_ID,
+  ensureNotoFontsForLang,
+  shouldLoadNotoFonts,
+} from "@/lib/noto-fonts";
 
 function NotFoundComponent() {
   return (
@@ -97,16 +103,7 @@ export const Route = createRootRouteWithContext<RootRouteContext>()({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      // Sinhala + Tamil web fonts so non-English glyphs render predictably.
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap",
-      },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -116,10 +113,34 @@ export const Route = createRootRouteWithContext<RootRouteContext>()({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   const { initialLang } = Route.useRouteContext();
+  const includeNotoFonts = shouldLoadNotoFonts(initialLang);
   return (
     <html lang={initialLang}>
       <head>
         <HeadContent />
+        {includeNotoFonts && (
+          <>
+            <link
+              id="noto-fonts-googleapis"
+              rel="preconnect"
+              href="https://fonts.googleapis.com"
+              data-noto-fonts="true"
+            />
+            <link
+              id="noto-fonts-gstatic"
+              rel="preconnect"
+              href="https://fonts.gstatic.com"
+              crossOrigin="anonymous"
+              data-noto-fonts="true"
+            />
+            <link
+              id={NOTO_FONT_STYLESHEET_ID}
+              rel="stylesheet"
+              href={NOTO_FONT_STYLESHEET_HREF}
+              data-noto-fonts="true"
+            />
+          </>
+        )}
       </head>
       <body>
         {children}
@@ -150,10 +171,19 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider initialLang={initialLang}>
+        <NotoFontLoader />
         <Outlet />
         <Toaster />
         <PerfDebugOverlay />
       </I18nProvider>
     </QueryClientProvider>
   );
+}
+
+function NotoFontLoader() {
+  const { lang } = useLang();
+  useEffect(() => {
+    ensureNotoFontsForLang(lang);
+  }, [lang]);
+  return null;
 }

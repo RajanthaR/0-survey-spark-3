@@ -20,18 +20,23 @@ type Answers = Record<string, unknown>;
 export function QuestionMap({
   survey,
   answers,
+  visible: providedVisible,
   lang,
   currentId,
   onJump,
 }: {
   survey: Survey;
   answers: Answers;
+  visible?: Question[];
   lang: Lang;
   currentId: string | undefined;
   onJump: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const visible = useMemo(() => visibleQuestions(survey, answers), [survey, answers]);
+  const visible = useMemo(
+    () => providedVisible ?? visibleQuestions(survey, answers),
+    [answers, providedVisible, survey],
+  );
 
   const answeredCount = useMemo(
     () => visible.filter((q) => isAnswered(q, answers)).length,

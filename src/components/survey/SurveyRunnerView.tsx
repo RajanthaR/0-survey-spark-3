@@ -52,7 +52,6 @@ interface SurveyRunnerViewProps {
   verifyError: string | null;
   navDirection: 1 | -1;
   validationError: string | null;
-  focusableBlockedQuestionId: string | null;
   nextButtonRef: RefObject<HTMLButtonElement | null>;
   backButtonRef: RefObject<HTMLButtonElement | null>;
   swipeHandlers: SwipeHandlers;
@@ -92,7 +91,6 @@ export function SurveyRunnerView({
   verifyError,
   navDirection,
   validationError,
-  focusableBlockedQuestionId,
   nextButtonRef,
   backButtonRef,
   swipeHandlers,
@@ -131,6 +129,7 @@ export function SurveyRunnerView({
               <QuestionMap
                 survey={survey}
                 answers={answers}
+                visible={visible}
                 lang={lang}
                 currentId={current?.id}
                 onJump={onEdit}
@@ -324,6 +323,7 @@ export function SurveyRunnerView({
               <ReviewPanel
                 survey={survey}
                 answers={answers}
+                visible={visible}
                 lang={lang}
                 onEdit={onEdit}
                 onContinue={onReviewContinue}
@@ -441,14 +441,12 @@ export function SurveyRunnerView({
                 const requiredEmpty = !!current.required && !isAnswered(current, answers);
                 const formatErr = validateAnswer(current, answers[current.id], lang) !== null;
                 const blocked = requiredEmpty || formatErr;
-                const keepFocusable = blocked && focusableBlockedQuestionId === current.id;
-
                 return (
                   <Button
                     size="lg"
                     className="h-14 flex-1 rounded-xl text-base font-semibold data-[blocked=true]:cursor-not-allowed data-[blocked=true]:opacity-50"
                     onClick={onQuestionNext}
-                    disabled={busy || (blocked && !keepFocusable)}
+                    disabled={busy || blocked}
                     aria-disabled={busy || blocked}
                     data-blocked={blocked || undefined}
                     data-testid="next-button"

@@ -16,92 +16,167 @@ function adminClient() {
   return createAdminClient("admin.stats");
 }
 
-export const getStats = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (d: {
-      surveySlug?: string;
-      statusFilter?: "completed" | "in_progress" | "all";
-      language?: "en" | "si" | "ta";
-      dateFrom?: string;
-      dateTo?: string;
-    }) =>
-      z
-        .object({
-          surveySlug: z.string().max(64).optional(),
-          statusFilter: z.enum(["completed", "in_progress", "all"]).optional(),
-          language: z.enum(["en", "si", "ta"]).optional(),
-          dateFrom: z
-            .string()
-            .regex(/^\d{4}-\d{2}-\d{2}$/)
-            .optional(),
-          dateTo: z
-            .string()
-            .regex(/^\d{4}-\d{2}-\d{2}$/)
-            .optional(),
-        })
-        .parse(d),
-  )
-  .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
-    const supabaseAdmin = adminClient();
+type StatsInput = {
+  surveySlug?: string;
+  statusFilter?: "completed" | "in_progress" | "all";
+  language?: "en" | "si" | "ta";
+  dateFrom?: string;
+  dateTo?: string;
+};
+
+export type SurveyStatsViewRow = {
+  survey_slug: string;
+  language: string;
+  status: string;
+  day: string;
+  n: number | string;
+  completed: number | string;
+  in_progress: number | string;
+  duration_ms_sum: number | string;
+  duration_count: number | string;
+};
+
+type StatsAnswerRow = {
+  survey_slug: string;
+  language: string;
+  answers: unknown;
+};
+
+function asCount(value: number | string | null | undefined): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Number(value);
+  return 0;
+}
+
+export function aggregateStatsViewRows(rows: SurveyStatsViewRow[], todayInput = new Date()) {
+  const langSplit = new Map<string, number>();
+  const surveySplit = new Map<string, number>();
+  const dailyMap = new Map<string, number>();
+  let total = 0;
+  let completed = 0;
+  let inProgress = 0;
+  let durationSum = 0;
+  let durationCount = 0;
+
+  for (const r of rows) {
+    const n = asCount(r.n);
+    total += n;
+    completed += asCount(r.completed);
+    inProgress += asCount(r.in_progress);
+    durationSum += asCount(r.duration_ms_sum);
+    durationCount += asCount(r.duration_count);
+    langSplit.set(r.language, (langSplit.get(r.language) ?? 0) + n);
+    surveySplit.set(r.survey_slug, (surveySplit.get(r.survey_slug) ?? 0) + n);
+    const day = String(r.day ?? "").slice(0, 10);
+    if (day) dailyMap.set(day, (dailyMap.get(day) ?? 0) + n);
+  }
+
+  const sortedDays = Array.from(dailyMap.keys()).sort();
+  const today = new Date(todayInput);
+  today.setUTCHours(0, 0, 0, 0);
+  const earliest = sortedDays.length ? new Date(`${sortedDays[0]}T00:00:00Z`) : today;
+  const minStart = new Date(today);
+  minStart.setUTCDate(minStart.getUTCDate() - 13);
+  const start = earliest < minStart ? earliest : minStart;
+  const daily: { date: string; count: number }[] = [];
+  for (let d = new Date(start); d <= today; d.setUTCDate(d.getUTCDate() + 1)) {
+    const key = d.toISOString().slice(0, 10);
+    daily.push({ date: key, count: dailyMap.get(key) ?? 0 });
+  }
+
+  return {
+    total,
+    completed,
+    inProgress,
+    completionRate: total ? Math.round((completed / total) * 100) : 0,
+    avgMinutes: durationCount ? Math.round(durationSum / durationCount / 60000) : 0,
+    langSplit: Array.from(langSplit, ([name, value]) => ({ name, value })).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    ),
+    surveySplit: Array.from(surveySplit, ([name, value]) => ({ name, value })).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    ),
+    daily,
+  };
+}
+
+async function fetchStatsAnswerRows(data: StatsInput): Promise<StatsAnswerRow[]> {
+  if (!data.surveySlug) return [];
+  const supabaseAdmin = adminClient();
+  const rows: StatsAnswerRow[] = [];
+  const PAGE = 1000;
+
+  for (let from = 0; ; from += PAGE) {
     let q = supabaseAdmin
       .from("responses")
-      .select("id, survey_slug, language, status, started_at, completed_at, progress_pct, answers");
-    if (data.surveySlug) q = q.eq("survey_slug", data.surveySlug);
+      .select("survey_slug, language, answers")
+      .order("started_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    q = q.eq("survey_slug", data.surveySlug);
     if (data.statusFilter && data.statusFilter !== "all") {
       q = q.eq("status", data.statusFilter);
     }
     if (data.language) q = q.eq("language", data.language);
     if (data.dateFrom) q = q.gte("started_at", `${data.dateFrom}T00:00:00.000Z`);
     if (data.dateTo) q = q.lte("started_at", `${data.dateTo}T23:59:59.999Z`);
-    const { data: rows, error } = await q.limit(2000);
+
+    const { data: chunk, error } = await q;
     if (error) throw new Error(error.message);
-    const list = rows ?? [];
-    const total = list.length;
-    const completed = list.filter((r) => r.status === "completed").length;
-    const inProgress = total - completed;
-    const langSplit: Record<string, number> = {};
-    const surveySplit: Record<string, number> = {};
-    const dailyMap: Record<string, number> = {};
-    let durationSum = 0;
-    let durationCount = 0;
-    for (const r of list) {
-      langSplit[r.language] = (langSplit[r.language] ?? 0) + 1;
-      surveySplit[r.survey_slug] = (surveySplit[r.survey_slug] ?? 0) + 1;
-      const day = (r.started_at ?? "").slice(0, 10);
-      if (day) dailyMap[day] = (dailyMap[day] ?? 0) + 1;
-      if (r.completed_at && r.started_at) {
-        const d = new Date(r.completed_at).getTime() - new Date(r.started_at).getTime();
-        if (d > 0 && d < 1000 * 60 * 60 * 6) {
-          durationSum += d;
-          durationCount += 1;
-        }
-      }
+    const pageRows = (chunk ?? []) as StatsAnswerRow[];
+    rows.push(...pageRows);
+    if (pageRows.length < PAGE) break;
+  }
+
+  return rows;
+}
+
+export const getStats = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: StatsInput) =>
+    z
+      .object({
+        surveySlug: z.string().max(64).optional(),
+        statusFilter: z.enum(["completed", "in_progress", "all"]).optional(),
+        language: z.enum(["en", "si", "ta"]).optional(),
+        dateFrom: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+        dateTo: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const supabaseAdmin = adminClient();
+    let statsQ = supabaseAdmin
+      .from("survey_stats")
+      .select(
+        "survey_slug, language, status, day, n, completed, in_progress, duration_ms_sum, duration_count",
+      );
+    if (data.surveySlug) statsQ = statsQ.eq("survey_slug", data.surveySlug);
+    if (data.statusFilter && data.statusFilter !== "all") {
+      statsQ = statsQ.eq("status", data.statusFilter);
     }
-    // Zero-fill daily series so the chart shows continuous days even when
-    // no responses came in. Spans from the earliest day with data (or 13
-    // days ago, whichever is earlier) up to today.
-    const sortedDays = Object.keys(dailyMap).sort();
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const earliest = sortedDays.length ? new Date(sortedDays[0] + "T00:00:00Z") : today;
-    const minStart = new Date(today);
-    minStart.setUTCDate(minStart.getUTCDate() - 13);
-    const start = earliest < minStart ? earliest : minStart;
-    const daily: { date: string; count: number }[] = [];
-    for (let d = new Date(start); d <= today; d.setUTCDate(d.getUTCDate() + 1)) {
-      const key = d.toISOString().slice(0, 10);
-      daily.push({ date: key, count: dailyMap[key] ?? 0 });
-    }
+    if (data.language) statsQ = statsQ.eq("language", data.language);
+    if (data.dateFrom) statsQ = statsQ.gte("day", data.dateFrom);
+    if (data.dateTo) statsQ = statsQ.lte("day", data.dateTo);
+    const { data: statsRows, error } = await statsQ;
+    if (error) throw new Error(error.message);
+    const summary = aggregateStatsViewRows((statsRows ?? []) as SurveyStatsViewRow[]);
+    const detailRows =
+      data.surveySlug && SURVEYS[data.surveySlug] ? await fetchStatsAnswerRows(data) : [];
 
     // Section completion: average % done per section, scoped to a single
     // survey when surveySlug filter is active. Skipped for "all surveys".
     let sectionStats: { name: string; pct: number; total: number; done: number }[] = [];
-    if (data.surveySlug && SURVEYS[data.surveySlug] && list.length) {
+    if (data.surveySlug && SURVEYS[data.surveySlug] && detailRows.length) {
       const survey = SURVEYS[data.surveySlug];
       const agg = new Map<string, { total: number; done: number }>();
-      for (const r of list) {
+      for (const r of detailRows) {
         const answers = (r.answers ?? {}) as Record<string, unknown>;
         const lang = (r.language as "en" | "si" | "ta") || "en";
         const breakdown = sectionBreakdown(survey, answers, lang);
@@ -134,9 +209,9 @@ export const getStats = createServerFn({ method: "POST" })
       distribution?: { name: string; value: number }[];
     };
     let questionStats: QStat[] = [];
-    if (data.surveySlug && SURVEYS[data.surveySlug] && list.length) {
+    if (data.surveySlug && SURVEYS[data.surveySlug] && detailRows.length) {
       const survey = SURVEYS[data.surveySlug];
-      const totalRespondents = list.length;
+      const totalRespondents = detailRows.length;
       questionStats = survey.questions
         .filter((q) => q.type !== "section_header")
         .map((q) => {
@@ -149,7 +224,7 @@ export const getStats = createServerFn({ method: "POST" })
             }
             return val;
           };
-          for (const r of list) {
+          for (const r of detailRows) {
             const v = (r.answers as Record<string, unknown> | null)?.[q.id];
             if (v == null) continue;
             if (Array.isArray(v)) {
@@ -193,14 +268,14 @@ export const getStats = createServerFn({ method: "POST" })
     }
 
     return {
-      total,
-      completed,
-      inProgress,
-      completionRate: total ? Math.round((completed / total) * 100) : 0,
-      avgMinutes: durationCount ? Math.round(durationSum / durationCount / 60000) : 0,
-      langSplit: Object.entries(langSplit).map(([k, v]) => ({ name: k, value: v })),
-      surveySplit: Object.entries(surveySplit).map(([k, v]) => ({ name: k, value: v })),
-      daily,
+      total: summary.total,
+      completed: summary.completed,
+      inProgress: summary.inProgress,
+      completionRate: summary.completionRate,
+      avgMinutes: summary.avgMinutes,
+      langSplit: summary.langSplit,
+      surveySplit: summary.surveySplit,
+      daily: summary.daily,
       sectionStats,
       questionStats,
     };

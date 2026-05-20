@@ -75,7 +75,6 @@ export function SurveyRunner({
   // direction in <QuestionView> so Forward feels like sliding to the next
   // card and Back feels like sliding to the previous one.
   const [navDirection, setNavDirection] = useState<1 | -1>(1);
-  const [focusableBlockedQuestionId, setFocusableBlockedQuestionId] = useState<string | null>(null);
   // Ref to the sticky-bar Next button so we can return keyboard focus
   // there after every step transition. This makes Enter/Space repeat
   // advance through the questionnaire without keyboard users having to
@@ -237,7 +236,6 @@ export function SurveyRunner({
       const nextUnanswered = after.find((q) => !isAnswered(q, answers));
       const nextId = (nextUnanswered ?? visible[idx + 1]).id;
       setNavDirection(1);
-      setFocusableBlockedQuestionId(nextId);
       setCurrentId(nextId);
       const enc = UI.encouragements;
       if (enc && idx === Math.floor(visible.length / 2) - 1) {
@@ -277,7 +275,6 @@ export function SurveyRunner({
   const goBack = useCallback(() => {
     if (idx <= 0) return;
     setNavDirection(-1);
-    setFocusableBlockedQuestionId(null);
     setCurrentId(visible[idx - 1].id);
     setValidationErrorCode(null);
   }, [idx, setCurrentId, visible]);
@@ -328,7 +325,6 @@ export function SurveyRunner({
       verifyError={verifyError}
       navDirection={navDirection}
       validationError={validationError}
-      focusableBlockedQuestionId={focusableBlockedQuestionId}
       nextButtonRef={nextButtonRef}
       backButtonRef={backButtonRef}
       swipeHandlers={swipeHandlers}

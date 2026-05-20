@@ -38,6 +38,28 @@ export function visibleQuestions(survey: Survey, answers: Answers): Question[] {
   return survey.questions.filter((q) => q.type !== "section_header" && isVisible(q, answers));
 }
 
+function stableAnswerString(value: unknown): string {
+  if (value === undefined) return "undefined";
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableAnswerString).join(",")}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${stableAnswerString(record[key])}`)
+    .join(",")}}`;
+}
+
+export function visibilityAnswerSignature(survey: Survey, answers: Answers): string {
+  const ids = new Set<string>();
+  for (const q of survey.questions) {
+    if (q.showIf) ids.add(q.showIf.questionId);
+  }
+  return Array.from(ids)
+    .sort()
+    .map((id) => `${id}:${stableAnswerString(answers[id])}`)
+    .join("|");
+}
+
 export function isAnswered(q: Question, answers: Answers): boolean {
   const v = answers[q.id];
   if (v == null) return false;
@@ -69,6 +91,11 @@ export function isValidCompletedResponse(survey: Survey, answers: Answers): bool
 
 export function progressFor(survey: Survey, answers: Answers): number {
   const vis = visibleQuestions(survey, answers);
+  return progressForVisible(vis, answers);
+}
+
+export function progressForVisible(visible: Question[], answers: Answers): number {
+  const vis = visible;
   if (!vis.length) return 0;
   const done = vis.filter((q) => isAnswered(q, answers)).length;
   return Math.round((done / vis.length) * 100);
