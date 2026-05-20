@@ -101,6 +101,14 @@ jobs:
       - name: Test
         run: bun run test
 
+      - name: Upload same-as-English i18n report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: same-as-english-i18n
+          path: coverage/same-as-english.json
+          retention-days: 14
+
   # Parallel with `static` and `test`. Smoke moved to `smoke.yml`
   # (push: main only) — see that workflow for the deploy-gate rationale.
   build:

@@ -13,11 +13,18 @@
  * matchers + cleanup on top.
  */
 import "@testing-library/jest-dom/vitest";
-import { afterEach } from "vitest";
+import { afterEach, expect } from "vitest";
 import { cleanup } from "@testing-library/react";
+import { getPickTextMisses, resetPickTextMisses } from "@/lib/i18n";
 
 afterEach(() => {
+  const misses = [...getPickTextMisses()];
+  resetPickTextMisses();
   cleanup();
+  expect(
+    misses,
+    `pickText fell back to English for missing translations:\n${misses.join("\n")}`,
+  ).toEqual([]);
 });
 
 // jsdom doesn't implement Element.scrollIntoView (used by QuestionView when

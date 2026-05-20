@@ -17,12 +17,30 @@ export const LANG_LABELS: Record<Lang, LocalizedString> = {
 };
 
 const warned = new Set<string>();
+let pickTextMissCount = 0;
+const pickTextMisses: string[] = [];
+
 function warnFallback(key: string, lang: Lang) {
+  pickTextMissCount += 1;
+  pickTextMisses.push(`${lang}:${key}`);
   if (import.meta.env.PROD) return;
   const id = `${lang}:${key}`;
   if (warned.has(id)) return;
   warned.add(id);
   console.warn(`[i18n] missing ${lang} translation, falling back to en: "${key.slice(0, 60)}"`);
+}
+
+export function getPickTextMisses(): readonly string[] {
+  return pickTextMisses;
+}
+
+export function getPickTextMissCount(): number {
+  return pickTextMissCount;
+}
+
+export function resetPickTextMisses(): void {
+  pickTextMissCount = 0;
+  pickTextMisses.length = 0;
 }
 
 export function pickText(s: LocalizedString | string | undefined, lang: Lang): string {
@@ -42,8 +60,13 @@ export const UI = {
   },
   intro: {
     en: "A short, anonymous research survey by the University of Sri Jayewardenepura. Your input directly informs PhD research on sustainable industrial development across South Asia.",
-    si: "ශ්‍රී ජයවර්ධනපුර විශ්වවිද්‍යාලයේ කෙටි, නිර්නාමික පර්යේෂණ සමීක්ෂණයකි.",
-    ta: "ஸ்ரீ ஜயவர்தனபுர பல்கலைக்கழகத்தின் சுருக்கமான, அநாமதேய ஆராய்ச்சி கணக்கெடுப்பு.",
+    si: "ශ්‍රී ජයවර්ධනපුර විශ්වවිද්‍යාලය විසින් පවත්වන කෙටි, නිර්නාමික පර්යේෂණ සමීක්ෂණයකි. ඔබේ අදහස් දකුණු ආසියාවේ තිරසර කාර්මික සංවර්ධනය පිළිබඳ ආචාර්ය උපාධි පර්යේෂණයට සෘජුව දායක වේ.",
+    ta: "ஸ்ரீ ஜயவர்தனபுர பல்கலைக்கழகம் நடத்தும் குறுகிய, அநாமதேய ஆராய்ச்சி கணக்கெடுப்பு. உங்கள் கருத்துகள் தென் ஆசியாவில் நிலையான தொழில்துறை வளர்ச்சி குறித்த முனைவர் பட்ட ஆராய்ச்சிக்கு நேரடியாக உதவும்.",
+  },
+  skipToMain: {
+    en: "Skip to main content",
+    si: "ප්‍රධාන අන්තර්ගතයට යන්න",
+    ta: "முக்கிய உள்ளடக்கத்திற்குச் செல்லவும்",
   },
   start: { en: "Start", si: "ආරම්භ කරන්න", ta: "தொடங்கு" },
   resume: { en: "Resume", si: "නැවත ආරම්භ", ta: "தொடரவும்" },
@@ -185,6 +208,33 @@ export const UI = {
     en: "Try again",
     si: "නැවත උත්සාහ කරන්න",
     ta: "மீண்டும் முயற்சிக்கவும்",
+  },
+  goHome: { en: "Go home", si: "මුල් පිටුවට යන්න", ta: "முகப்புக்குச் செல்லவும்" },
+  notFoundTitle: { en: "Page not found", si: "පිටුව හමු නොවීය", ta: "பக்கம் கிடைக்கவில்லை" },
+  notFoundBody: {
+    en: "The page you're looking for doesn't exist or has been moved.",
+    si: "ඔබ සොයන පිටුව නොමැත හෝ වෙනත් ස්ථානයකට ගෙන ගොස් ඇත.",
+    ta: "நீங்கள் தேடும் பக்கம் இல்லை அல்லது இடம் மாற்றப்பட்டுள்ளது.",
+  },
+  errorTitle: {
+    en: "This page didn't load",
+    si: "මෙම පිටුව පූරණය නොවීය",
+    ta: "இந்தப் பக்கம் ஏற்றப்படவில்லை",
+  },
+  errorBody: {
+    en: "Something went wrong on our end. You can try refreshing or head back home.",
+    si: "අපගේ පාර්ශ්වයේ දෝෂයක් සිදු විය. පිටුව නැවත පූරණය කරන්න හෝ මුල් පිටුවට යන්න.",
+    ta: "எங்களிடம் ஏதோ தவறு ஏற்பட்டது. புதுப்பிக்க முயற்சிக்கலாம் அல்லது முகப்புக்குச் செல்லலாம்.",
+  },
+  surveyNotFound: {
+    en: "Survey not found",
+    si: "සමීක්ෂණය හමු නොවීය",
+    ta: "கணக்கெடுப்பு கிடைக்கவில்லை",
+  },
+  researcherLogin: {
+    en: "Researcher login",
+    si: "පර්යේෂක පිවිසුම",
+    ta: "ஆராய்ச்சியாளர் உள்நுழைவு",
   },
   placeholderText: {
     en: "Type your answer",

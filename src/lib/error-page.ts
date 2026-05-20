@@ -1,9 +1,24 @@
-export function renderErrorPage(): string {
+import { pickText, UI, type Lang } from "@/lib/i18n";
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function renderErrorPage(lang: Lang = "en"): string {
+  const title = escapeHtml(pickText(UI.errorTitle, lang));
+  const body = escapeHtml(pickText(UI.errorBody, lang));
+  const retry = escapeHtml(pickText(UI.retry, lang));
+  const goHome = escapeHtml(pickText(UI.goHome, lang));
+
   return `<!doctype html>
-<html lang="en">
+<html lang="${lang}">
   <head>
     <meta charset="utf-8" />
-    <title>This page didn't load</title>
+    <title>${title}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body { font: 15px/1.5 system-ui, -apple-system, sans-serif; background: #fafafa; color: #111; display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 1.5rem; }
@@ -17,14 +32,14 @@ export function renderErrorPage(): string {
     </style>
   </head>
   <body>
-    <div class="card">
-      <h1>This page didn't load</h1>
-      <p>Something went wrong on our end. You can try refreshing or head back home.</p>
+    <main id="main" class="card">
+      <h1>${title}</h1>
+      <p>${body}</p>
       <div class="actions">
-        <button class="primary" onclick="location.reload()">Try again</button>
-        <a class="secondary" href="/">Go home</a>
+        <button class="primary" onclick="location.reload()">${retry}</button>
+        <a class="secondary" href="/">${goHome}</a>
       </div>
-    </div>
+    </main>
   </body>
 </html>`;
 }

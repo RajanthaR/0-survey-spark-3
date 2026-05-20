@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { I18nProvider, useLang, type Lang } from "@/lib/i18n";
+import { I18nProvider, pickText, UI, useLang, type Lang } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { registerOptionImageSW } from "@/lib/sw-register";
@@ -23,40 +23,40 @@ import {
 } from "@/lib/noto-fonts";
 
 function NotFoundComponent() {
+  const { lang } = useLang();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <main id="main" className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">
+          {pickText(UI.notFoundTitle, lang)}
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">{pickText(UI.notFoundBody, lang)}</p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            {pickText(UI.goHome, lang)}
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const { lang } = useLang();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <main id="main" className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          {pickText(UI.errorTitle, lang)}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{pickText(UI.errorBody, lang)}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -65,17 +65,17 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            {pickText(UI.retry, lang)}
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            {pickText(UI.goHome, lang)}
           </a>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -143,6 +143,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
         )}
       </head>
       <body>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-soft focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          {pickText(UI.skipToMain, initialLang)}
+        </a>
         {children}
         <Scripts />
       </body>

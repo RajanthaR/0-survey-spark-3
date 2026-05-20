@@ -36,7 +36,7 @@ function Index() {
         </span>
         <LanguageToggle compact />
       </header>
-      <main className="mx-auto max-w-2xl space-y-8 px-4 pb-20 pt-6">
+      <main id="main" className="mx-auto max-w-2xl space-y-8 px-4 pb-20 pt-6">
         <section className="rounded-3xl gradient-eco p-8 text-primary-foreground shadow-soft">
           <p className="text-sm opacity-90">{pickText(UI.tagline, lang)}</p>
           <h1 className="mt-2 text-3xl font-semibold">{pickText(UI.appName, lang)}</h1>
@@ -67,7 +67,7 @@ function Index() {
 
         <p className="text-center text-xs text-muted-foreground">
           <Link to="/admin" className="underline">
-            Researcher login
+            {pickText(UI.researcherLogin, lang)}
           </Link>
         </p>
       </main>

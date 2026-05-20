@@ -221,13 +221,11 @@ export function SurveyRunner({
     if (!current) return;
     if (current.required && !isAnswered(current, answers)) {
       setValidationErrorCode("required");
-      toast.error(pickText(UI.required, lang));
       return;
     }
     const err = validateAnswerCode(current, answers[current.id]);
     if (err) {
       setValidationErrorCode(err);
-      toast.error(formatValidationError(err, lang));
       return;
     }
     setValidationErrorCode(null);

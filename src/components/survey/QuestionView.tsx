@@ -9,6 +9,8 @@ import { type Question, YES_NO_OPTIONS } from "@/surveys/types";
 import { OptionVisual } from "@/components/survey/OptionVisual";
 import { questionHasVisuals } from "@/surveys/validate";
 
+export type AnswerInputMeta = { source: "keyboard" | "pointer" | "programmatic" };
+
 export function QuestionView({
   q,
   value,
@@ -18,7 +20,7 @@ export function QuestionView({
 }: {
   q: Question;
   value: unknown;
-  onChange: (v: unknown) => void;
+  onChange: (v: unknown, meta?: AnswerInputMeta) => void;
   error: string | null;
   /** +1 = navigated forward, -1 = navigated back. Drives slide direction. */
   direction?: 1 | -1;
@@ -182,9 +184,11 @@ function Field({
 }: {
   q: Question;
   value: unknown;
-  onChange: (v: unknown) => void;
+  onChange: (v: unknown, meta?: AnswerInputMeta) => void;
   lang: Lang;
 }) {
+  const lastChoiceInputRef = useRef<AnswerInputMeta["source"]>("programmatic");
+
   switch (q.type) {
     case "single_choice":
     case "yes_no": {
@@ -201,7 +205,19 @@ function Field({
                 type="button"
                 role="radio"
                 aria-checked={active}
-                onClick={() => onChange(o.value)}
+                onPointerDown={() => {
+                  lastChoiceInputRef.current = "pointer";
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                    lastChoiceInputRef.current = "keyboard";
+                  }
+                }}
+                onClick={() => {
+                  const source = lastChoiceInputRef.current;
+                  lastChoiceInputRef.current = "programmatic";
+                  onChange(o.value, { source });
+                }}
                 className={`flex min-h-14 items-center gap-3 rounded-2xl border p-4 text-left transition ${
                   active
                     ? "border-primary bg-primary/10"
@@ -281,12 +297,13 @@ function Field({
           {[1, 2, 3, 4, 5].map((n, i) => {
             const active = cur === String(n);
             const face = hasVisuals ? faces[i] : undefined;
+            const label = face?.label ? pickText(face.label, lang) : String(n);
             return (
               <motion.button
                 whileTap={{ scale: 0.94 }}
                 key={n}
                 type="button"
-                aria-label={String(n)}
+                aria-label={`${n}: ${label}`}
                 aria-pressed={active}
                 onClick={() => onChange(String(n))}
                 className={`flex h-16 flex-col items-center justify-center gap-1 rounded-2xl border text-base font-semibold transition ${
