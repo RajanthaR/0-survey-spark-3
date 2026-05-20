@@ -57,7 +57,7 @@ function ResetPasswordPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-background px-4">
+    <main id="main" className="grid min-h-screen place-items-center bg-background px-4">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-soft">
         <h1 className="text-xl font-semibold">Set a new password</h1>
         {!ready ? (
@@ -93,6 +93,6 @@ function ResetPasswordPage() {
           </form>
         )}
       </div>
-    </div>
+    </main>
   );
 }

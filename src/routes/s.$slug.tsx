@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { SurveyRunner } from "@/components/SurveyRunner";
 import { getSurvey } from "@/surveys";
 import { resumeResponse } from "@/lib/responses.functions";
+import { pickText, UI, useLang } from "@/lib/i18n";
 import {
   clearStoredResumeToken,
   getStoredResumeToken,
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/s/$slug")({
 function SurveyPage() {
   const { slug } = Route.useParams();
   const { token: searchToken } = Route.useSearch();
+  const { lang } = useLang();
   const survey = getSurvey(slug);
   const resumeFn = useServerFn(resumeResponse);
 
@@ -91,17 +93,17 @@ function SurveyPage() {
 
   if (!survey) {
     return (
-      <div className="grid min-h-screen place-items-center text-muted-foreground">
-        Survey not found
-      </div>
+      <main id="main" className="grid min-h-screen place-items-center text-muted-foreground">
+        {pickText(UI.surveyNotFound, lang)}
+      </main>
     );
   }
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center">
+      <main id="main" className="grid min-h-screen place-items-center">
         <Loader2 className="size-6 animate-spin text-primary" />
-      </div>
+      </main>
     );
   }
 

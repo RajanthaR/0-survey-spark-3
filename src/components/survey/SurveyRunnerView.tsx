@@ -21,7 +21,7 @@ import { EMAIL_RE, isAnswered, validateAnswer } from "@/components/survey/valida
 import type { SurveyStage } from "@/components/survey/hooks/useStageMachine";
 import { OptionalConsentPanel } from "@/components/survey/OptionalConsentPanel";
 import { QuestionMap } from "@/components/survey/QuestionMap";
-import { QuestionView } from "@/components/survey/QuestionView";
+import { QuestionView, type AnswerInputMeta } from "@/components/survey/QuestionView";
 import { ResponseVisualSummary } from "@/components/survey/ResponseVisualSummary";
 import { ResumeStrip } from "@/components/survey/ResumeStrip";
 import { ReviewPanel } from "@/components/survey/ReviewPanel";
@@ -33,7 +33,7 @@ type SwipeHandlers = Pick<
   "onPointerDown" | "onPointerUp" | "onPointerCancel"
 >;
 
-const AUTO_ADVANCE_DELAY_MS = 220;
+const AUTO_ADVANCE_DELAY_MS = 500;
 
 interface SurveyRunnerViewProps {
   survey: Survey;
@@ -63,7 +63,7 @@ interface SurveyRunnerViewProps {
   onRetryVerify: () => Promise<void>;
   onBypassVerify: () => Promise<void>;
   onEdit: (id: string) => void;
-  onQuestionChange: (value: unknown) => void;
+  onQuestionChange: (value: unknown, meta?: AnswerInputMeta) => void;
   onAutoAdvance: () => void;
   onReviewContinue: () => void;
   onContactChange: (field: keyof Contact, value: string) => void;
@@ -199,7 +199,7 @@ export function SurveyRunnerView({
         active={stage === "consent" || stage === "consent-optional" || stage === "questions"}
         focusKey={`${stage}:${current?.id ?? ""}`}
       >
-        <main className="mx-auto max-w-2xl px-4 pb-32 pt-6">
+        <main id="main" className="mx-auto max-w-2xl px-4 pb-32 pt-6">
           <AnimatePresence mode="wait">
             {stage === "intro" && (
               <motion.section
@@ -308,9 +308,12 @@ export function SurveyRunnerView({
                   q={current}
                   value={answers[current.id]}
                   direction={navDirection}
-                  onChange={(v) => {
-                    onQuestionChange(v);
-                    if (current.type === "single_choice" || current.type === "yes_no") {
+                  onChange={(v, meta) => {
+                    onQuestionChange(v, meta);
+                    if (
+                      meta?.source === "pointer" &&
+                      (current.type === "single_choice" || current.type === "yes_no")
+                    ) {
                       setTimeout(onAutoAdvance, AUTO_ADVANCE_DELAY_MS);
                     }
                   }}
@@ -425,6 +428,7 @@ export function SurveyRunnerView({
                 ref={backButtonRef}
               >
                 <ArrowLeft className="size-5" />
+                <span className="ml-2 hidden sm:inline">{pickText(UI.back, lang)}</span>
               </Button>
               <Button
                 variant="ghost"

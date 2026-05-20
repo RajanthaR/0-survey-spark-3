@@ -34,8 +34,8 @@ function ResumePage() {
   }, [token, resumeFn, navigate]);
 
   return (
-    <div className="grid min-h-screen place-items-center">
+    <main id="main" className="grid min-h-screen place-items-center">
       <Loader2 className="size-6 animate-spin text-primary" />
-    </div>
+    </main>
   );
 }

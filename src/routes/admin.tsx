@@ -2665,7 +2665,7 @@ function Dashboard({ email }: { email: string }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+      <main id="main" className="mx-auto max-w-6xl space-y-6 px-4 py-6">
         <Tabs value={slug} onValueChange={setSlug}>
           <TabsList>
             <TabsTrigger value="__all__">All surveys</TabsTrigger>

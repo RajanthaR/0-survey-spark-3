@@ -2,7 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { assertProductionSecurityConfig } from "./lib/security-headers.server";
+import { assertProductionSecurityConfig, readInitialLang } from "./lib/security-headers.server";
 export { RateLimitDO } from "./lib/rate-limit.do";
 
 type ServerEntry = {
@@ -23,8 +23,8 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
-function brandedErrorResponse(): Response {
-  return new Response(renderErrorPage(), {
+function brandedErrorResponse(request: Request): Response {
+  return new Response(renderErrorPage(readInitialLang(request.headers.get("cookie"))), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
   });
@@ -57,7 +57,10 @@ function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boole
 
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(
+  request: Request,
+  response: Response,
+): Promise<Response> {
   if (response.status < 500) return response;
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
@@ -68,7 +71,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   }
 
   console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return brandedErrorResponse();
+  return brandedErrorResponse(request);
 }
 
 function describeRequest(request: Request): string {
@@ -94,7 +97,7 @@ export default {
       const response = await handler.fetch(request, {
         context: { cloudflareEnv: env, cloudflareContext: ctx },
       });
-      const normalized = await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(request, response);
       if (normalized.status >= 500) {
         console.error(
           `[SSR] ${requestLabel} -> ${normalized.status} in ${Date.now() - startedAt}ms`,
@@ -103,7 +106,7 @@ export default {
       return normalized;
     } catch (error) {
       console.error(`[SSR] ${requestLabel} threw after ${Date.now() - startedAt}ms`, error);
-      return brandedErrorResponse();
+      return brandedErrorResponse(request);
     }
   },
 };
