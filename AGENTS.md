@@ -49,6 +49,7 @@ All workflows declare `concurrency: cancel-in-progress: true` on `${{ github.wor
 - Rate limiting lives in Redis when `REDIS_URL` is set (token-bucket implemented as a Lua `defineCommand` script in `src/lib/rate-limit.server.ts`). When Redis is unset or transiently unreachable the limiter falls back to a per-process in-memory `Map` and logs `[rate-limit] Redis call failed; falling back to in-memory:` once per failure. The fallback is safe for local/test but breaks across replicas in production — keep `REDIS_URL` set on Railway and keep replica counts honest about that constraint.
 - Required runtime env on Railway: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_BOOTSTRAP_EMAIL`, `TURNSTILE_SECRET`, `ALLOW_TURNSTILE_BYPASS=false`, `REDIS_URL`, `APP_ENV` and `NODE_ENV` set to `production` (or `staging`). Required at build: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, `VITE_TURNSTILE_SITE_KEY`. Railway injects `PORT`; the Node entry honours `HOSTNAME` (default `0.0.0.0`).
 - Migration history and a phase-by-phase runbook live in `docs/RAILWAY-MIGRATION.md`. The active deployment runbook is `docs/DEPLOYMENT.md`.
+- Turnstile can be temporarily bypassed for non-production QA using the tracked Windsurf workflow `.windsurf/workflows/bypass-turnstile.md` (`/bypass-turnstile`). Never enable `ALLOW_TURNSTILE_BYPASS=true` for production.
 
 ## Server Boundaries
 
