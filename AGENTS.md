@@ -10,6 +10,7 @@
   - `bun run format:check`
   - `bun run test`
   - `bun run build`
+  - `bun run start` (Node runtime equivalent of the Railway service: boots `server-node.mjs` against `dist/`)
   - `bun run deploy:preflight:static`
   - `bun run deploy:preflight`
   - `bun run smoke:db`
@@ -40,12 +41,23 @@ Five workflows under `.github/workflows/`:
 
 All workflows declare `concurrency: cancel-in-progress: true` on `${{ github.workflow }}-${{ github.ref }}` and share a `paths-ignore` block for `audits/`, `Codex-audits/`, `Plans/`, `docs/`, `**/*.md`, `LICENSE`, `.gitignore`, `.gitattributes`, `.editorconfig`. Keep that block in sync across all workflows when editing.
 
+## Runtime And Deployment
+
+- The app deploys to Railway as a Node.js service. Cloudflare Workers, Wrangler, `wrangler.jsonc`, `@cloudflare/vite-plugin`, and Durable Objects are no longer in the runtime path. Do not reintroduce them without an explicit migration decision.
+- Build chain: Bun installs and `vite build` emits `dist/server/server.js` (Web-Fetch SSR handler) plus `dist/client/*` (hashed static assets). `server-node.mjs` at the repo root is the Node entry that uses `srvx` + `srvx/static` to serve `dist/client/*` and delegate everything else to `dist/server/server.js`'s `fetch(request)`.
+- Railway picks up `nixpacks.toml`: `bun install --frozen-lockfile` → `bun run build` → `node server-node.mjs`. Bump pinned versions only in a dedicated PR.
+- Rate limiting lives in Redis when `REDIS_URL` is set (token-bucket implemented as a Lua `defineCommand` script in `src/lib/rate-limit.server.ts`). When Redis is unset or transiently unreachable the limiter falls back to a per-process in-memory `Map` and logs `[rate-limit] Redis call failed; falling back to in-memory:` once per failure. The fallback is safe for local/test but breaks across replicas in production — keep `REDIS_URL` set on Railway and keep replica counts honest about that constraint.
+- Required runtime env on Railway: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_BOOTSTRAP_EMAIL`, `TURNSTILE_SECRET`, `ALLOW_TURNSTILE_BYPASS=false`, `REDIS_URL`, `APP_ENV` and `NODE_ENV` set to `production` (or `staging`). Required at build: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, `VITE_TURNSTILE_SITE_KEY`. Railway injects `PORT`; the Node entry honours `HOSTNAME` (default `0.0.0.0`).
+- Migration history and a phase-by-phase runbook live in `docs/RAILWAY-MIGRATION.md`. The active deployment runbook is `docs/DEPLOYMENT.md`.
+
 ## Server Boundaries
 
 - TanStack Start route modules are client-imported. Do not statically import `*.server.*` modules from files that can enter the client graph.
 - Put testable server-only implementations in `*.impl.server.ts` or `*.shared.server.ts`, and import them inside `createServerFn().handler(...)`.
 - Keep client-facing files limited to RPC wrappers, types, schemas, and browser-safe code.
 - Avoid module-level mutable diagnostics in shared client/server modules. If a helper such as `pickText` needs test-only miss accounting, gate it to `import.meta.env.MODE === "test"` and skip SSR/production accumulation so requests never share growing global arrays or counters.
+- `src/server.ts` exports a pure Web-Fetch handler (`export default { async fetch(request: Request) }`). Do not reintroduce a Worker `(request, env, ctx)` signature or thread `cloudflareEnv` / `cloudflareContext` through the H3 request context. `process.env` is the single source of runtime config for `assertProductionSecurityConfig`, `verifyTurnstile`, and the rate limiter.
+- The Redis client in `src/lib/rate-limit.server.ts` is lazily constructed on first call and gated on `REDIS_URL`. Keep the in-memory `Map` path intact so vitest can run without Redis. The public API (`rateLimit`, `peekRateLimit`, `getClientIp`, `__resetRateLimitForTests`) is consumed by mocks in `responses.bypassRateLimit.test.ts` and `responses.turnstileGuard.test.ts` — preserve those exports.
 
 ## Verification Notes
 
@@ -58,6 +70,9 @@ All workflows declare `concurrency: cancel-in-progress: true` on `${{ github.wor
 - Local axe verification is `bun run build`, start preview on `127.0.0.1:4173`, then `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 bun run test:a11y`. The default axe routes are `/`, `/s/phase-1`, and unauthenticated `/admin`.
 - `bunx playwright install chromium` may time out downloading Chromium in this Codex macOS environment. Treat that as a local browser-install blocker if it retries and stalls; CI installs Chromium before running axe.
 - Local Lighthouse verification uses `BASE_URL=<url> bun run lighthouse:ci`. CI/nightly uses `vars.STAGING_BASE_URL` and enforces LCP <= 2.5s, TTI <= 3.5s, and CLS <= 0.1.
-- Local preview smoke: `bun run build && bun run preview -- --host 127.0.0.1 --port 4173 &` then `BASE_URL=http://127.0.0.1:4173 bun run smoke`. CI runs this same flow in `smoke.yml` only on push: main, so PRs that touch `src/start.ts`, `src/lib/security-headers.server.ts`, `src/routes/__root.tsx`, or anything else affecting SSR / CSP should be smoked locally before merging.
+- Local preview smoke (Vite-served): `bun run build && bun run preview -- --host 127.0.0.1 --port 4173 &` then `BASE_URL=http://127.0.0.1:4173 bun run smoke`. CI runs this same flow in `smoke.yml` only on push: main, so PRs that touch `src/start.ts`, `src/server.ts`, `src/lib/security-headers.server.ts`, `src/routes/__root.tsx`, `server-node.mjs`, or anything else affecting SSR / CSP should be smoked locally before merging.
+- Production-equivalent smoke (Node-served, matches Railway): `bun run build && PORT=4173 HOSTNAME=127.0.0.1 node server-node.mjs &` then `BASE_URL=http://127.0.0.1:4173 bun run smoke`. Use this when changing `server-node.mjs`, `src/server.ts`, the rate-limit Redis path, or anything that interacts with the `srvx` static / fetch bridge. Requires NVM Node 24.x on `PATH`; the bundled Codex Node and Bun cannot run the compiled server bundle interchangeably.
 - `src/lib/__tests__/codebook-xlsx.test.ts` has shown local Vitest hangs in this environment; treat that as an environment-specific runner issue unless it reproduces in CI. Use `bun run test -- --exclude '**/codebook-xlsx.test.ts'` to bypass when running the full suite locally.
 - As of the Phase 4 performance work, the local full suite excluding `codebook-xlsx.test.ts` still has known survey navigation/focus failures clustered in `SurveyRunner.backFocusReturn.a11y.test.tsx`, `SurveyRunner.nextAnnouncements.a11y.test.tsx`, `SurveyRunner.rapidBackAnnouncements.a11y.test.tsx`, `SurveyRunner.telNumRangeGating.e2e.test.tsx`, `SurveyRunner.nextDisabled.e2e.test.tsx`, and one case in `SurveyRunner.saveExitAfterBack.e2e.test.tsx`. Do not attribute those failures to bundle/stat changes without isolating the relevant files first.
+- `src/lib/__tests__/responses.language.test.ts` fails to load locally with `TypeError: undefined is not an object (evaluating 'z.object')` originating in `src/lib/responses.functions.ts`. The failure reproduces on `main` independently of any feature work — treat it as a pre-existing zod / Vitest resolution issue, not a regression of whatever you're shipping.
+- `src/lib/__tests__/rate-limit.redis.test.ts` exercises the Redis-backed limiter via a hoisted `vi.mock("ioredis", ...)` factory. The fallback case intentionally logs `[rate-limit] Redis call failed; falling back to in-memory:` to stderr — that is expected test output, not a failure signal.

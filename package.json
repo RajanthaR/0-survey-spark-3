@@ -29,6 +29,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "start": "node server-node.mjs",
     "deploy:preflight": "node scripts/deploy-preflight.mjs",
     "deploy:preflight:static": "node scripts/deploy-preflight.mjs --static",
     "db:diff": "node scripts/db-diff.mjs",
@@ -60,7 +61,6 @@
     ]
   },
   "dependencies": {
-    "@cloudflare/vite-plugin": "^1.25.5",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -103,6 +103,7 @@
     "fflate": "^0.8.2",
     "framer-motion": "^12.38.0",
     "input-otp": "^1.4.2",
+    "ioredis": "^5.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.575.0",
     "react": "^19.2.0",

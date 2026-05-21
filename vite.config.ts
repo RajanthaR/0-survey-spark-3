@@ -1,7 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { gzipSync } from "node:zlib";
-import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -77,9 +76,9 @@ function bundleShapePlugin(): PluginOption {
   };
 }
 
-// Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-// @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
-export default defineConfig(({ command }) => {
+// TanStack Start emits dist/server/server.js (Web-Fetch handler) and dist/client/* assets.
+// The Node runtime entry at server-node.mjs imports the server bundle and serves both via srvx.
+export default defineConfig(() => {
   const plugins: PluginOption[] = [
     tsConfigPaths(),
     tailwindcss(),
@@ -88,10 +87,6 @@ export default defineConfig(({ command }) => {
     devRouteRefreshPlugin(),
     bundleShapePlugin(),
   ];
-
-  if (command === "build") {
-    plugins.push(cloudflare());
-  }
 
   return {
     plugins,

@@ -19,16 +19,16 @@ proprietary and fully owned by Rajantha R Ambegala. See [LICENSE](./LICENSE).
 
 - TanStack Start, TanStack Router, React 19, Vite
 - Supabase Auth and Postgres
-- Cloudflare Workers via Wrangler
+- Node.js 24 runtime (Railway via Nixpacks); Redis-backed rate limiter
 - Tailwind CSS, Radix UI, lucide-react, framer-motion, Recharts
 - Vitest and Playwright
 
 ## Requirements
 
-- Bun 1.3.14
-- Node.js 24.15.0 when using Node-based tooling
+- Bun 1.3.14 (build)
+- Node.js 24.15.0 (runtime + Node-based tooling)
 - Supabase project with the migrations in `supabase/migrations`
-- Cloudflare account if deploying to Workers
+- Redis instance for the production rate limiter (Railway Redis add-on works)
 
 ## Setup
 
@@ -75,6 +75,8 @@ Optional:
 - `VITE_TURNSTILE_SITE_KEY`
 - `TURNSTILE_SECRET`
 - `ALLOW_TURNSTILE_BYPASS`
+- `REDIS_URL` (required in production for cross-replica rate limiting)
+- `PORT` / `HOSTNAME` (Railway injects `PORT` automatically)
 - `BASE_URL`
 - `PLAYWRIGHT_BASE_URL`
 
@@ -86,14 +88,20 @@ is available in [db/schema.sql](./db/schema.sql), with notes in
 
 ## Deployment
 
-The app is configured for Cloudflare Workers with [wrangler.jsonc](./wrangler.jsonc).
-Build with:
+The app deploys to Railway as a Node.js service. The build emits `dist/server/server.js`
+(Web-Fetch handler) and `dist/client/*` (static assets); `server-node.mjs` boots a Node
+HTTP server via `srvx` that wraps both.
 
 ```bash
+bun install --frozen-lockfile
 bun run build
+node server-node.mjs
 ```
 
-Then deploy using your Cloudflare workflow after configuring production secrets.
+Railway uses `nixpacks.toml` to install with Bun and run with Node 24. Set the
+service variables listed in [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) before
+deploying. Add a Redis add-on in the same Railway project and set `REDIS_URL`
+on the service.
 
 ## GitHub
 

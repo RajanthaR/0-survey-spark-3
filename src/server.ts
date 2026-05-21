@@ -3,7 +3,6 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { assertProductionSecurityConfig, readInitialLang } from "./lib/security-headers.server";
-export { RateLimitDO } from "./lib/rate-limit.do";
 
 type ServerEntry = {
   fetch: (
@@ -83,20 +82,14 @@ function describeRequest(request: Request): string {
   }
 }
 
-function envRecord(env: unknown): Record<string, unknown> {
-  return env && typeof env === "object" ? (env as Record<string, unknown>) : {};
-}
-
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
-    assertProductionSecurityConfig({ ...process.env, ...envRecord(env) });
+  async fetch(request: Request) {
+    assertProductionSecurityConfig(process.env);
     const requestLabel = describeRequest(request);
     const startedAt = Date.now();
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, {
-        context: { cloudflareEnv: env, cloudflareContext: ctx },
-      });
+      const response = await handler.fetch(request);
       const normalized = await normalizeCatastrophicSsrResponse(request, response);
       if (normalized.status >= 500) {
         console.error(

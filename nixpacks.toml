@@ -1,0 +1,16 @@
+# Railway / Nixpacks build for survey-spark-3.
+# - Build phase uses Bun (matches `packageManager` in package.json).
+# - Runtime uses Node 24 (TanStack Start emits a Node-compatible server bundle).
+# - The Node entry at server-node.mjs imports dist/server/server.js + serves dist/client/* via srvx.
+
+[phases.setup]
+nixPkgs = ["bun", "nodejs_24"]
+
+[phases.install]
+cmds = ["bun install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["bun run build"]
+
+[start]
+cmd = "node server-node.mjs"

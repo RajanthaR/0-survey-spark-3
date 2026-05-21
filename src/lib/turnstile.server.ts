@@ -1,4 +1,3 @@
-import { getGlobalStartContext } from "@tanstack/start-client-core";
 import { getClientIp } from "@/lib/rate-limit.server";
 
 /**
@@ -20,7 +19,6 @@ import { getClientIp } from "@/lib/rate-limit.server";
  */
 
 const SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-type StartContextWithEnv = { cloudflareEnv?: Record<string, unknown> };
 
 interface SiteverifyResponse {
   success: boolean;
@@ -41,13 +39,8 @@ export class TurnstileVerificationError extends Error {
 }
 
 function envString(key: string): string | undefined {
-  try {
-    const context = getGlobalStartContext() as StartContextWithEnv | undefined;
-    const value = context?.cloudflareEnv?.[key] ?? process.env[key];
-    return typeof value === "string" ? value : undefined;
-  } catch {
-    return process.env[key];
-  }
+  const value = process.env[key];
+  return typeof value === "string" ? value : undefined;
 }
 
 export async function verifyTurnstile(

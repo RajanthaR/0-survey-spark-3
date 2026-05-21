@@ -50,6 +50,7 @@ interface SurveyRunnerViewProps {
   busy: boolean;
   token?: string;
   verifyError: string | null;
+  onTurnstileToken?: (token: string | null) => void;
   navDirection: 1 | -1;
   validationError: string | null;
   nextButtonRef: RefObject<HTMLButtonElement | null>;
@@ -89,6 +90,7 @@ export function SurveyRunnerView({
   busy,
   token,
   verifyError,
+  onTurnstileToken = () => {},
   navDirection,
   validationError,
   nextButtonRef,
@@ -293,6 +295,8 @@ export function SurveyRunnerView({
                     onRetryVerify={onRetryVerify}
                     allowBypass={allowBypass}
                     onBypass={onBypassVerify}
+                    turnstileSiteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                    onTurnstileToken={onTurnstileToken}
                   />
                 );
               })()}

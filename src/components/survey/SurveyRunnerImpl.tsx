@@ -66,6 +66,7 @@ export function SurveyRunner({
   const [consent, setConsent] = useState<Record<string, boolean>>(initialConsent ?? {});
   const [contact, setContact] = useState<Contact>({ name: "", email: "", organization: "" });
   const [busy, setBusy] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   // Inline error surfaced on the consent panel when the server-side
   // Turnstile verification rejects the start request. Held in component
   // state (not a toast) so the message stays visible alongside the retry
@@ -165,6 +166,7 @@ export function SurveyRunner({
             consent,
             userAgent:
               typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined,
+            turnstileToken: turnstileToken ?? undefined,
             bypassTurnstile: opts?.bypassTurnstile === true ? true : undefined,
           },
         });
@@ -176,7 +178,7 @@ export function SurveyRunner({
         setBusy(false);
       }
     },
-    [consent, lang, navigate, persistToken, startFn, survey.slug, token],
+    [consent, lang, navigate, persistToken, startFn, survey.slug, token, turnstileToken],
   );
 
   const manualSave = useCallback(async () => {
@@ -321,6 +323,7 @@ export function SurveyRunner({
       busy={busy}
       token={token}
       verifyError={verifyError}
+      onTurnstileToken={setTurnstileToken}
       navDirection={navDirection}
       validationError={validationError}
       nextButtonRef={nextButtonRef}

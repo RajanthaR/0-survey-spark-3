@@ -18,6 +18,8 @@ export function OptionalConsentPanel({
   onRetryVerify,
   allowBypass,
   onBypass,
+  turnstileSiteKey,
+  onTurnstileToken,
 }: {
   items: Survey["consent"];
   lang: Lang;
@@ -30,10 +32,15 @@ export function OptionalConsentPanel({
   onRetryVerify?: () => void | Promise<void>;
   allowBypass?: boolean;
   onBypass?: () => void | Promise<void>;
+  turnstileSiteKey?: string;
+  onTurnstileToken: (token: string | null) => void;
 }) {
   const allChecked = items.length > 0 && items.every((c) => !!values[c.id]);
   const triggeredRef = useRef(false);
   const cardRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const turnstileRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetRef = useRef<string | null>(null);
+  const [turnstileReady, setTurnstileReady] = useState(false);
   // Live-region announcement for screen readers, refreshed on every toggle.
   // The `nonce` forces React to re-render even when the user toggles the same
   // card to the same state twice, so AT will re-speak the message.
@@ -98,9 +105,78 @@ export function OptionalConsentPanel({
     }
   };
   useEffect(() => {
+    onTurnstileToken(null);
+    setTurnstileReady(false);
+    if (!turnstileSiteKey || typeof window === "undefined") return;
+
+    let cancelled = false;
+    const windowWithTurnstile = window as Window &
+      typeof globalThis & {
+        turnstile?: {
+          render: (
+            container: HTMLElement,
+            options: {
+              sitekey: string;
+              callback: (token: string) => void;
+              "expired-callback": () => void;
+              "error-callback": () => void;
+            },
+          ) => string;
+          reset: (widgetId: string) => void;
+          remove: (widgetId: string) => void;
+        };
+      };
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]',
+    );
+    const renderWidget = () => {
+      if (cancelled || !turnstileRef.current || !windowWithTurnstile.turnstile) return;
+      if (turnstileWidgetRef.current) return;
+      turnstileWidgetRef.current = windowWithTurnstile.turnstile.render(turnstileRef.current, {
+        sitekey: turnstileSiteKey,
+        callback: (token) => {
+          setTurnstileReady(true);
+          onTurnstileToken(token);
+        },
+        "expired-callback": () => {
+          setTurnstileReady(false);
+          onTurnstileToken(null);
+        },
+        "error-callback": () => {
+          setTurnstileReady(false);
+          onTurnstileToken(null);
+        },
+      });
+    };
+    if (windowWithTurnstile.turnstile) {
+      renderWidget();
+    } else if (existingScript) {
+      existingScript.addEventListener("load", renderWidget, { once: true });
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      script.addEventListener("load", renderWidget, { once: true });
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      cancelled = true;
+      if (existingScript) existingScript.removeEventListener("load", renderWidget);
+      if (turnstileWidgetRef.current && windowWithTurnstile.turnstile) {
+        windowWithTurnstile.turnstile.remove(turnstileWidgetRef.current);
+      }
+      turnstileWidgetRef.current = null;
+      onTurnstileToken(null);
+    };
+  }, [onTurnstileToken, turnstileSiteKey]);
+
+  useEffect(() => {
     // Skip auto-continue when a verification error is showing — the user
     // needs to read the message and tap "Try again" deliberately.
-    if (allChecked && !triggeredRef.current && !busy && !verifyError) {
+    const verificationReady = !turnstileSiteKey || turnstileReady;
+    if (allChecked && verificationReady && !triggeredRef.current && !busy && !verifyError) {
       triggeredRef.current = true;
       const id = setTimeout(() => {
         void onContinue();
@@ -108,7 +184,7 @@ export function OptionalConsentPanel({
       return () => clearTimeout(id);
     }
     if (!allChecked) triggeredRef.current = false;
-  }, [allChecked, busy, onContinue, verifyError]);
+  }, [allChecked, busy, onContinue, turnstileReady, turnstileSiteKey, verifyError]);
 
   return (
     <motion.section
@@ -269,6 +345,11 @@ export function OptionalConsentPanel({
           )}
         </div>
       )}
+      {turnstileSiteKey && (
+        <div className="flex justify-center">
+          <div ref={turnstileRef} />
+        </div>
+      )}
       <div className="flex gap-2">
         <Button
           variant="outline"
@@ -284,7 +365,7 @@ export function OptionalConsentPanel({
           size="lg"
           className="h-14 flex-1 rounded-2xl"
           onClick={() => void onContinue()}
-          disabled={busy}
+          disabled={busy || (!!turnstileSiteKey && !turnstileReady)}
         >
           {busy ? <Loader2 className="size-5 animate-spin" /> : pickText(UI.continueLabel, lang)}
           <ArrowRight className="ml-2 size-5" />
