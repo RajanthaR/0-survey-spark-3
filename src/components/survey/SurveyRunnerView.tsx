@@ -454,7 +454,7 @@ export function SurveyRunnerView({
                     size="lg"
                     className="h-14 flex-1 rounded-xl text-base font-semibold data-[blocked=true]:cursor-not-allowed data-[blocked=true]:opacity-50"
                     onClick={onQuestionNext}
-                    disabled={busy || blocked}
+                    disabled={busy}
                     aria-disabled={busy || blocked}
                     data-blocked={blocked || undefined}
                     data-testid="next-button"

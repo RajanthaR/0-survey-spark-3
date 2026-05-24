@@ -119,7 +119,7 @@ describe("SurveyRunner Next guard after Back", () => {
       // Q2: empty required → disabled.
       const q2Initial = screen.getByRole("textbox") as HTMLInputElement;
       expect(q2Initial.type).toBe("email");
-      expect(next().disabled).toBe(true);
+      expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Back → Q1, guard must reflect Q1 (still answered) → enabled.
@@ -139,7 +139,7 @@ describe("SurveyRunner Next guard after Back", () => {
       const q2Again = screen.getByRole("textbox") as HTMLInputElement;
       expect(q2Again.type).toBe("email");
       expect(q2Again.value).toBe("");
-      expect(next().disabled).toBe(true);
+      expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Type a valid email → enabled.

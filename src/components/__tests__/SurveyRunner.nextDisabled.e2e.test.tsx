@@ -102,12 +102,18 @@ async function advanceToQ2() {
 
 describe("SurveyRunner Next button gating", () => {
   for (const lang of LANGS) {
-    it(`[${lang}] disables Next until a required text answer is provided`, async () => {
+    it(`[${lang}] marks Next blocked until a required text answer is provided`, async () => {
       const { unmount } = renderRunner(lang);
       const next = screen.getByTestId("next-button") as HTMLButtonElement;
 
-      expect(next.disabled).toBe(true);
+      expect(next.disabled).toBe(false);
       expect(next.getAttribute("aria-disabled")).toBe("true");
+      expect(next.getAttribute("data-blocked")).toBe("true");
+
+      await act(async () => {
+        fireEvent.click(next);
+      });
+      expect(screen.queryByTestId("error-summary")).not.toBeNull();
 
       const input = screen.getByRole("textbox") as HTMLInputElement;
       await act(async () => {
@@ -115,10 +121,11 @@ describe("SurveyRunner Next button gating", () => {
       });
       expect(next.disabled).toBe(false);
       expect(next.getAttribute("aria-disabled")).toBe("false");
+      expect(next.getAttribute("data-blocked")).toBeNull();
       unmount();
     });
 
-    it(`[${lang}] keeps Next disabled when the required email is empty or malformed`, async () => {
+    it(`[${lang}] keeps Next blocked when the required email is empty or malformed`, async () => {
       const { unmount } = renderRunner(lang, { q1: "Sample Org" });
       await advanceToQ2();
 
@@ -127,7 +134,7 @@ describe("SurveyRunner Next button gating", () => {
       expect(email.type).toBe("email");
 
       // empty required after a forward transition remains blocked.
-      expect(next.disabled).toBe(true);
+      expect(next.disabled).toBe(false);
       expect(next.getAttribute("aria-disabled")).toBe("true");
       expect(next.getAttribute("data-blocked")).toBe("true");
 
@@ -135,7 +142,7 @@ describe("SurveyRunner Next button gating", () => {
       await act(async () => {
         fireEvent.change(email, { target: { value: "not-an-email" } });
       });
-      expect(next.disabled).toBe(true);
+      expect(next.disabled).toBe(false);
       expect(next.getAttribute("aria-disabled")).toBe("true");
       expect(next.getAttribute("data-blocked")).toBe("true");
       unmount();
