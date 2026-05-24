@@ -121,7 +121,7 @@ if (!fs.existsSync(shapePath)) {
     module.exports = budgets.map((budget) => {
       const seeds = findTargetChunks(output, budget.moduleIncludes);
       const files = budgetChunks(budget.name, output, seeds).map((chunk) =>
-        path.relative(__dirname, path.join(output.dir, chunk.fileName)),
+        normalizePath(path.relative(__dirname, path.join(output.dir, chunk.fileName))),
       );
       return {
         name: budget.name,
