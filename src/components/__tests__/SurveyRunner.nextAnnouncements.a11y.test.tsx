@@ -144,12 +144,12 @@ describe("SurveyRunner — Next click announces both progress + new question (EN
           const sectionAfter = activeQuestionSection(container);
           const headingAfter = within(sectionAfter).getByRole("heading", { level: 2 });
           expect(headingAfter.textContent).toContain(pickText(SURVEY.questions[step].label, lang));
-          // Focus contract: after a forward transition the sticky-bar
-          // Next button receives focus so keyboard users can press
-          // Enter / Space again to keep advancing without re-Tabbing.
+          // Focus contract: after a forward transition focus moves into
+          // the new question so screen-reader users hear the changed prompt.
           const active = document.activeElement as HTMLElement | null;
           expect(active).not.toBeNull();
-          expect(active?.getAttribute("data-testid")).toBe("next-button");
+          expect(sectionAfter.contains(active)).toBe(true);
+          expect(active?.tagName).toBe("INPUT");
         });
       }
     }, 10_000);

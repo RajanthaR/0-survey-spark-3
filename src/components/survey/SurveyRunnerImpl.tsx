@@ -15,7 +15,6 @@ import {
 import { prefetchUpcomingOptionImages } from "@/surveys/visuals/prefetch";
 import { SurveyRunnerView } from "@/components/survey/SurveyRunnerView";
 import { useAutoSave } from "@/components/survey/hooks/useAutoSave";
-import { useFocusReturn } from "@/components/survey/hooks/useFocusReturn";
 import { useKeyboardNav } from "@/components/survey/hooks/useKeyboardNav";
 import { useResumeToken } from "@/components/survey/hooks/useResumeToken";
 import { useStageMachine } from "@/components/survey/hooks/useStageMachine";
@@ -232,11 +231,8 @@ export function SurveyRunner({
     }
     setValidationErrorCode(null);
     if (idx < visible.length - 1) {
-      const after = visible.slice(idx + 1);
-      const nextUnanswered = after.find((q) => !isAnswered(q, answers));
-      const nextId = (nextUnanswered ?? visible[idx + 1]).id;
       setNavDirection(1);
-      setCurrentId(nextId);
+      setCurrentId(visible[idx + 1].id);
       const enc = UI.encouragements;
       if (enc && idx === Math.floor(visible.length / 2) - 1) {
         toast(pickText(enc[1], lang));
@@ -298,13 +294,6 @@ export function SurveyRunner({
     onLast: goLast,
     onNext: runLatestGoNext,
     onBack: goBack,
-  });
-  useFocusReturn({
-    enabled: stage === "questions",
-    focusKey: current?.id,
-    direction: navDirection,
-    nextButtonRef,
-    backButtonRef,
   });
 
   return (

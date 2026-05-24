@@ -22,7 +22,7 @@
  * label spoken — they are never left wondering whether Back did
  * anything.
  */
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, fireEvent, act, waitFor } from "@testing-library/react";
 import { I18nProvider, UI, pickText, type Lang } from "@/lib/i18n";
 import { formatQuestionPosition } from "@/lib/format";
@@ -118,6 +118,10 @@ async function fillAndAdvance(container: HTMLElement, value: string) {
   act(() => nextBtn(container).click());
 }
 
+beforeEach(() => {
+  window.localStorage.clear();
+});
+
 describe("SurveyRunner — Back triggers progress + question-change SR announcements (per language)", () => {
   for (const lang of ["en", "si", "ta"] as const) {
     it(`${lang}: progress live-region updates AND restored question's heading is exposed for re-announcement`, async () => {
@@ -181,11 +185,8 @@ describe("SurveyRunner — Back triggers progress + question-change SR announcem
       });
       expect(questionHeading(container).textContent).not.toContain(LABELS[lang][2]);
       await waitFor(() => {
-        // Focus contract: after a Back transition the sticky-bar Back
-        // button retains focus so a keyboard user can keep rewinding
-        // with Enter / Space without re-Tabbing.
         const active = document.activeElement as HTMLElement | null;
-        expect(active?.getAttribute("aria-label")).toBe(pickText(UI.back, lang));
+        expect(active).toBe(input(container));
       });
 
       // ── Press Back again → Q1 ──
