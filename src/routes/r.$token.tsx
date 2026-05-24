@@ -25,7 +25,12 @@ function ResumePage() {
           return;
         }
         setStoredResumeToken(row.surveySlug, token);
-        navigate({ to: "/s/$slug", params: { slug: row.surveySlug }, replace: true });
+        navigate({
+          to: "/s/$slug",
+          params: { slug: row.surveySlug },
+          search: { token },
+          replace: true,
+        });
       })
       .catch(() => navigate({ to: "/" }));
     return () => {

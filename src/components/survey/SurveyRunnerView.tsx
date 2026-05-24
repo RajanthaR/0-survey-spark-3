@@ -1,4 +1,4 @@
-import { type ComponentProps, type RefObject } from "react";
+import { useId, type ComponentProps, type RefObject } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Loader2, Save } from "lucide-react";
 
@@ -115,6 +115,10 @@ export function SurveyRunnerView({
   onQuestionNext,
 }: SurveyRunnerViewProps) {
   const prefersReducedMotion = useReducedMotion();
+  const contactIdPrefix = useId();
+  const contactNameId = `${contactIdPrefix}-contact-name`;
+  const contactEmailId = `${contactIdPrefix}-contact-email`;
+  const contactOrganizationId = `${contactIdPrefix}-contact-organization`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -349,16 +353,18 @@ export function SurveyRunnerView({
                 <p className="text-sm text-muted-foreground">{pickText(UI.thanksLead, lang)}</p>
                 <div className="space-y-3">
                   <div>
-                    <Label>{pickText(UI.nameLabel, lang)}</Label>
+                    <Label htmlFor={contactNameId}>{pickText(UI.nameLabel, lang)}</Label>
                     <Input
+                      id={contactNameId}
                       className="mt-1 h-12"
                       value={contact.name}
                       onChange={(e) => onContactChange("name", e.target.value)}
                     />
                   </div>
                   <div>
-                    <Label>{pickText(UI.emailLabel, lang)}</Label>
+                    <Label htmlFor={contactEmailId}>{pickText(UI.emailLabel, lang)}</Label>
                     <Input
+                      id={contactEmailId}
                       type="email"
                       className="mt-1 h-12"
                       value={contact.email}
@@ -366,8 +372,9 @@ export function SurveyRunnerView({
                     />
                   </div>
                   <div>
-                    <Label>{pickText(UI.orgLabel, lang)}</Label>
+                    <Label htmlFor={contactOrganizationId}>{pickText(UI.orgLabel, lang)}</Label>
                     <Input
+                      id={contactOrganizationId}
                       className="mt-1 h-12"
                       value={contact.organization}
                       onChange={(e) => onContactChange("organization", e.target.value)}

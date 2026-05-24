@@ -53,17 +53,22 @@ function SurveyPage() {
     consent: Record<string, boolean>;
     status: string;
   } | null>(null);
+  const [forceResumeLanguage, setForceResumeLanguage] = useState(Boolean(searchToken));
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (searchToken) {
       persistSearchTokenAndCleanUrl(slug, searchToken);
       setToken(searchToken);
+      setForceResumeLanguage(true);
       return;
     }
     if (token) return;
     const local = getStoredResumeToken(slug);
-    if (local) setToken(local);
+    if (local) {
+      setToken(local);
+      setForceResumeLanguage(false);
+    }
   }, [slug, searchToken, token]);
 
   useEffect(() => {
@@ -84,6 +89,7 @@ function SurveyPage() {
         // invalid token — clear and start fresh
         clearStoredResumeToken(slug);
         setToken(undefined);
+        setForceResumeLanguage(false);
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -113,6 +119,7 @@ function SurveyPage() {
       initialToken={token}
       initialAnswers={resumed?.answers}
       initialLanguage={resumed?.language}
+      forceInitialLanguage={forceResumeLanguage}
       initialConsent={resumed?.consent}
       initialStatus={resumed?.status}
     />
