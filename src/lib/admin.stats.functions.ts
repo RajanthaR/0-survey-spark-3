@@ -42,6 +42,16 @@ type StatsAnswerRow = {
   answers: unknown;
 };
 
+export type AnalyticsReportRow = {
+  id: string;
+  survey_slug: string;
+  language: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+  answers: Record<string, unknown> | null;
+};
+
 function asCount(value: number | string | null | undefined): number {
   if (typeof value === "number") return value;
   if (typeof value === "string") return Number(value);
@@ -721,85 +731,130 @@ function parseAnalyticsReportInput(d: unknown) {
   throw new Error(`VALIDATION:${JSON.stringify({ fieldErrors })}`);
 }
 
+export type AnalyticsReportInput = z.infer<typeof analyticsReportSchema>;
+
+const ANALYTICS_REPORT_PAGE_SIZE = 1000;
+
+export async function fetchPaginatedAnalyticsReportRows(
+  fetchPage: (from: number, to: number) => Promise<AnalyticsReportRow[]>,
+  pageSize = ANALYTICS_REPORT_PAGE_SIZE,
+): Promise<AnalyticsReportRow[]> {
+  const rows: AnalyticsReportRow[] = [];
+  const safePageSize = Math.max(1, pageSize);
+  for (let from = 0; ; from += safePageSize) {
+    const chunk = await fetchPage(from, from + safePageSize - 1);
+    rows.push(...chunk);
+    if (chunk.length < safePageSize) break;
+  }
+  return rows;
+}
+
+function hasReportAnswer(value: unknown): boolean {
+  if (value == null) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") return Object.keys(value as object).length > 0;
+  return String(value).trim().length > 0;
+}
+
+export function buildAnalyticsReport(
+  data: AnalyticsReportInput,
+  list: AnalyticsReportRow[],
+  generatedAt = new Date().toISOString(),
+) {
+  const total = list.length;
+  const survey = data.surveySlug ? SURVEYS[data.surveySlug] : undefined;
+  let completed = 0;
+  const langMap: Record<string, number> = {};
+  const answeredCounts = new Map<string, number>();
+
+  for (const r of list) {
+    if (r.status === "completed") completed += 1;
+    langMap[r.language] = (langMap[r.language] ?? 0) + 1;
+    if (survey && r.answers) {
+      for (const [questionId, value] of Object.entries(r.answers)) {
+        if (hasReportAnswer(value)) {
+          answeredCounts.set(questionId, (answeredCounts.get(questionId) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  const inProgress = total - completed;
+  const completionRate = total ? Math.round((completed / total) * 100) : 0;
+  const byLanguage = Object.entries(langMap)
+    .map(([language, count]) => ({
+      language,
+      count,
+      pct: total ? Math.round((count / total) * 100) : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  let dropOff: {
+    id: string;
+    label: string;
+    section: string;
+    answered: number;
+    total: number;
+    answeredPct: number;
+    dropOffPct: number;
+  }[] = [];
+  if (survey && total > 0) {
+    dropOff = survey.questions
+      .filter((q) => q.type !== "section_header")
+      .map((q) => {
+        const answered = answeredCounts.get(q.id) ?? 0;
+        const answeredPct = total ? Math.round((answered / total) * 100) : 0;
+        return {
+          id: q.id,
+          label: pickText(q.label, "en"),
+          section: pickText(q.section, "en"),
+          answered,
+          total,
+          answeredPct,
+          dropOffPct: 100 - answeredPct,
+        };
+      });
+  }
+
+  return {
+    generatedAt,
+    surveySlug: data.surveySlug ?? null,
+    dateFrom: data.dateFrom ?? null,
+    dateTo: data.dateTo ?? null,
+    total,
+    completed,
+    inProgress,
+    completionRate,
+    byLanguage,
+    dropOff,
+  };
+}
+
+async function fetchAnalyticsReportRows(
+  supabaseAdmin: ReturnType<typeof adminClient>,
+  data: AnalyticsReportInput,
+): Promise<AnalyticsReportRow[]> {
+  return fetchPaginatedAnalyticsReportRows(async (from, to) => {
+    let q = supabaseAdmin
+      .from("responses")
+      .select("id, survey_slug, language, status, started_at, completed_at, answers")
+      .order("started_at", { ascending: false })
+      .order("id", { ascending: false });
+    if (data.surveySlug) q = q.eq("survey_slug", data.surveySlug);
+    if (data.dateFrom) q = q.gte("started_at", `${data.dateFrom}T00:00:00.000Z`);
+    if (data.dateTo) q = q.lte("started_at", `${data.dateTo}T23:59:59.999Z`);
+    const { data: rows, error } = await q.range(from, to);
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as AnalyticsReportRow[];
+  });
+}
+
 export const getAnalyticsReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseAnalyticsReportInput)
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     const supabaseAdmin = adminClient();
-    let q = supabaseAdmin
-      .from("responses")
-      .select("id, survey_slug, language, status, started_at, completed_at, answers");
-    if (data.surveySlug) q = q.eq("survey_slug", data.surveySlug);
-    if (data.dateFrom) q = q.gte("started_at", `${data.dateFrom}T00:00:00Z`);
-    if (data.dateTo) q = q.lte("started_at", `${data.dateTo}T23:59:59Z`);
-    const { data: rows, error } = await q.limit(5000);
-    if (error) throw new Error(error.message);
-    const list = rows ?? [];
-    const total = list.length;
-    const completed = list.filter((r) => r.status === "completed").length;
-    const inProgress = total - completed;
-    const completionRate = total ? Math.round((completed / total) * 100) : 0;
-
-    const langMap: Record<string, number> = {};
-    for (const r of list) langMap[r.language] = (langMap[r.language] ?? 0) + 1;
-    const byLanguage = Object.entries(langMap)
-      .map(([language, count]) => ({
-        language,
-        count,
-        pct: total ? Math.round((count / total) * 100) : 0,
-      }))
-      .sort((a, b) => b.count - a.count);
-
-    let dropOff: {
-      id: string;
-      label: string;
-      section: string;
-      answered: number;
-      total: number;
-      answeredPct: number;
-      dropOffPct: number;
-    }[] = [];
-    if (data.surveySlug && SURVEYS[data.surveySlug] && total > 0) {
-      const survey = SURVEYS[data.surveySlug];
-      dropOff = survey.questions
-        .filter((q) => q.type !== "section_header")
-        .map((q) => {
-          let answered = 0;
-          for (const r of list) {
-            const v = (r.answers as Record<string, unknown> | null)?.[q.id];
-            if (v == null) continue;
-            if (Array.isArray(v)) {
-              if (v.length > 0) answered += 1;
-            } else if (typeof v === "object") {
-              if (Object.keys(v as object).length > 0) answered += 1;
-            } else if (String(v).trim()) {
-              answered += 1;
-            }
-          }
-          const answeredPct = total ? Math.round((answered / total) * 100) : 0;
-          return {
-            id: q.id,
-            label: pickText(q.label, "en"),
-            section: pickText(q.section, "en"),
-            answered,
-            total,
-            answeredPct,
-            dropOffPct: 100 - answeredPct,
-          };
-        });
-    }
-
-    return {
-      generatedAt: new Date().toISOString(),
-      surveySlug: data.surveySlug ?? null,
-      dateFrom: data.dateFrom ?? null,
-      dateTo: data.dateTo ?? null,
-      total,
-      completed,
-      inProgress,
-      completionRate,
-      byLanguage,
-      dropOff,
-    };
+    const rows = await fetchAnalyticsReportRows(supabaseAdmin, data);
+    return buildAnalyticsReport(data, rows);
   });
