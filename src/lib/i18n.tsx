@@ -310,7 +310,7 @@ interface I18nCtx {
    * selection via the toggle, so the user's persisted choice is never
    * overwritten by server data on re-mount or refresh.
    */
-  adoptServerLang: (l: Lang) => void;
+  adoptServerLang: (l: Lang, opts?: { force?: boolean }) => void;
   /** True once the user has explicitly selected a language. */
   langTouched: boolean;
 }
@@ -356,12 +356,10 @@ export function I18nProvider({
     setLangTouched(true);
   };
 
-  const adoptServerLang = (l: Lang) => {
+  const adoptServerLang = (l: Lang, opts?: { force?: boolean }) => {
+    const force = opts?.force === true;
     // Honour an explicit user choice above anything the server says.
-    if (langTouched) return;
-    if (typeof window !== "undefined" && window.localStorage.getItem(TOUCHED_KEY) === "1") {
-      return;
-    }
+    if (!force && langTouched) return;
     setLangState(l);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(LANG_KEY, l);

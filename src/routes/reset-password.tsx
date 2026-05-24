@@ -18,7 +18,7 @@ export const Route = createFileRoute("/reset-password")({
   }),
 });
 
-function ResetPasswordPage() {
+export function ResetPasswordPage() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [pw, setPw] = useState("");
@@ -68,8 +68,9 @@ function ResetPasswordPage() {
         ) : (
           <form onSubmit={submit} className="mt-4 space-y-3">
             <div>
-              <Label>New password</Label>
+              <Label htmlFor="new-password">New password</Label>
               <Input
+                id="new-password"
                 type="password"
                 required
                 minLength={8}
@@ -78,8 +79,9 @@ function ResetPasswordPage() {
               />
             </div>
             <div>
-              <Label>Confirm password</Label>
+              <Label htmlFor="confirm-password">Confirm password</Label>
               <Input
+                id="confirm-password"
                 type="password"
                 required
                 minLength={8}

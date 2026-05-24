@@ -28,6 +28,7 @@ interface Props {
   initialToken?: string;
   initialAnswers?: Answers;
   initialLanguage?: Lang;
+  forceInitialLanguage?: boolean;
   initialConsent?: Record<string, boolean>;
   initialStatus?: string;
 }
@@ -37,6 +38,7 @@ export function SurveyRunner({
   initialToken,
   initialAnswers,
   initialLanguage,
+  forceInitialLanguage,
   initialConsent,
   initialStatus,
 }: Props) {
@@ -53,8 +55,8 @@ export function SurveyRunner({
     // never overwrites the user's persisted choice — including on
     // re-mounts within the same session.
     if (!initialLanguage) return;
-    adoptServerLang(initialLanguage);
-  }, [adoptServerLang, initialLanguage]);
+    adoptServerLang(initialLanguage, { force: forceInitialLanguage });
+  }, [adoptServerLang, forceInitialLanguage, initialLanguage]);
 
   const {
     token,
