@@ -108,7 +108,7 @@ export function QuestionView({
       // First focusable inside the answer field — input, textarea, or
       // the first option button for choice-style questions.
       const focusable = wrap.querySelector<HTMLElement>(FIELD_FOCUSABLE_SELECTOR);
-      focusable?.focus({ preventScroll: true });
+      (focusable ?? headingRef.current)?.focus({ preventScroll: true });
     }
   }, [error, reduceMotion]);
 

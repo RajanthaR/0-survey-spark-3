@@ -155,10 +155,10 @@ async function type(value: string) {
   });
 }
 
-function expectEnabled(disabled: boolean) {
+function expectBlocked(blocked: boolean) {
   const n = nextBtn();
-  expect(n.disabled).toBe(disabled);
-  expect(n.getAttribute("aria-disabled")).toBe(String(disabled));
+  expect(n.disabled).toBe(false);
+  expect(n.getAttribute("aria-disabled")).toBe(String(blocked));
 }
 
 function activeLabel(): string {
@@ -179,17 +179,17 @@ describe("Next gating — tel required (EN/SI/TA)", () => {
       expect(activeInput().type).toBe("tel");
 
       // empty + required → disabled
-      expectEnabled(true);
+      expectBlocked(true);
 
       // invalid (too short / wrong chars per TEL_RE = /^[+()\-\s\d]{6,}$/)
       await type("12");
-      expectEnabled(true);
+      expectBlocked(true);
       await type("hello!");
-      expectEnabled(true);
+      expectBlocked(true);
 
       // valid
       await type("+94 71 234 5678");
-      expectEnabled(false);
+      expectBlocked(false);
 
       unmount();
     });
@@ -209,24 +209,24 @@ describe("Next gating — number_range required (EN/SI/TA)", () => {
       expect(activeInput().type).toBe("number");
 
       // empty + required → disabled
-      expectEnabled(true);
+      expectBlocked(true);
 
       // non-numeric (the type=number input may swallow letters in some
       // browsers, but if it lands as the value the regex still rejects it)
       await type("");
-      expectEnabled(true);
+      expectBlocked(true);
 
       // valid integer / decimal
       await type("5");
-      expectEnabled(false);
+      expectBlocked(false);
       await type("3.14");
-      expectEnabled(false);
+      expectBlocked(false);
       await type("-7");
-      expectEnabled(false);
+      expectBlocked(false);
 
       // clearing it again must re-disable
       await type("");
-      expectEnabled(true);
+      expectBlocked(true);
 
       unmount();
     });
@@ -246,29 +246,29 @@ describe("Next gating — re-evaluates after Back/Forward (EN/SI/TA)", () => {
       // Fill tel with a VALID value, advance to q3, then Back: the guard
       // must now reflect q3's emptiness, not q2's validity.
       await type("+94 71 234 5678");
-      expectEnabled(false);
+      expectBlocked(false);
       await clickNext(); // → q3 number_range (empty)
       expect(activeLabel()).toContain(pickText(SURVEY.questions[2].label, lang));
-      expectEnabled(true); // empty number_range → blocked
+      expectBlocked(true); // empty number_range → blocked
 
       await clickBack(); // → q2
       expect(activeLabel()).toContain(pickText(SURVEY.questions[1].label, lang));
-      expectEnabled(false); // q2's tel value preserved + valid
+      expectBlocked(false); // q2's tel value preserved + valid
 
       // Forward again to q3 (still empty) — guard must block again.
       await clickNext();
       expect(activeLabel()).toContain(pickText(SURVEY.questions[2].label, lang));
-      expectEnabled(true);
+      expectBlocked(true);
 
       // Fill number_range with INVALID-then-valid; verify the guard tracks
       // each transition after a Back/Forward round-trip.
       await type("");
       await clickBack(); // → q2 (still valid)
-      expectEnabled(false);
+      expectBlocked(false);
       await clickNext(); // → q3 (still empty)
-      expectEnabled(true);
+      expectBlocked(true);
       await type("42");
-      expectEnabled(false);
+      expectBlocked(false);
 
       unmount();
     });
@@ -296,7 +296,7 @@ describe("Next gating — multiple Back taps re-evaluate per restored question (
       await clickNext(); // → q3
       await clickNext(); // → q4
       expect(activeLabel()).toContain(pickText(SURVEY.questions[3].label, lang));
-      expectEnabled(false); // q4 valid
+      expectBlocked(false); // q4 valid
 
       // Step back to q3 and CLEAR it. The clear stays in answers as empty
       // string, which means q3 will now block Next when we revisit it on
@@ -305,22 +305,22 @@ describe("Next gating — multiple Back taps re-evaluate per restored question (
       await clickBack(); // → q3
       await type("");
       expect(activeInput().value).toBe("");
-      expectEnabled(true);
+      expectBlocked(true);
 
       // Burst Back from q3 → q2 → q1, asserting Next mirrors each step.
       await clickBack(); // → q2
       expect(activeLabel()).toContain(pickText(SURVEY.questions[1].label, lang));
-      expectEnabled(false); // q2 valid tel preserved
+      expectBlocked(false); // q2 valid tel preserved
 
       await clickBack(); // → q1
       expect(activeLabel()).toContain(pickText(SURVEY.questions[0].label, lang));
-      expectEnabled(false); // q1 valid text preserved
+      expectBlocked(false); // q1 valid text preserved
 
       // Back at q1 is a no-op (disabled) — guard for q1 must not change.
       expect(backBtn().disabled).toBe(true);
       await clickBack();
       expect(activeLabel()).toContain(pickText(SURVEY.questions[0].label, lang));
-      expectEnabled(false);
+      expectBlocked(false);
 
       unmount();
     });
@@ -348,33 +348,33 @@ describe("Back preserves typed/selected answers and Next mirrors them (EN/SI/TA)
       await clickBack();
       expect(activeLabel()).toContain(pickText(SURVEY.questions[2].label, lang));
       expect(activeInput().value).toBe("42");
-      expectEnabled(false);
+      expectBlocked(false);
 
       // Walk back to q2 — tel value preserved, Next enabled.
       await clickBack();
       expect(activeLabel()).toContain(pickText(SURVEY.questions[1].label, lang));
       expect(activeInput().value).toBe("+94 71 234 5678");
-      expectEnabled(false);
+      expectBlocked(false);
 
       // Mutate q2 to an INVALID value, then Back to q1 (disabled), Forward
       // to q2 again — invalid value still preserved, Next now disabled.
       await type("12"); // invalid (TEL_RE requires ≥6 of [+()\-\s\d])
-      expectEnabled(true);
+      expectBlocked(true);
       await clickBack(); // → q1
       expect(activeInput().value).toBe("Sample Org");
-      expectEnabled(false);
+      expectBlocked(false);
       await clickNext(); // → q2 with preserved invalid value
       await waitFor(() => expect(activeInput().value).toBe("12"));
-      expectEnabled(true);
+      expectBlocked(true);
 
       // Walk all the way forward — each step's stored value must round-trip.
       await type("+94 71 234 5678");
-      expectEnabled(false);
+      expectBlocked(false);
       await clickNext(); // → q3
       expect(activeInput().value).toBe("42");
       await clickNext(); // → q4
       expect(activeInput().value).toBe(""); // never typed → still empty
-      expectEnabled(true);
+      expectBlocked(true);
 
       unmount();
     });

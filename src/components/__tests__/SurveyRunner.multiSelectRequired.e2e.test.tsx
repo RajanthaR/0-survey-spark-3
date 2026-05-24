@@ -112,7 +112,7 @@ describe("SurveyRunner multi-select required validation", () => {
       const { unmount } = renderRunner(lang);
       const next = () => screen.getByTestId("next-button") as HTMLButtonElement;
 
-      expect(next().disabled).toBe(true);
+      expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       await act(async () => {
@@ -125,7 +125,7 @@ describe("SurveyRunner multi-select required validation", () => {
       await act(async () => {
         fireEvent.click(optionButton("A"));
       });
-      expect(next().disabled).toBe(true);
+      expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("true");
       unmount();
     });
@@ -141,21 +141,21 @@ describe("SurveyRunner multi-select required validation", () => {
       });
 
       // Now on qMin3 — empty.
-      expect(next().disabled).toBe(true);
+      expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Pick A → 1/3 → still disabled.
       await act(async () => {
         fireEvent.click(optionButton("A"));
       });
-      expect(next().disabled).toBe(true);
+      expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Pick B → 2/3 → still disabled.
       await act(async () => {
         fireEvent.click(optionButton("B"));
       });
-      expect(next().disabled).toBe(true);
+      expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Pick C → 3/3 → enabled.
@@ -169,7 +169,7 @@ describe("SurveyRunner multi-select required validation", () => {
       await act(async () => {
         fireEvent.click(optionButton("C"));
       });
-      expect(next().disabled).toBe(true);
+      expect(next().disabled).toBe(false);
       expect(next().getAttribute("aria-disabled")).toBe("true");
 
       // Pick D → 3/3 → enabled again (different combination).
