@@ -126,9 +126,8 @@ describe("SurveyRunner Next button gating", () => {
       const email = screen.getByRole("textbox") as HTMLInputElement;
       expect(email.type).toBe("email");
 
-      // empty required after a forward transition remains blocked while
-      // staying focusable for the screen-reader announcement contract.
-      expect(next.disabled).toBe(false);
+      // empty required after a forward transition remains blocked.
+      expect(next.disabled).toBe(true);
       expect(next.getAttribute("aria-disabled")).toBe("true");
       expect(next.getAttribute("data-blocked")).toBe("true");
 
@@ -136,7 +135,7 @@ describe("SurveyRunner Next button gating", () => {
       await act(async () => {
         fireEvent.change(email, { target: { value: "not-an-email" } });
       });
-      expect(next.disabled).toBe(false);
+      expect(next.disabled).toBe(true);
       expect(next.getAttribute("aria-disabled")).toBe("true");
       expect(next.getAttribute("data-blocked")).toBe("true");
       unmount();

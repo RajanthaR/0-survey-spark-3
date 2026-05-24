@@ -3,9 +3,7 @@
  *   - ArrowRight / PageDown → go to next question
  *   - ArrowLeft  / PageUp   → go back
  *   - Enter / Space on the focused Next button advance (native button activation)
- *   - After every transition, focus returns to the sticky-bar Next button
- *     (or Back button on a backward transition) so the user can keep
- *     pressing Enter / Space to advance without re-Tabbing.
+ *   - After every transition, focus moves into the active question.
  *   - Keys are ignored when focus is in a text input / textarea so
  *     they don't fight text editing.
  */
@@ -93,24 +91,25 @@ function renderRunner() {
 const qid = () =>
   (document.querySelector('[data-testid="q-stub"]') as HTMLElement).getAttribute("data-qid");
 const nextBtn = () => document.querySelector('[data-testid="next-button"]') as HTMLButtonElement;
-const backBtn = () => document.querySelector('[aria-label="Back"]') as HTMLButtonElement;
 
 beforeEach(() => {
   window.localStorage.clear();
 });
 
-describe("SurveyRunner — keyboard navigation + sticky-bar focus", () => {
-  it("ArrowRight advances; focus lands on the Next button", async () => {
+describe("SurveyRunner — keyboard navigation + question-first focus", () => {
+  it("ArrowRight advances; focus lands in the active question", async () => {
     renderRunner();
     await waitFor(() => expect(qid()).toBe("q1"));
     act(() => {
       fireEvent.keyDown(window, { key: "ArrowRight" });
     });
     await waitFor(() => expect(qid()).toBe("q2"));
-    await waitFor(() => expect(document.activeElement).toBe(nextBtn()));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(document.querySelector('[data-testid="q-focusable"]')),
+    );
   });
 
-  it("ArrowLeft goes back; focus lands on the Back button", async () => {
+  it("ArrowLeft goes back; focus lands in the active question", async () => {
     renderRunner();
     act(() => {
       fireEvent.keyDown(window, { key: "ArrowRight" });
@@ -124,19 +123,23 @@ describe("SurveyRunner — keyboard navigation + sticky-bar focus", () => {
       fireEvent.keyDown(window, { key: "ArrowLeft" });
     });
     await waitFor(() => expect(qid()).toBe("q2"));
-    // Back is enabled at q2 (idx > 0), so focus lands on the Back button.
-    await waitFor(() => expect(document.activeElement).toBe(backBtn()));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(document.querySelector('[data-testid="q-focusable"]')),
+    );
   });
 
-  it("Enter on the focused Next button advances and refocuses Next", async () => {
+  it("Enter on the focused Next button advances and focuses the active question", async () => {
     renderRunner();
     await waitFor(() => expect(qid()).toBe("q1"));
-    await waitFor(() => expect(document.activeElement).toBe(nextBtn()));
+    nextBtn().focus();
+    expect(document.activeElement).toBe(nextBtn());
     act(() => {
       nextBtn().click(); // native Enter/Space on a button == click
     });
     await waitFor(() => expect(qid()).toBe("q2"));
-    await waitFor(() => expect(document.activeElement).toBe(nextBtn()));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(document.querySelector('[data-testid="q-focusable"]')),
+    );
   });
 
   it("PageDown / PageUp also navigate forward / back", async () => {

@@ -18,7 +18,7 @@
  *   • keep the header progress chip / aria-valuenow aligned with the
  *     persisted progressPct (no regression to 0%)
  */
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, fireEvent, act, waitFor } from "@testing-library/react";
 import { I18nProvider, UI, pickText, type Lang } from "@/lib/i18n";
 import { formatQuestionPosition } from "@/lib/format";
@@ -72,6 +72,10 @@ const SURVEY: Survey = {
 };
 
 const ANS = ["alpha", "beta", "gamma"] as const;
+
+beforeEach(() => {
+  window.localStorage.clear();
+});
 
 function input(container: HTMLElement): HTMLInputElement {
   const el = container.querySelector("input[type=text]") as HTMLInputElement | null;

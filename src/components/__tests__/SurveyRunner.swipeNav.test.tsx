@@ -1,6 +1,6 @@
 /**
  * Swipe gestures on the questions stage:
- *   - swipe LEFT  → goNext (with next-unanswered skipping + validation)
+ *   - swipe LEFT  → goNext (adjacent question + validation)
  *   - swipe RIGHT → goBack (idx-1, no skipping)
  *   - sets navDirection so the slide animation matches (1 for forward,
  *     -1 for back) — asserted via QuestionView's `direction` prop, which
@@ -133,9 +133,11 @@ describe("SurveyRunner — swipe navigation", () => {
   });
 
   it("swipe RIGHT goes back one with direction=-1 (no skipping)", async () => {
-    // Pre-answer q1 + q2 so we land on q3 by swiping forward twice first.
+    // Pre-answer q1 + q2 so validation allows us to swipe forward twice first.
     renderRunner({ q1: "a", q2: "b" });
-    swipe(surface(), 240, 80); // q1 → next-unanswered = q3
+    swipe(surface(), 240, 80); // q1 → q2
+    await waitFor(() => expect(activeQ().getAttribute("data-qid")).toBe("q2"));
+    swipe(surface(), 240, 80); // q2 → q3
     await waitFor(() => expect(activeQ().getAttribute("data-qid")).toBe("q3"));
 
     swipe(surface(), 60, 240); // back
@@ -143,11 +145,11 @@ describe("SurveyRunner — swipe navigation", () => {
     expect(activeQ().getAttribute("data-dir")).toBe("-1");
   });
 
-  it("swipe LEFT respects next-unanswered skipping (q1 with q2/q3 answered → q4)", async () => {
+  it("swipe LEFT advances to the adjacent question even when later questions are answered", async () => {
     renderRunner({ q2: "x", q3: "y" });
     expect(activeQ().getAttribute("data-qid")).toBe("q1");
     swipe(surface(), 240, 80);
-    await waitFor(() => expect(activeQ().getAttribute("data-qid")).toBe("q4"));
+    await waitFor(() => expect(activeQ().getAttribute("data-qid")).toBe("q2"));
     expect(activeQ().getAttribute("data-dir")).toBe("1");
   });
 

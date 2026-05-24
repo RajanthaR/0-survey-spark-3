@@ -11,7 +11,7 @@
  *   5. The continue CTA is a real <button>, has an accessible name, and
  *      activating it via keyboard (Enter) advances past the consent stage.
  */
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import { I18nProvider } from "@/lib/i18n";
 import type { Survey } from "@/surveys/types";
@@ -111,6 +111,10 @@ function getTriggers(): HTMLButtonElement[] {
 function getCta(container: HTMLElement) {
   return container.querySelector("main button.h-14") as HTMLButtonElement;
 }
+
+beforeEach(() => {
+  window.localStorage.clear();
+});
 
 describe("Required consent accordion — keyboard + screen-reader a11y", () => {
   it("renders one collapsed accordion trigger per required item with proper ARIA", () => {

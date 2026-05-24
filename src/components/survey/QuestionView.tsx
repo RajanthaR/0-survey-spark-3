@@ -11,6 +11,9 @@ import { questionHasVisuals } from "@/surveys/validate";
 
 export type AnswerInputMeta = { source: "keyboard" | "pointer" | "programmatic" };
 
+const FIELD_FOCUSABLE_SELECTOR =
+  'input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [role="radio"]:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function QuestionView({
   q,
   value,
@@ -48,16 +51,18 @@ export function QuestionView({
   const bannerRef = useRef<HTMLDivElement | null>(null);
   const prevErrorRef = useRef<string | null>(null);
 
-  // Move focus + scroll the new question's heading into view whenever the
-  // question changes. Screen-reader users hear the new question announced
-  // via the focus move; sighted thumb-driven users see the page scroll back
-  // to the top of the new card instead of staying parked at the previous
-  // question's input. `scroll-mt-24` keeps the heading clear of the sticky
-  // header. Honour `prefers-reduced-motion` for the scroll behaviour.
+  // Move focus into the new question's answer field and scroll its heading
+  // into view whenever the question changes. Screen-reader users hear the
+  // new question announced via the focus move; sighted thumb-driven users
+  // see the page scroll back to the top of the new card instead of staying
+  // parked at the previous question's input. `scroll-mt-24` keeps the
+  // heading clear of the sticky header. Honour `prefers-reduced-motion`
+  // for the scroll behaviour.
   useEffect(() => {
     const h = headingRef.current;
     if (!h) return;
-    h.focus({ preventScroll: true });
+    const focusable = fieldWrapRef.current?.querySelector<HTMLElement>(FIELD_FOCUSABLE_SELECTOR);
+    (focusable ?? h).focus({ preventScroll: true });
     h.scrollIntoView({
       behavior: reduceMotion ? "auto" : "smooth",
       block: "start",
@@ -102,9 +107,7 @@ export function QuestionView({
     if (wrap) {
       // First focusable inside the answer field — input, textarea, or
       // the first option button for choice-style questions.
-      const focusable = wrap.querySelector<HTMLElement>(
-        'input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [role="radio"]:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
+      const focusable = wrap.querySelector<HTMLElement>(FIELD_FOCUSABLE_SELECTOR);
       focusable?.focus({ preventScroll: true });
     }
   }, [error, reduceMotion]);

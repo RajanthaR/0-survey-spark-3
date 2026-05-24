@@ -18,7 +18,7 @@
  */
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, act, waitFor, within } from "@testing-library/react";
-import { I18nProvider, UI, type Lang, pickText } from "@/lib/i18n";
+import { I18nProvider, type Lang, pickText } from "@/lib/i18n";
 import { formatQuestionPosition } from "@/lib/format";
 import type { Survey } from "@/surveys/types";
 
@@ -172,15 +172,13 @@ describe("SurveyRunner — rapid Back updates live region + restores focus per s
       expect(headingAfter.textContent).toContain(pickText(SURVEY.questions[0].label, lang));
 
       // Focus landed on the restored question's answer control, inside the
-      // active question section — FocusTrap's `focusKey` change re-ran
-      // initial focus for every commit; the last commit's focus is what we
-      // assert here.
+      // active question section — the last commit's focus is what we assert
+      // here.
       await waitFor(() => {
         const active = document.activeElement as HTMLElement | null;
         expect(active).not.toBeNull();
-        // Focus contract: after a Back transition the sticky-bar Back
-        // button retains focus.
-        expect(active?.getAttribute("aria-label")).toBe(pickText(UI.back, lang));
+        expect(sectionAfter.contains(active)).toBe(true);
+        expect(active?.tagName).toBe("INPUT");
       });
     });
 
@@ -228,7 +226,8 @@ describe("SurveyRunner — rapid Back updates live region + restores focus per s
         await waitFor(() => {
           const active = document.activeElement as HTMLElement | null;
           expect(active).not.toBeNull();
-          expect(active?.getAttribute("aria-label")).toBe(pickText(UI.back, lang));
+          expect(section.contains(active)).toBe(true);
+          expect(active?.tagName).toBe("INPUT");
         });
       }
     });

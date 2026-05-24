@@ -1,9 +1,8 @@
 /**
  * The progress header shows a localized "+N skipped" pill when the
- * position counter jumps forward by more than one (i.e. next-unanswered
- * skipping landed past one or more answered questions). The pill is a
- * polite live region so screen-reader users hear it too. It auto-clears
- * after a short delay and never appears when nothing was skipped.
+ * position counter jumps forward by more than one. The pill is a polite
+ * live region so screen-reader users hear it too. It auto-clears after a
+ * short delay and never appears on normal adjacent Next navigation.
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, act, fireEvent, waitFor } from "@testing-library/react";
@@ -64,8 +63,38 @@ beforeEach(() => {
 });
 
 describe("SurveyRunner — skipped progress pill", () => {
-  it("shows '+N skipped' when Next jumps past answered questions, then auto-clears", async () => {
-    // Pre-answer q2 and q3 so Next from q1 lands on q4 (skipping 2).
+  it("shows '+N skipped' when a shortcut jumps past intermediate questions, then auto-clears", async () => {
+    const { container } = render(
+      <I18nProvider>
+        <SurveyRunner survey={SURVEY} initialToken="tok" initialLanguage="en" />
+      </I18nProvider>,
+    );
+    act(() => {
+      fireEvent.keyDown(window, { key: "End" });
+    });
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-testid="question-position"]')!.textContent).toBe(
+        "Question 5 of 5",
+      );
+    });
+    const pill = await waitFor(() => {
+      const el = container.querySelector('[data-testid="skipped-pill"]');
+      if (!el) throw new Error("pill not rendered");
+      return el as HTMLElement;
+    });
+    expect(pill.textContent).toBe("+3 skipped");
+    expect(pill.getAttribute("aria-live")).toBe("polite");
+
+    await waitFor(
+      () => {
+        expect(container.querySelector('[data-testid="skipped-pill"]')).toBeNull();
+      },
+      { timeout: 2500 },
+    );
+  });
+
+  it("does NOT render the pill on adjacent Next even when later questions are answered", async () => {
     const { container } = render(
       <I18nProvider>
         <SurveyRunner
@@ -78,44 +107,11 @@ describe("SurveyRunner — skipped progress pill", () => {
     );
     type(container, "a");
     clickNext(container);
-
-    // Header advanced to "Question 4 of 5" and the skip pill appears.
-    await waitFor(() => {
-      expect(container.querySelector('[data-testid="question-position"]')!.textContent).toBe(
-        "Question 4 of 5",
-      );
-    });
-    const pill = await waitFor(() => {
-      const el = container.querySelector('[data-testid="skipped-pill"]');
-      if (!el) throw new Error("pill not rendered");
-      return el as HTMLElement;
-    });
-    expect(pill.textContent).toBe("+2 skipped");
-    expect(pill.getAttribute("aria-live")).toBe("polite");
-
-    // Auto-clears after the timeout.
-    await waitFor(
-      () => {
-        expect(container.querySelector('[data-testid="skipped-pill"]')).toBeNull();
-      },
-      { timeout: 2500 },
-    );
-  });
-
-  it("does NOT render the pill on a normal one-step advance", async () => {
-    const { container } = render(
-      <I18nProvider>
-        <SurveyRunner survey={SURVEY} initialToken="tok" initialLanguage="en" />
-      </I18nProvider>,
-    );
-    type(container, "a");
-    clickNext(container);
     await waitFor(() => {
       expect(container.querySelector('[data-testid="question-position"]')!.textContent).toBe(
         "Question 2 of 5",
       );
     });
-    // Give state a moment to settle and assert no pill appeared.
     await new Promise((r) => setTimeout(r, 30));
     expect(container.querySelector('[data-testid="skipped-pill"]')).toBeNull();
   });
@@ -127,22 +123,18 @@ describe("SurveyRunner — skipped progress pill", () => {
     ]) {
       const { container, unmount } = render(
         <I18nProvider>
-          <SurveyRunner
-            survey={SURVEY}
-            initialToken="tok"
-            initialAnswers={{ q2: "x", q3: "y" }}
-            initialLanguage={lang}
-          />
+          <SurveyRunner survey={SURVEY} initialToken="tok" initialLanguage={lang} />
         </I18nProvider>,
       );
-      type(container, "a");
-      clickNext(container);
+      act(() => {
+        fireEvent.keyDown(window, { key: "End" });
+      });
       const pill = await waitFor(() => {
         const el = container.querySelector('[data-testid="skipped-pill"]');
         if (!el) throw new Error("pill not rendered");
         return el as HTMLElement;
       });
-      expect(pill.textContent).toBe(`+2 ${suffix}`);
+      expect(pill.textContent).toBe(`+3 ${suffix}`);
       unmount();
     }
   });

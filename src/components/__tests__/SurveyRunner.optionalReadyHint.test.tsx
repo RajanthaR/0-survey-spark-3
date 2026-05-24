@@ -5,7 +5,7 @@
  * silent until the threshold is met. Toggling the last selection back off
  * also clears the live region.
  */
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, act } from "@testing-library/react";
 import { I18nProvider, UI, pickText } from "@/lib/i18n";
 import type { Survey } from "@/surveys/types";
@@ -83,6 +83,10 @@ const getIdle = () =>
   document.querySelector('[data-testid="optional-idle-hint"]') as HTMLElement | null;
 const getCards = () =>
   Array.from(document.querySelectorAll<HTMLButtonElement>('button[role="switch"]'));
+
+beforeEach(() => {
+  window.localStorage.clear();
+});
 
 describe("Optional consent — polite ready-hint announcement threshold", () => {
   it("polite live region exists with role=status, aria-live=polite, aria-atomic=true", () => {
