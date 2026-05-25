@@ -1,7 +1,7 @@
 const RESUME_PREFIX = "eip.resume.";
 const LEGACY_PREFIX = "eip.token.";
-const DAY_MS = 24 * 60 * 60 * 1000;
-export const RESUME_TOKEN_TTL_MS = DAY_MS;
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+export const RESUME_TOKEN_TTL_MS = THIRTY_DAYS_MS;
 
 type StoredResumeToken = {
   token: string;
@@ -20,7 +20,7 @@ export function resumeStorageKey(slug: string): string {
 export function setStoredResumeToken(slug: string, token: string, now = Date.now()): void {
   const local = storage();
   if (!local) return;
-  const payload: StoredResumeToken = { token, expiresAt: now + DAY_MS };
+  const payload: StoredResumeToken = { token, expiresAt: now + RESUME_TOKEN_TTL_MS };
   local.setItem(resumeStorageKey(slug), JSON.stringify(payload));
   local.removeItem(`${LEGACY_PREFIX}${slug}`);
 }

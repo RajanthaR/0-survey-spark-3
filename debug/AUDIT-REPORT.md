@@ -243,20 +243,19 @@ Recommended fix:
 
 **Severity:** Low / product decision
 **Area:** Resume UX
+**Status:** Resolved — `RESUME_TOKEN_TTL_MS` aligned to 30 days (2026-05-25)
 
-Evidence:
+Evidence at time of audit:
 
-- `src/lib/resume-token-storage.ts` uses a 1-day localStorage TTL.
+- `src/lib/resume-token-storage.ts` used a 1-day localStorage TTL.
 - `supabase/migrations/20260517090000_expire_stale_responses.sql` expires in-progress responses after 30 days.
 
-Impact:
+Resolution:
 
-- A user returning to the same browser after more than 24 hours may not see the local resume option even though the server response remains resumable by direct link.
-
-Recommended fix:
-
-- If intentional for privacy, document it in the UX copy.
-- If not intentional, align local token TTL with server expiry or show a clearer resume-link warning.
+- `RESUME_TOKEN_TTL_MS` changed from `DAY_MS` (24 h) to `THIRTY_DAYS_MS` (30 days), matching the database expiry.
+- `setStoredResumeToken` now derives expiry from the exported constant (`RESUME_TOKEN_TTL_MS`) rather than the private variable, making it the single source of truth.
+- The TTL is still a sliding window: each successful `getStoredResumeToken` call resets the clock.
+- Test description updated from "24h sliding TTL" to "30-day sliding TTL"; all 4 tests pass.
 
 ## Positive findings
 

@@ -17,7 +17,7 @@ beforeEach(() => {
 });
 
 describe("resume token storage", () => {
-  it("stores resume tokens under the new key with a 24h sliding TTL", () => {
+  it("stores resume tokens under the new key with a 30-day sliding TTL", () => {
     setStoredResumeToken(slug, "tok-1", 1_000);
     const first = JSON.parse(window.localStorage.getItem(resumeStorageKey(slug)) ?? "{}") as {
       expiresAt?: number;
