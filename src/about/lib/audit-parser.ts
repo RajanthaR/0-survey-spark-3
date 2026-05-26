@@ -191,13 +191,18 @@ export function parseMasterTodo(source: string, origin: AuditOrigin): AuditItem[
   return items;
 }
 
+// Severity is critical=0..low=3. Items without a severity sort AFTER all known
+// severities, so use a finite sentinel rather than Infinity — `Infinity - Infinity`
+// is NaN and would violate the Array.prototype.sort comparator contract.
+const SEVERITY_UNKNOWN = 4;
+
 export function sortAuditItems(items: AuditItem[]): AuditItem[] {
   return [...items].sort((a, b) => {
     const statusDelta = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
     if (statusDelta) return statusDelta;
-    const severityDelta =
-      (a.severity ? SEVERITY_ORDER[a.severity] : Number.POSITIVE_INFINITY) -
-      (b.severity ? SEVERITY_ORDER[b.severity] : Number.POSITIVE_INFINITY);
+    const aSev = a.severity ? SEVERITY_ORDER[a.severity] : SEVERITY_UNKNOWN;
+    const bSev = b.severity ? SEVERITY_ORDER[b.severity] : SEVERITY_UNKNOWN;
+    const severityDelta = aSev - bSev;
     if (severityDelta) return severityDelta;
     return (a.id ?? a.title).localeCompare(b.id ?? b.title);
   });
