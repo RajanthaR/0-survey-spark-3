@@ -21,7 +21,7 @@ export default tseslint.config(
       "public/sw.js",
       "audits/**",
       "Codex-audits/**",
-      "Plans/Unified-Audit-Plan-2026-05-17/**",
+      "Plans/**",
     ],
   },
   {

@@ -79,6 +79,7 @@ function bundleShapePlugin(): PluginOption {
 // TanStack Start emits dist/server/server.js (Web-Fetch handler) and dist/client/* assets.
 // The Node runtime entry at server-node.mjs imports the server bundle and serves both via srvx.
 export default defineConfig(() => {
+  const commitSha = process.env.GITHUB_SHA ?? process.env.RAILWAY_GIT_COMMIT_SHA ?? "main";
   const plugins: PluginOption[] = [
     tsConfigPaths(),
     tailwindcss(),
@@ -90,6 +91,9 @@ export default defineConfig(() => {
 
   return {
     plugins,
+    define: {
+      __COMMIT_SHA__: JSON.stringify(commitSha),
+    },
     resolve: {
       dedupe: ["react", "react-dom", "@tanstack/react-router", "@tanstack/react-start"],
     },

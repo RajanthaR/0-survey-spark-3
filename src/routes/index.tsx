@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
+import { AboutHeaderLink } from "@/about/components/AboutHeaderLink";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { pickText, useLang, UI } from "@/lib/i18n";
 import { SURVEY_LIST } from "@/surveys";
@@ -34,7 +35,10 @@ function Index() {
         <span className="text-sm font-semibold uppercase tracking-wider text-primary">
           {pickText(UI.appName, lang)}
         </span>
-        <LanguageToggle compact />
+        <div className="flex items-center justify-end gap-2">
+          <AboutHeaderLink />
+          <LanguageToggle compact />
+        </div>
       </header>
       <main id="main" className="mx-auto max-w-2xl space-y-8 px-4 pb-20 pt-6">
         <section className="rounded-3xl gradient-eco p-8 text-primary-foreground shadow-soft">

@@ -11,9 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutIndexRouteImport } from './routes/about.index'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as AboutStudyRouteImport } from './routes/about.study'
+import { Route as AboutResearchRouteImport } from './routes/about.research'
+import { Route as AboutPresentRouteImport } from './routes/about.present'
+import { Route as AboutEngineeringRouteImport } from './routes/about.engineering'
 import { Route as ApiAdminExportDotcsvRouteImport } from './routes/api/admin/export[.]csv'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -26,10 +32,20 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AboutIndexRoute = AboutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AboutRoute,
 } as any)
 const SSlugRoute = SSlugRouteImport.update({
   id: '/s/$slug',
@@ -41,6 +57,26 @@ const RTokenRoute = RTokenRouteImport.update({
   path: '/r/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutStudyRoute = AboutStudyRouteImport.update({
+  id: '/study',
+  path: '/study',
+  getParentRoute: () => AboutRoute,
+} as any)
+const AboutResearchRoute = AboutResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
+  getParentRoute: () => AboutRoute,
+} as any)
+const AboutPresentRoute = AboutPresentRouteImport.update({
+  id: '/present',
+  path: '/present',
+  getParentRoute: () => AboutRoute,
+} as any)
+const AboutEngineeringRoute = AboutEngineeringRouteImport.update({
+  id: '/engineering',
+  path: '/engineering',
+  getParentRoute: () => AboutRoute,
+} as any)
 const ApiAdminExportDotcsvRoute = ApiAdminExportDotcsvRouteImport.update({
   id: '/api/admin/export.csv',
   path: '/api/admin/export.csv',
@@ -49,58 +85,93 @@ const ApiAdminExportDotcsvRoute = ApiAdminExportDotcsvRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRouteWithChildren
   '/admin': typeof AdminRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/about/engineering': typeof AboutEngineeringRoute
+  '/about/present': typeof AboutPresentRoute
+  '/about/research': typeof AboutResearchRoute
+  '/about/study': typeof AboutStudyRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
+  '/about/': typeof AboutIndexRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/about/engineering': typeof AboutEngineeringRoute
+  '/about/present': typeof AboutPresentRoute
+  '/about/research': typeof AboutResearchRoute
+  '/about/study': typeof AboutStudyRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
+  '/about': typeof AboutIndexRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRouteWithChildren
   '/admin': typeof AdminRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/about/engineering': typeof AboutEngineeringRoute
+  '/about/present': typeof AboutPresentRoute
+  '/about/research': typeof AboutResearchRoute
+  '/about/study': typeof AboutStudyRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
+  '/about/': typeof AboutIndexRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/admin'
     | '/reset-password'
+    | '/about/engineering'
+    | '/about/present'
+    | '/about/research'
+    | '/about/study'
     | '/r/$token'
     | '/s/$slug'
+    | '/about/'
     | '/api/admin/export.csv'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/reset-password'
+    | '/about/engineering'
+    | '/about/present'
+    | '/about/research'
+    | '/about/study'
     | '/r/$token'
     | '/s/$slug'
+    | '/about'
     | '/api/admin/export.csv'
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/admin'
     | '/reset-password'
+    | '/about/engineering'
+    | '/about/present'
+    | '/about/research'
+    | '/about/study'
     | '/r/$token'
     | '/s/$slug'
+    | '/about/'
     | '/api/admin/export.csv'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRouteWithChildren
   AdminRoute: typeof AdminRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   RTokenRoute: typeof RTokenRoute
@@ -124,12 +195,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/about/': {
+      id: '/about/'
+      path: '/'
+      fullPath: '/about/'
+      preLoaderRoute: typeof AboutIndexRouteImport
+      parentRoute: typeof AboutRoute
     }
     '/s/$slug': {
       id: '/s/$slug'
@@ -145,6 +230,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about/study': {
+      id: '/about/study'
+      path: '/study'
+      fullPath: '/about/study'
+      preLoaderRoute: typeof AboutStudyRouteImport
+      parentRoute: typeof AboutRoute
+    }
+    '/about/research': {
+      id: '/about/research'
+      path: '/research'
+      fullPath: '/about/research'
+      preLoaderRoute: typeof AboutResearchRouteImport
+      parentRoute: typeof AboutRoute
+    }
+    '/about/present': {
+      id: '/about/present'
+      path: '/present'
+      fullPath: '/about/present'
+      preLoaderRoute: typeof AboutPresentRouteImport
+      parentRoute: typeof AboutRoute
+    }
+    '/about/engineering': {
+      id: '/about/engineering'
+      path: '/engineering'
+      fullPath: '/about/engineering'
+      preLoaderRoute: typeof AboutEngineeringRouteImport
+      parentRoute: typeof AboutRoute
+    }
     '/api/admin/export.csv': {
       id: '/api/admin/export.csv'
       path: '/api/admin/export.csv'
@@ -155,8 +268,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AboutRouteChildren {
+  AboutEngineeringRoute: typeof AboutEngineeringRoute
+  AboutPresentRoute: typeof AboutPresentRoute
+  AboutResearchRoute: typeof AboutResearchRoute
+  AboutStudyRoute: typeof AboutStudyRoute
+  AboutIndexRoute: typeof AboutIndexRoute
+}
+
+const AboutRouteChildren: AboutRouteChildren = {
+  AboutEngineeringRoute: AboutEngineeringRoute,
+  AboutPresentRoute: AboutPresentRoute,
+  AboutResearchRoute: AboutResearchRoute,
+  AboutStudyRoute: AboutStudyRoute,
+  AboutIndexRoute: AboutIndexRoute,
+}
+
+const AboutRouteWithChildren = AboutRoute._addFileChildren(AboutRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRouteWithChildren,
   AdminRoute: AdminRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   RTokenRoute: RTokenRoute,
