@@ -21,6 +21,8 @@ const ALLOWED = new Set(
     "src/lib/i18n.tsx", // UI string dictionary
     "src/lib/analytics-report-i18n.ts", // Admin analytics-report dictionary
     "src/lib/format.ts", // QuestionCount / QuestionPosition nouns
+    "src/about/copy/study.ts", // Study-lane copy dictionary
+    "src/about/copy/ui.ts", // About shell copy dictionary
     "src/surveys/types.ts", // Shared option dictionaries (likert, months, …)
     "src/surveys/consent.ts", // Shared consent items
     "src/surveys/phase-1.ts", // Survey definition
@@ -75,7 +77,7 @@ describe("no inline Sinhala/Tamil labels outside i18n dictionaries", () => {
     }
     expect(
       offenders,
-      `Inline Sinhala/Tamil characters found outside allowlisted dictionaries. Move the string into a dictionary triple ({ en, si, ta }) in src/lib/i18n.tsx or the survey definition, then render it with pickText:\n  ${offenders.join("\n  ")}`,
+      `Inline Sinhala/Tamil characters found outside allowlisted dictionaries. Move the string into a dictionary triple ({ en, si, ta }) in src/lib/i18n.tsx, src/about/copy/*, or the survey definition, then render it with pickText:\n  ${offenders.join("\n  ")}`,
     ).toEqual([]);
   });
 });
