@@ -1,0 +1,26 @@
+<!-- Purpose: Shows how a request moves through srvx, TanStack Start, security headers, and server functions. Authored 2026-05-26. -->
+flowchart TD
+  Request["Request"]
+  ServerNode["server-node.mjs"]
+  ServeStatic["serveStatic dist/client"]
+  FetchHandler["src/server.ts fetch"]
+  StartMiddleware["src/start.ts requestMiddleware"]
+  SecurityHeaders["src/lib/security-headers.server.ts"]
+  StartRouter["@tanstack/react-start/server-entry"]
+  ServerFn["createServerFn handler"]
+  RateLimit["src/lib/rate-limit.server.ts"]
+  Turnstile["src/lib/turnstile.server.ts"]
+  Response["Response"]
+
+  Request --> ServerNode
+  ServerNode --> ServeStatic
+  ServeStatic -->|asset hit| Response
+  ServeStatic -->|SSR or RPC| FetchHandler
+  FetchHandler --> StartRouter
+  StartRouter --> StartMiddleware
+  StartMiddleware --> SecurityHeaders
+  StartMiddleware --> ServerFn
+  ServerFn --> RateLimit
+  ServerFn --> Turnstile
+  ServerFn --> Response
+  SecurityHeaders --> Response

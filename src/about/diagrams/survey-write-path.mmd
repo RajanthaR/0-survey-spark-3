@@ -1,0 +1,19 @@
+<!-- Purpose: Shows the respondent write path from consent through Supabase persistence and resume token issuance. Authored 2026-05-26. -->
+flowchart TD
+  SurveyRunnerImpl["src/components/survey/SurveyRunnerImpl.tsx"]
+  ResponsesFunctions["src/lib/responses.functions.ts"]
+  StartResponseImpl["src/lib/responses.impl.server.ts"]
+  RateLimit["rateLimit startResponse"]
+  VerifyTurnstile["verifyTurnstile"]
+  SupabaseAdmin["createAdminClient responses.startResponse"]
+  ResponsesTable["public.responses"]
+  ResumeToken["resume_token"]
+
+  SurveyRunnerImpl --> ResponsesFunctions
+  ResponsesFunctions --> StartResponseImpl
+  StartResponseImpl --> RateLimit
+  StartResponseImpl --> VerifyTurnstile
+  VerifyTurnstile --> SupabaseAdmin
+  SupabaseAdmin --> ResponsesTable
+  ResponsesTable --> ResumeToken
+  ResumeToken --> SurveyRunnerImpl

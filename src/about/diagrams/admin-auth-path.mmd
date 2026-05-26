@@ -1,0 +1,25 @@
+<!-- Purpose: Shows admin authentication, bootstrap, role checks, and analytics access. Authored 2026-05-26. -->
+flowchart TD
+  LoginPanel["src/routes/admin/LoginPanel.tsx"]
+  SupabaseClient["src/integrations/supabase/client.ts"]
+  AdminPasswordSignIn["adminPasswordSignIn"]
+  AuthMiddleware["requireSupabaseAuth"]
+  AdminBootstrap["adminBootstrap"]
+  UserRoles["user_roles"]
+  AssertAdmin["assertAdmin"]
+  StatsFunctions["src/lib/admin.stats.functions.ts"]
+  ExportsFunctions["src/lib/admin.exports.functions.ts"]
+  ResponsesTable["public.responses"]
+
+  LoginPanel --> AdminPasswordSignIn
+  LoginPanel --> SupabaseClient
+  AdminPasswordSignIn --> SupabaseClient
+  AdminBootstrap --> AuthMiddleware
+  AdminBootstrap --> UserRoles
+  StatsFunctions --> AuthMiddleware
+  ExportsFunctions --> AuthMiddleware
+  StatsFunctions --> AssertAdmin
+  ExportsFunctions --> AssertAdmin
+  AssertAdmin --> UserRoles
+  StatsFunctions --> ResponsesTable
+  ExportsFunctions --> ResponsesTable

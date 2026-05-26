@@ -1,0 +1,20 @@
+<!-- Purpose: Shows dictionary, survey, and resume-language precedence for rendered multilingual text. Authored 2026-05-26. -->
+flowchart TD
+  Dictionaries["src/lib/i18n.tsx UI"]
+  Surveys["src/surveys/phase-1.ts and phase-3.ts"]
+  LangProvider["LangProvider"]
+  UseLang["useLang"]
+  PickText["pickText"]
+  SurveyRunnerImpl["src/components/survey/SurveyRunnerImpl.tsx"]
+  ResumeResponse["resumeResponse"]
+  ResponsesLanguage["responses.language"]
+  RenderedText["Rendered EN/SI/TA text"]
+
+  Dictionaries --> PickText
+  Surveys --> PickText
+  LangProvider --> UseLang
+  UseLang --> SurveyRunnerImpl
+  ResumeResponse --> ResponsesLanguage
+  ResponsesLanguage --> SurveyRunnerImpl
+  SurveyRunnerImpl --> PickText
+  PickText --> RenderedText

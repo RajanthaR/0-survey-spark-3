@@ -1,0 +1,25 @@
+<!-- Purpose: Shows Redis token bucket behavior and the in-memory fallback caveat. Authored 2026-05-26. -->
+flowchart TD
+  ServerFn["createServerFn handler"]
+  GetClientIp["getClientIp"]
+  RateLimit["rateLimit"]
+  RedisUrl["REDIS_URL"]
+  RedisClient["ioredis client"]
+  Lua["RATE_LIMIT_LUA token bucket"]
+  RedisError["Redis call failed"]
+  MemoryMap["in-memory Map buckets"]
+  Allowed["Request allowed"]
+  TooMany["HTTP 429 Too many requests"]
+
+  ServerFn --> GetClientIp
+  GetClientIp --> RateLimit
+  RateLimit --> RedisUrl
+  RedisUrl -->|set| RedisClient
+  RedisClient --> Lua
+  Lua --> Allowed
+  Lua --> TooMany
+  RedisClient --> RedisError
+  RedisError --> MemoryMap
+  RedisUrl -->|unset| MemoryMap
+  MemoryMap --> Allowed
+  MemoryMap --> TooMany

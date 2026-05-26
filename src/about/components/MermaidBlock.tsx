@@ -1,5 +1,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 
+import { stripMermaidMetadata } from "@/about/lib/mermaid-source";
+
 type RenderState =
   | { status: "pending" }
   | { status: "ready"; svg: string }
@@ -13,6 +15,7 @@ type MermaidApi = {
 export function MermaidBlock({ source }: { source: string }) {
   const reactId = useId();
   const renderId = useMemo(() => `mermaid-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`, [reactId]);
+  const renderSource = useMemo(() => stripMermaidMetadata(source), [source]);
   const [state, setState] = useState<RenderState>({ status: "pending" });
 
   useEffect(() => {
@@ -23,7 +26,7 @@ export function MermaidBlock({ source }: { source: string }) {
       try {
         const mermaid = (await import("mermaid")).default as MermaidApi;
         mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "default" });
-        const result = await mermaid.render(renderId, source);
+        const result = await mermaid.render(renderId, renderSource);
         if (!cancelled) setState({ status: "ready", svg: result.svg });
       } catch (error) {
         if (!cancelled) {
@@ -40,7 +43,7 @@ export function MermaidBlock({ source }: { source: string }) {
     return () => {
       cancelled = true;
     };
-  }, [renderId, source]);
+  }, [renderId, renderSource]);
 
   if (state.status === "ready") {
     return (
@@ -59,7 +62,7 @@ export function MermaidBlock({ source }: { source: string }) {
         </p>
       )}
       <pre className="overflow-x-auto text-xs" data-testid="mermaid-source">
-        {source}
+        {renderSource}
       </pre>
     </div>
   );

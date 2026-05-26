@@ -20,13 +20,13 @@ describe("MermaidBlock", () => {
 
   it("shows source before hydration render completes, then renders SVG", async () => {
     mermaidMock.render.mockResolvedValue({ svg: '<svg role="img" aria-label="diagram"></svg>' });
-    const source = "graph TD; A-->B";
+    const source = "<!-- Purpose: test. Authored 2026-05-26. -->\ngraph TD; A-->B";
     const { container } = render(<MermaidBlock source={source} />);
 
-    expect(screen.getByTestId("mermaid-source")).toHaveTextContent(source);
+    expect(screen.getByTestId("mermaid-source")).toHaveTextContent("graph TD; A-->B");
 
     await waitFor(() => expect(mermaidMock.render).toHaveBeenCalledTimes(1));
-    expect(mermaidMock.render.mock.calls[0][1]).toBe(source);
+    expect(mermaidMock.render.mock.calls[0][1]).toBe("graph TD; A-->B");
     expect(mermaidMock.initialize).toHaveBeenCalledWith(
       expect.objectContaining({ startOnLoad: false }),
     );
