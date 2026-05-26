@@ -176,7 +176,7 @@ function DocSearch() {
                     setQuery("");
                     void navigate({
                       to: "/about/engineering",
-                      search: { doc: entry.path },
+                      search: { mode: "browser", doc: entry.path },
                     });
                   }}
                 >

@@ -34,17 +34,26 @@ describe("MarkdownView", () => {
     expect(screen.getByTestId("mermaid-block")).toHaveTextContent("graph TD; A-->B");
   });
 
-  it("rewrites repo-relative links and leaves external links unchanged", () => {
+  it("rewrites Markdown docs in-app, source links to GitHub, and leaves external links unchanged", () => {
     render(
       <MarkdownView
         basePath="docs/plans/option-visuals.md"
-        source="[Deployment](../DEPLOYMENT.md) [External](https://example.com) [Anchor](#local)"
+        source={[
+          "[Deployment](../DEPLOYMENT.md)",
+          "[Source](/src/server.ts)",
+          "[External](https://example.com)",
+          "[Anchor](#local)",
+        ].join(" ")}
       />,
     );
 
     expect(screen.getByRole("link", { name: "Deployment" })).toHaveAttribute(
       "href",
-      "https://github.com/RajanthaR/survey-spark-3/blob/main/docs/DEPLOYMENT.md",
+      "/about/engineering?mode=browser&doc=docs%2FDEPLOYMENT.md",
+    );
+    expect(screen.getByRole("link", { name: "Source" })).toHaveAttribute(
+      "href",
+      "https://github.com/RajanthaR/survey-spark-3/blob/main/src/server.ts",
     );
     expect(screen.getByRole("link", { name: "External" })).toHaveAttribute(
       "href",
@@ -57,7 +66,13 @@ describe("MarkdownView", () => {
 describe("rewriteMarkdownHref", () => {
   it("normalizes nested relative paths", () => {
     expect(rewriteMarkdownHref("./nested/../DEPLOYMENT.md#railway", "docs/plans/current.md")).toBe(
-      "https://github.com/RajanthaR/survey-spark-3/blob/main/docs/plans/DEPLOYMENT.md#railway",
+      "/about/engineering?mode=browser&doc=docs%2Fplans%2FDEPLOYMENT.md#railway",
+    );
+  });
+
+  it("rewrites cross-audit Markdown links into the doc browser", () => {
+    expect(rewriteMarkdownHref("04-testing.md#t-6", "audits/00-overview.md")).toBe(
+      "/about/engineering?mode=browser&doc=audits%2F04-testing.md#t-6",
     );
   });
 });

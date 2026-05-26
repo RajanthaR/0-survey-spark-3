@@ -1,0 +1,26 @@
+<!-- Purpose: Shows the Railway Node runtime and build/runtime split for EIP Insight. Authored 2026-05-26. -->
+flowchart LR
+  Browser["Browser"]
+  Railway["Railway service"]
+  ServerNode["server-node.mjs"]
+  StaticAssets["dist/client"]
+  ServerBundle["dist/server/server.js"]
+  FetchHandler["src/server.ts"]
+  StartEntry["@tanstack/react-start/server-entry"]
+  Supabase["Supabase Auth + Postgres"]
+  Redis["REDIS_URL Redis"]
+  Bun["bun install --frozen-lockfile"]
+  Vite["vite build"]
+
+  Browser --> Railway
+  Railway --> ServerNode
+  ServerNode --> StaticAssets
+  ServerNode --> ServerBundle
+  ServerBundle --> FetchHandler
+  FetchHandler --> StartEntry
+  StartEntry --> Supabase
+  StartEntry --> Redis
+
+  Bun --> Vite
+  Vite --> StaticAssets
+  Vite --> ServerBundle
