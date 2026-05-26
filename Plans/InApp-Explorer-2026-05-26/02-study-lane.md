@@ -10,6 +10,19 @@ A trilingual (EN / SI / TA) one-page "about this research" surface for survey re
 - Unblocks the global header link being useful for the largest audience.
 - Establishes the i18n copy pattern that the rest of the project already uses (`pickText` + `UI` dict), so reviewers can be sure this lane fits the existing architecture before the bigger lanes land.
 
+## Worktree setup
+
+Run once at the start of this phase. This lane can run in parallel with `03-research-lane.md` and `04-engineering-lane.md` once P0 has merged to `main`:
+
+```bash
+git fetch origin
+git worktree add -b feat/about-study ../survey-spark-3-study origin/main
+cd ../survey-spark-3-study
+bun install --frozen-lockfile
+```
+
+All sessions below run inside that worktree. After merge, remove with `git worktree remove ../survey-spark-3-study`.
+
 ## Sources
 
 - `src/lib/i18n.ts` — the `UI` dict and `pickText(text, lang)` pattern. This lane extends it with a new `ABOUT_STUDY` dict.
@@ -100,6 +113,40 @@ Verification:
 - [ ] Footer cross-lane links route correctly to `/about/research` and `/about/engineering` (placeholders are fine at this stage).
 - [ ] `head()` metadata is localised.
 - [ ] All gates green: `typecheck && lint && test && build`.
+
+## Wrap-up — open the PR
+
+When every "Done criteria" item above is checked and the strict gate passes from inside the worktree:
+
+```bash
+bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build
+git push -u origin feat/about-study
+gh pr create --title "feat(about): trilingual /about/study respondent page (P1)" --body "$(cat <<'EOF'
+## Summary
+- Add `ABOUT_STUDY` trilingual dictionary (EN / SI / TA) with non-emptiness test.
+- Render `/about/study` page with localised head metadata.
+- Footer cross-lane links to /about/research and /about/engineering with an "(English only)" note.
+
+## Plan
+Implements `Plans/InApp-Explorer-2026-05-26/02-study-lane.md`. Depends on P0 (`feat/about-infra`).
+
+## Verification
+- bun run typecheck — pass
+- bun run lint -- --max-warnings 0 — pass
+- bun run format:check — pass
+- bun run test — pass (new: src/about/copy/__tests__/study.test.ts)
+- bun run build — pass
+
+## Translation review
+- [ ] PhD candidate reviewed every Sinhala string
+- [ ] PhD candidate reviewed every Tamil string
+
+Do not merge until both translation review boxes are checked.
+EOF
+)"
+```
+
+Return the PR URL when done.
 
 ## Risks
 

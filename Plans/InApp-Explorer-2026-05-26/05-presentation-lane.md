@@ -11,6 +11,19 @@ Done means: one keystroke takes her into a presentation that walks supervisors t
 - After the content lanes (P1 / P2 / P3 / `02` / `03` / `04`) settle, the presentation lane is mostly composition work: import existing components, drop them into a slide harness.
 - Validates the visual quality of the other lanes — anything that doesn't look right blown up to 1920×1080 is honest feedback for the source lane.
 
+## Worktree setup
+
+Run once at the start of this phase. This lane *can* start in parallel with P1/P2/P3 using fixture content, but final slide composition needs the content lanes merged. Recommended order: start the worktree after P0 lands, work on the slide harness + slide kinds in parallel, and freeze the deck after P1/P2/P3 are merged.
+
+```bash
+git fetch origin
+git worktree add -b feat/about-present ../survey-spark-3-present origin/main
+cd ../survey-spark-3-present
+bun install --frozen-lockfile
+```
+
+All sessions below run inside that worktree. After merge, remove with `git worktree remove ../survey-spark-3-present`.
+
 ## Sources
 
 - `src/about/copy/study.ts` (P1)
@@ -114,6 +127,39 @@ Verification:
 - [ ] `/about/present` lazy-loads its own chunk (no impact on the rest of `/about/*` bundle).
 - [ ] AboutLayout chrome is minimised on present route.
 - [ ] "Exit presentation" button visible when not in fullscreen.
+
+## Wrap-up — open the PR
+
+When every "Done criteria" item above is checked and the strict gate passes from inside the worktree:
+
+```bash
+bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build
+git push -u origin feat/about-present
+gh pr create --title "feat(about): /about/present keyboard slideshow (P3')" --body "$(cat <<'EOF'
+## Summary
+- `<SlideDeck>` harness with keyboard nav, fullscreen, progress bar, help overlay, reduced-motion handling.
+- Four slide kinds (title, text, diagram, component) with projection-sized typography.
+- Initial 13-slide `deck.tsx` covering study → instrument → current numbers → system overview → audit posture → milestones.
+
+## Plan
+Implements `Plans/InApp-Explorer-2026-05-26/05-presentation-lane.md`. Depends on P0 (`feat/about-infra`). Uses components from P2 (`feat/about-research`) and P3 (`feat/about-engineering`) — those PRs should be merged first or this PR should rebase onto them.
+
+## Verification
+- bun run typecheck — pass
+- bun run lint -- --max-warnings 0 — pass
+- bun run format:check — pass
+- bun run test — pass (new: slide-deck reducer tests)
+- bun run build — pass
+- bun run size — /about/present lazy chunk does not bloat other /about routes
+
+## Manual check
+- [ ] Deck advances cleanly through all 13 slides at 1920×1080 (projector test)
+- [ ] Reduced-motion snap-cuts work
+EOF
+)"
+```
+
+Return the PR URL when done.
 
 ## Risks
 

@@ -2,6 +2,19 @@
 
 Ordered checklist across the six lane plans. Each item maps to a session in one of the lane docs and is sized for a single Codex / Claude-Code run.
 
+## Worktrees and parallel execution
+
+Each phase plan opens with a `## Worktree setup` block. Use it. The recommended choreography:
+
+1. Run **P0 alone** in `../survey-spark-3-infra` on `feat/about-infra`. Open + merge the PR.
+2. After P0 merges, spawn **three worktrees in parallel**: `../survey-spark-3-study`, `../survey-spark-3-research`, `../survey-spark-3-engineering`. One agent (or you) per worktree.
+3. **P3' (present)** can start a 4th worktree concurrently for harness work; freeze the slide deck only after P1–P3 PRs merge.
+4. **P4 (rollout)** runs last in `../survey-spark-3-rollout` after P0–P3 are all on `main`.
+
+Each phase's `## Wrap-up — open the PR` block produces an independent PR. Don't merge a lane PR before P0; don't merge P4 before all the others.
+
+
+
 ## P0 — Infrastructure (`01-infrastructure.md`)
 
 - [ ] 0.1 — Add `/about` hub + four sub-routes; header link gated off `/s/*` and `/r/*`; lazy chunk split.

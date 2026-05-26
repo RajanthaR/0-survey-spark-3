@@ -17,6 +17,19 @@ Every other lane depends on this:
 
 Without P0, the lanes can't be reviewed in isolation.
 
+## Worktree setup
+
+Run once at the start of this phase so the other phases can be developed in parallel without merge contention:
+
+```bash
+git fetch origin
+git worktree add -b feat/about-infra ../survey-spark-3-infra origin/main
+cd ../survey-spark-3-infra
+bun install --frozen-lockfile
+```
+
+All sessions below run inside that worktree. When the phase is done, the wrap-up section creates the PR; after merge, remove the worktree with `git worktree remove ../survey-spark-3-infra` and delete the branch.
+
 ## Sources
 
 - `src/routes/__root.tsx` — global layout, where the header link will land.
@@ -166,6 +179,39 @@ Verification:
 - [ ] `bun run build && bun run size` show no regression on `/`, `/s/phase-1`, `/r/$token`. The `mermaid` and `react-markdown` chunks appear only as lazy children of `/about`.
 - [ ] `bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build` are all green.
 - [ ] New unit tests pass: `load-doc.test.ts`, `MermaidBlock.test.tsx`.
+
+## Wrap-up — open the PR
+
+When every "Done criteria" item above is checked and the strict gate passes from inside the worktree:
+
+```bash
+bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build
+git push -u origin feat/about-infra
+gh pr create --title "feat(about): /about hub + Markdown/Mermaid infrastructure (P0)" --body "$(cat <<'EOF'
+## Summary
+- Add `/about` route hub with four placeholder lanes, header link gated off survey routes.
+- Add Markdown loader + react-markdown renderer with GFM and GitHub link rewrite.
+- Add lazy-loaded `<MermaidBlock>` with SSR fallback.
+- Add `AboutLayout` (sidebar + breadcrumbs + client-side doc search).
+
+## Plan
+Implements `Plans/InApp-Explorer-2026-05-26/01-infrastructure.md`. Unblocks P1–P3 lane PRs.
+
+## Verification
+- bun run typecheck — pass
+- bun run lint -- --max-warnings 0 — pass
+- bun run format:check — pass
+- bun run test — pass (new: load-doc.test.ts, MermaidBlock.test.tsx)
+- bun run build — pass
+- bun run size — survey bundle unchanged on /, /s/phase-1, /r/\$token
+
+## Notes
+This PR is a hard prerequisite for the P1/P2/P3 lane PRs, which are designed to run in parallel against the same `main` after this lands.
+EOF
+)"
+```
+
+Return the PR URL when done. Do not merge any P1–P3 lane PR until this one is merged.
 
 ## Risks
 

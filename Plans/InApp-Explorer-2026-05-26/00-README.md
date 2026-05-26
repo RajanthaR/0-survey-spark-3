@@ -80,14 +80,29 @@ The plan inherits these from the existing project:
 
 ```
 P0 infrastructure (01) → P1 study lane (02) ─┐
-                       → P2 engineering lane (04) ─┼─→ P3 present lane (05) → P4 rollout (06)
-                       → P3 research lane (03) ───┘
+                       → P2 research lane (03) ──┼─→ P3' present lane (05) → P4 rollout (06)
+                       → P3 engineering lane (04)┘
 ```
 
 - **P0 — infrastructure** is a hard prerequisite. Nothing else compiles without the `/about` hub, the Markdown loader, and the lazy chunk boundary.
-- **P1, P2, P3 lanes** are independent of each other after P0 lands. They can be picked up in any order and parallelised across sessions. The order in the diagram above is a suggested optimisation: study lane is the smallest and unblocks the header link; engineering lane builds the Mermaid infrastructure that the presentation lane reuses; research lane needs a Supabase server-fn so it's the highest-risk lane and is best left for last among the content lanes.
-- **P3 — presentation** depends on the other lanes having content to slide through. It can start in parallel using fixture content, but final slide selection waits.
+- **P1, P2, P3 lanes** are independent of each other after P0 lands. They can be picked up in any order and parallelised across sessions.
+- **P3' — presentation** depends on the other lanes having content to slide through. The slide harness can start in parallel using fixture content, but final slide selection waits for the content lanes.
 - **P4 — rollout** is the only lane that must come last. It edits CI, lighthouse routes, and the axe sweep.
+
+## Worktree-based parallel execution
+
+Every lane plan opens with a `## Worktree setup` block that creates an isolated `git worktree` and branch, so multiple agents can work on different lanes simultaneously without merge contention. Recommended choreography:
+
+| Phase | Branch | Worktree dir | Can start when | Can run in parallel with |
+| --- | --- | --- | --- | --- |
+| P0 — infra (`01`) | `feat/about-infra` | `../survey-spark-3-infra` | Always | — (must finish first) |
+| P1 — study (`02`) | `feat/about-study` | `../survey-spark-3-study` | After P0 merges to `main` | P2, P3 |
+| P2 — research (`03`) | `feat/about-research` | `../survey-spark-3-research` | After P0 merges to `main` | P1, P3 |
+| P3 — engineering (`04`) | `feat/about-engineering` | `../survey-spark-3-engineering` | After P0 merges to `main` | P1, P2 |
+| P3' — present (`05`) | `feat/about-present` | `../survey-spark-3-present` | After P0 merges; harness work can parallel P1–P3 | P1, P2, P3 (harness only) |
+| P4 — rollout (`06`) | `feat/about-rollout` | `../survey-spark-3-rollout` | After P0–P3 all merge to `main` | — (must finish last) |
+
+The maximum parallel width is **3** worktrees (P1 + P2 + P3) after P0 lands. P3' can add a 4th worktree if you're optimising for wall-clock, but its final session blocks on P1–P3 merging anyway, so the practical gain is small. Each lane's `## Wrap-up — open the PR` block produces an independent PR; merge order is enforced by GitHub branch protection + the dependency notes in each PR body.
 
 ## Risks and tradeoffs called out up front
 

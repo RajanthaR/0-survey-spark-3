@@ -12,6 +12,19 @@ Done means a supervisor visiting `/about/research` can answer: *"What is she stu
 - Forces a clean `createServerFn` for aggregated response counts, exercising the server-boundary pattern from `AGENTS.md` § "Server Boundaries" before the heavier engineering lane lands.
 - Builds on top of P0 infra (Markdown loader for the narrative sections, `recharts` for live counts) — no new dependencies.
 
+## Worktree setup
+
+Run once at the start of this phase. This lane can run in parallel with `02-study-lane.md` and `04-engineering-lane.md` once P0 has merged to `main`:
+
+```bash
+git fetch origin
+git worktree add -b feat/about-research ../survey-spark-3-research origin/main
+cd ../survey-spark-3-research
+bun install --frozen-lockfile
+```
+
+All sessions below run inside that worktree. After merge, remove with `git worktree remove ../survey-spark-3-research`.
+
 ## Sources
 
 - `src/surveys/phase-1.ts`, `src/surveys/phase-3.ts`, `src/surveys/consent.ts` — the canonical study instrument.
@@ -194,6 +207,43 @@ Verification:
 - [ ] `/about/research` page composes all five sections + right-rail nav (desktop).
 - [ ] Language toggle is hidden on this lane; page is English-only.
 - [ ] All gates green: `typecheck && lint && test && build`. Bundle size for `/`, `/s/phase-1`, `/r/$token` unchanged.
+
+## Wrap-up — open the PR
+
+When every "Done criteria" item above is checked and the strict gate passes from inside the worktree:
+
+```bash
+bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build
+git push -u origin feat/about-research
+gh pr create --title "feat(about): /about/research narrative + live counts (P2)" --body "$(cat <<'EOF'
+## Summary
+- Add `getResearchAggregatesFn` server fn with <10 rounding and aggregate-only shape.
+- Add PhaseTimeline + SampleFlowDiagram (Mermaid).
+- Add LiveResponseCounts (TanStack Query) + MilestoneTimeline (JSON-driven).
+- Compose /about/research with framework + sampling/ethics Markdown placeholders.
+
+## Plan
+Implements `Plans/InApp-Explorer-2026-05-26/03-research-lane.md`. Depends on P0 (`feat/about-infra`).
+
+## Verification
+- bun run typecheck — pass
+- bun run lint -- --max-warnings 0 — pass
+- bun run format:check — pass
+- bun run test — pass
+- bun run build — pass
+- bun run size — survey bundle unchanged on /, /s/phase-1, /r/\$token
+
+## Candidate review
+- [ ] PhD candidate filled `01-framework.md` placeholder
+- [ ] PhD candidate filled `02-sampling-ethics.md` placeholder
+- [ ] Milestones JSON reflects current state
+
+Placeholders can ship to a non-public review environment, but production merge waits on the three review boxes above.
+EOF
+)"
+```
+
+Return the PR URL when done.
 
 ## Risks
 
