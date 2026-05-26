@@ -11,12 +11,13 @@ import {
 import { pickText, useLang, type Lang } from "@/lib/i18n";
 import { CONSENT_ITEMS } from "@/surveys/consent";
 
-type StudyLinkTarget = "/" | "/about/research" | "/about/engineering";
+type StudyLinkTarget = "/" | "/about/study" | "/about/research" | "/about/engineering";
 
 type StudyLinkProps = {
   to: StudyLinkTarget;
   className: string;
   children: ReactNode;
+  hash?: string;
 };
 
 type StudyLaneContentProps = {
@@ -42,7 +43,7 @@ const sectionOrder = [
 export const Route = createFileRoute("/about/study")({
   component: StudyLane,
   head: ({ match }) => {
-    const lang = match.context.initialLang;
+    const lang = match.context.initialLang ?? "en";
     const title = `${pickText(ABOUT_STUDY.pageTitle, lang)} - EIP Insight`;
     const description = pickText(ABOUT_STUDY.pageDescription, lang);
 
@@ -93,12 +94,13 @@ export function StudyLaneContent({ lang, renderLink = defaultRenderLink }: Study
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {pickText(ABOUT_STUDY.privacyBody, lang)}
           </p>
-          <a
-            href="#study-consent"
-            className="mt-3 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {pickText(ABOUT_STUDY.privacyConsentLink, lang)}
-          </a>
+          {renderLink({
+            to: "/about/study",
+            hash: "study-consent",
+            className:
+              "mt-3 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline",
+            children: pickText(ABOUT_STUDY.privacyConsentLink, lang),
+          })}
         </section>
 
         <section className="rounded-2xl border bg-card p-5">
@@ -188,9 +190,9 @@ function StudySection({ heading, body }: { heading: string; body: string }) {
   );
 }
 
-function defaultRenderLink({ to, className, children }: StudyLinkProps) {
+function defaultRenderLink({ to, className, children, hash }: StudyLinkProps) {
   return (
-    <Link to={to} className={className}>
+    <Link to={to} hash={hash} className={className}>
       {children}
     </Link>
   );
