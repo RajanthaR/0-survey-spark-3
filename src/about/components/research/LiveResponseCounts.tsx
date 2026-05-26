@@ -39,8 +39,10 @@ export function useResearchAggregates(): ResearchAggregatesState {
     staleTime: 60_000,
   });
 
-  if (query.isError) return { status: "error", error: toError(query.error) };
+  // Prefer cached data over an errored background refetch
+  // (stale-while-revalidate UX — don't flash an error if we already have counts).
   if (query.data) return { status: "success", data: query.data };
+  if (query.isError) return { status: "error", error: toError(query.error) };
   return { status: "loading" };
 }
 
