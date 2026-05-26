@@ -12,6 +12,19 @@ Done means: a senior engineer landing on `/about/engineering` cold can build an 
 - Forces the Mermaid + sidebar + search infrastructure from P0 to actually carry weight, which is the right way to validate that infra.
 - Establishes the GitHub deep-link rewriting and the audit-parsing pattern that the presentation lane (P3) reuses for the "engineering walkthrough" slides.
 
+## Worktree setup
+
+Run once at the start of this phase. This lane can run in parallel with `02-study-lane.md` and `03-research-lane.md` once P0 has merged to `main`:
+
+```bash
+git fetch origin
+git worktree add -b feat/about-engineering ../survey-spark-3-engineering origin/main
+cd ../survey-spark-3-engineering
+bun install --frozen-lockfile
+```
+
+All sessions below run inside that worktree. After merge, remove with `git worktree remove ../survey-spark-3-engineering`.
+
 ## Sources
 
 - `docs/DEPLOYMENT.md`, `docs/RAILWAY-MIGRATION.md`, `docs/RESEARCHER_OPS.md`, `docs/ADMIN_ONBOARDING.md`, `docs/BACKUP_RESTORE.md`, `docs/UX-PATTERNS.md`, `docs/TROUBLESHOOTING.md`, `docs/A11Y-SWEEP-2026-05.md`, `docs/PRODUCTION-BROWSER-TEST-AGENT.md`, `docs/plans/option-visuals.md`.
@@ -192,6 +205,40 @@ Verification:
 - [ ] Audit dashboard renders scoreboard + grouped table; numbers reconcile manually.
 - [ ] Tabs are keyboard-accessible; `?mode=` URL is shareable.
 - [ ] All gates green: `typecheck && lint && test && build && bundle:shape`. Survey-bundle size unchanged.
+
+## Wrap-up — open the PR
+
+When every "Done criteria" item above is checked and the strict gate passes from inside the worktree:
+
+```bash
+bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build && bun run bundle:shape
+git push -u origin feat/about-engineering
+gh pr create --title "feat(about): /about/engineering architecture story + doc browser + audit dashboard (P3)" --body "$(cat <<'EOF'
+## Summary
+- Six Mermaid diagram sources covering architecture, request lifecycle, write path, admin auth, i18n, and rate-limit.
+- Mode A: architecture-story Markdown page with inline diagrams.
+- Mode B: grouped doc-browser sidebar + viewer; cross-doc `.md` links navigate in-app.
+- Mode C: audit dashboard parsing the two master TODO files; scoreboard + grouped table.
+- Radix Tabs plumbing keyed off `?mode=`; per-tab lazy chunks; commit-SHA footnote.
+
+## Plan
+Implements `Plans/InApp-Explorer-2026-05-26/04-engineering-lane.md`. Depends on P0 (`feat/about-infra`).
+
+## Verification
+- bun run typecheck — pass
+- bun run lint -- --max-warnings 0 — pass
+- bun run format:check — pass
+- bun run test — pass (new: audit-parser tests at ≥80% branch coverage, diagrams smoke, link-rewrite unit)
+- bun run build — pass
+- bun run bundle:shape — three tab chunks + react-markdown + mermaid all under /about
+
+## Reviewer ask
+- [ ] Engineer reviewer signed off on Mermaid diagram accuracy (architecture, request lifecycle, write path, admin auth, i18n, rate-limit)
+EOF
+)"
+```
+
+Return the PR URL when done.
 
 ## Risks
 

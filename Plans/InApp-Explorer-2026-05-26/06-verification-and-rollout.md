@@ -11,6 +11,19 @@ Done means: the `main` branch ships the four lanes, all CI workflows are green, 
 - P0–P3 lanes were each gated locally on `typecheck && lint && test && build`, but the cross-cutting verifications (a11y on new routes, lighthouse on new routes, smoke on new routes, bundle delta documentation, CSP / security-header verification on the new routes) only make sense after every lane has landed.
 - Catches regressions only the integrated system surfaces — e.g. Mermaid + react-markdown both being lazy-loaded in the same chunk and interacting badly with the SSR boundary.
 
+## Worktree setup
+
+This phase must run **after** the P0–P3 lane PRs have merged to `main`. From a clean repo:
+
+```bash
+git fetch origin
+git worktree add -b feat/about-rollout ../survey-spark-3-rollout origin/main
+cd ../survey-spark-3-rollout
+bun install --frozen-lockfile
+```
+
+All sessions below run inside that worktree. After merge, remove with `git worktree remove ../survey-spark-3-rollout`.
+
 ## Sources
 
 - `.github/workflows/pr.yml`, `nightly.yml`, `smoke.yml`, `guardrails.yml`, `csv-export-shape.yml`
@@ -150,6 +163,50 @@ After P4 lands, the CI surface is:
 - [ ] CSP unchanged; new routes' headers match `/` byte-for-byte.
 - [ ] Workflow `paths-ignore` correctly excludes this plan folder.
 - [ ] Rollout PR merged after the smoke gate on main passes.
+
+## Wrap-up — open the PR
+
+When every "Done criteria" item above is checked and the strict gate passes from inside the worktree:
+
+```bash
+bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build
+bun run size && bun run bundle:shape
+git push -u origin feat/about-rollout
+gh pr create --title "feat(about): rollout — a11y / smoke / lighthouse coverage + bundle delta docs (P4)" --body "$(cat <<'EOF'
+## Summary
+- Add /about routes to scripts/smoke-ssr.mjs, the axe route list, and nightly Lighthouse routes.
+- Document install-size + per-route chunk delta in a table here.
+- Workflow paths-ignore parity for `Plans/**` confirmed.
+- CSP + security-header parity verified on /about routes.
+
+## Plan
+Implements `Plans/InApp-Explorer-2026-05-26/06-verification-and-rollout.md`. Depends on P0–P3 PRs already merged.
+
+## Verification
+- bun run typecheck — pass
+- bun run lint -- --max-warnings 0 — pass
+- bun run format:check — pass
+- bun run test — pass
+- bun run build — pass
+- Local smoke against all 10 canonical routes — pass
+- Local axe against all /about routes — pass
+- Local lighthouse on /about and /about/study — meets LCP ≤ 2.5s / TTI ≤ 3.5s / CLS ≤ 0.1
+
+## Bundle delta
+| Route | Before | After | Δ |
+| --- | --- | --- | --- |
+| / | <fill> | <fill> | 0 |
+| /s/phase-1 | <fill> | <fill> | 0 |
+| /r/\$token | <fill> | <fill> | 0 |
+| /about | n/a | <fill> | new |
+| /about/engineering | n/a | <fill> | new |
+
+(install-size delta from react-markdown + remark-gfm + mermaid + @tailwindcss/typography listed in PR comments)
+EOF
+)"
+```
+
+Return the PR URL when done. Merge **only after** the `smoke.yml` gate on `main` passes for the prior merges.
 
 ## Risks
 
