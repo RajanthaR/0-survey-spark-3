@@ -1,0 +1,6 @@
+[
+  { "date": "2025-11-01", "label": "Proposal defended", "status": "done" },
+  { "date": "2026-03-15", "label": "Phase 1 instrument finalised", "status": "done" },
+  { "date": "2026-05-26", "label": "Phase 1 data collection mid-point", "status": "in-progress" },
+  { "date": "2026-08-01", "label": "Phase 3 launch", "status": "upcoming" }
+]

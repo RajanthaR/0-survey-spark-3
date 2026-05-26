@@ -196,6 +196,10 @@ function DocSearch() {
 
 export function AboutLayout({ children }: { children: React.ReactNode }) {
   const { lang } = useLang();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const activeSection = getAboutSectionForPath(pathname);
+  const showLanguageToggle =
+    activeSection?.id !== "research" && activeSection?.id !== "engineering";
 
   return (
     <div className="min-h-screen bg-background">
@@ -211,7 +215,7 @@ export function AboutLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
             <DocSearch />
-            <LanguageToggle compact />
+            {showLanguageToggle && <LanguageToggle compact />}
           </div>
         </div>
       </header>

@@ -21,6 +21,7 @@ import { Route as AboutResearchRouteImport } from './routes/about.research'
 import { Route as AboutPresentRouteImport } from './routes/about.present'
 import { Route as AboutEngineeringRouteImport } from './routes/about.engineering'
 import { Route as ApiAdminExportDotcsvRouteImport } from './routes/api/admin/export[.]csv'
+import { Route as ApiAboutResearchAggregatesRouteImport } from './routes/api/about/research-aggregates'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -82,6 +83,12 @@ const ApiAdminExportDotcsvRoute = ApiAdminExportDotcsvRouteImport.update({
   path: '/api/admin/export.csv',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAboutResearchAggregatesRoute =
+  ApiAboutResearchAggregatesRouteImport.update({
+    id: '/api/about/research-aggregates',
+    path: '/api/about/research-aggregates',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/about/': typeof AboutIndexRoute
+  '/api/about/research-aggregates': typeof ApiAboutResearchAggregatesRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
 }
 export interface FileRoutesByTo {
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/about': typeof AboutIndexRoute
+  '/api/about/research-aggregates': typeof ApiAboutResearchAggregatesRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
 }
 export interface FileRoutesById {
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/about/': typeof AboutIndexRoute
+  '/api/about/research-aggregates': typeof ApiAboutResearchAggregatesRoute
   '/api/admin/export.csv': typeof ApiAdminExportDotcsvRoute
 }
 export interface FileRouteTypes {
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/s/$slug'
     | '/about/'
+    | '/api/about/research-aggregates'
     | '/api/admin/export.csv'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/s/$slug'
     | '/about'
+    | '/api/about/research-aggregates'
     | '/api/admin/export.csv'
   id:
     | '__root__'
@@ -166,6 +178,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/s/$slug'
     | '/about/'
+    | '/api/about/research-aggregates'
     | '/api/admin/export.csv'
   fileRoutesById: FileRoutesById
 }
@@ -176,6 +189,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   RTokenRoute: typeof RTokenRoute
   SSlugRoute: typeof SSlugRoute
+  ApiAboutResearchAggregatesRoute: typeof ApiAboutResearchAggregatesRoute
   ApiAdminExportDotcsvRoute: typeof ApiAdminExportDotcsvRoute
 }
 
@@ -265,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminExportDotcsvRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/about/research-aggregates': {
+      id: '/api/about/research-aggregates'
+      path: '/api/about/research-aggregates'
+      fullPath: '/api/about/research-aggregates'
+      preLoaderRoute: typeof ApiAboutResearchAggregatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -293,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   RTokenRoute: RTokenRoute,
   SSlugRoute: SSlugRoute,
+  ApiAboutResearchAggregatesRoute: ApiAboutResearchAggregatesRoute,
   ApiAdminExportDotcsvRoute: ApiAdminExportDotcsvRoute,
 }
 export const routeTree = rootRouteImport

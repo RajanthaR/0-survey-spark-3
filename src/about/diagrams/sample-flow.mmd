@@ -1,0 +1,11 @@
+flowchart LR
+    Land["Lands on /"] --> Pick["Picks a survey phase"]
+    Pick --> Consent["Reads consent"]
+    Consent -->|Agrees| Survey["Answers survey questions"]
+    Consent -->|Declines| Exit["Exits"]
+    Survey --> Save["Optional save and resume"]
+    Save -->|Resume token sent| Resume["Returns via /r/$token"]
+    Resume --> Survey
+    Survey --> Submit["Final submit"]
+    Submit --> Store[("Supabase responses")]
+    Store --> Aggregate["Aggregate counts for analysis"]
