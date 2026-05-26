@@ -63,11 +63,15 @@ const components = (basePath: string): Components => ({
   },
 });
 
+export function stripMarkdownComments(source: string): string {
+  return source.replace(/<!--[\s\S]*?-->/g, "");
+}
+
 export function MarkdownView({ source, basePath }: { source: string; basePath: string }) {
   return (
     <div className="markdown-view">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components(basePath)}>
-        {source}
+        {stripMarkdownComments(source)}
       </ReactMarkdown>
     </div>
   );
