@@ -96,7 +96,7 @@ function originStats(items: AuditItem[], origin: AuditOrigin) {
   };
 }
 
-function AuditScoreboard({ items }: { items: AuditItem[] }) {
+export function AuditScoreboard({ items }: { items: AuditItem[] }) {
   const stats = [originStats(items, "audits"), originStats(items, "codex-audits")];
 
   return (
@@ -197,15 +197,17 @@ function AuditTable({ topic, items }: { topic: string; items: AuditItem[] }) {
   );
 }
 
+export function buildAuditItems(): AuditItem[] {
+  const audits = loadDoc("audits/99-master-todo.md") ?? "";
+  const codexAudits = loadDoc("Codex-audits/MASTER_TODO.md") ?? "";
+  return sortAuditItems([
+    ...parseMasterTodo(audits, "audits"),
+    ...parseMasterTodo(codexAudits, "codex-audits"),
+  ]);
+}
+
 export default function AuditDashboardMode() {
-  const items = useMemo(() => {
-    const audits = loadDoc("audits/99-master-todo.md") ?? "";
-    const codexAudits = loadDoc("Codex-audits/MASTER_TODO.md") ?? "";
-    return sortAuditItems([
-      ...parseMasterTodo(audits, "audits"),
-      ...parseMasterTodo(codexAudits, "codex-audits"),
-    ]);
-  }, []);
+  const items = useMemo(() => buildAuditItems(), []);
   const grouped = itemsByTopic(items);
 
   return (

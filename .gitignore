@@ -17,6 +17,7 @@ dist-ssr
 .cache
 coverage
 playwright-report
+.playwright-mcp
 test-results
 *.tsbuildinfo
 *.local

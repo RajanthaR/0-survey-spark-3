@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { LanePlaceholder } from "@/about/components/LanePlaceholder";
+import { SlideDeck } from "@/about/components/present/SlideDeck";
+import { SLIDES } from "@/about/content/present/deck";
 import { getAboutSection } from "@/about/lib/sections";
 
 export const Route = createFileRoute("/about/present")({
@@ -14,5 +15,5 @@ export const Route = createFileRoute("/about/present")({
 });
 
 function PresentLane() {
-  return <LanePlaceholder section={getAboutSection("present")} />;
+  return <SlideDeck slides={SLIDES} />;
 }
