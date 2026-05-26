@@ -26,8 +26,9 @@ export function buildPhaseTimelineItems(surveys: Survey[] = SURVEY_LIST): PhaseT
     .map((survey) => {
       const sections: string[] = [];
       for (const question of survey.questions) {
+        if (!question.section) continue;
         const label = pickText(question.section, "en");
-        if (!sections.includes(label)) sections.push(label);
+        if (label && !sections.includes(label)) sections.push(label);
       }
 
       return {

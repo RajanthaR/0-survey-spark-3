@@ -13,10 +13,12 @@ export const Route = createFileRoute("/api/about/research-aggregates")({
             headers: { "Cache-Control": CACHE_CONTROL },
           });
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : "Live counts are temporarily unavailable.";
+          // Never propagate internal error details to the client: this endpoint
+          // returns aggregate research counts and a leaky error.message could
+          // disclose Supabase schema, table names, or connection state.
+          console.error("Failed to fetch research aggregates:", error);
           return Response.json(
-            { error: message },
+            { error: "Live counts are temporarily unavailable." },
             {
               status: 503,
               headers: { "Cache-Control": "no-store" },

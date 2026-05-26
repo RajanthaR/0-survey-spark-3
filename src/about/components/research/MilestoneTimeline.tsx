@@ -48,6 +48,9 @@ const dateFormatter = new Intl.DateTimeFormat("en-LK", {
   day: "numeric",
   month: "short",
   year: "numeric",
+  // Force UTC so a YYYY-MM-DD milestone renders as the same calendar date
+  // regardless of where the viewer's browser is.
+  timeZone: "UTC",
 });
 
 export function MilestoneTimeline({
@@ -117,7 +120,9 @@ export function MilestoneTimeline({
 }
 
 function formatMilestoneDate(value: string): string {
-  const date = new Date(`${value}T00:00:00`);
+  // Append `Z` so the date string is parsed as UTC; combined with the
+  // UTC-configured formatter this prevents timezone drift on display.
+  const date = new Date(`${value}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return value;
   return dateFormatter.format(date);
 }
