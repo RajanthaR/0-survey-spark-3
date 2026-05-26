@@ -67,7 +67,9 @@ describe("StudyLaneContent", () => {
   it("renders canonical consent items from the survey consent source", () => {
     render(<StudyLaneContent lang="en" renderLink={renderLink} />);
 
-    expect(screen.getByText(pickText(CONSENT_ITEMS[0]!.shortLabel, "en"))).toBeInTheDocument();
+    expect(
+      screen.getByText(pickText(CONSENT_ITEMS[0]!.shortLabel ?? CONSENT_ITEMS[0]!.label, "en")),
+    ).toBeInTheDocument();
     expect(screen.getByText(pickText(CONSENT_ITEMS.at(-1)!.label, "en"))).toBeInTheDocument();
     expect(screen.getAllByRole("button")).toHaveLength(CONSENT_ITEMS.length);
   });
