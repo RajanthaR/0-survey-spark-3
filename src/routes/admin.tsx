@@ -7,6 +7,7 @@ import { sanitizeCsvChunk, validateAssembledCsv } from "@/lib/csv-continuity";
 import { CRC32_INIT, crc32Update, crc32Hex, crc32OfBytes, sha256Hex, utf8 } from "@/lib/checksum";
 import { buildLogUrl, getLogUrlTemplate, setLogUrlTemplate, openLogUrl } from "@/lib/log-link";
 
+import { AboutHeaderLink } from "@/about/components/AboutHeaderLink";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,6 +148,9 @@ function AdminPage() {
         <Button variant="outline" className="mt-4" onClick={() => supabase.auth.signOut()}>
           Sign out
         </Button>
+        <div className="mt-2">
+          <AboutHeaderLink />
+        </div>
       </CenteredCard>
     );
 
@@ -2652,6 +2656,7 @@ function Dashboard({ email }: { email: string }) {
             <h1 className="text-base font-semibold">Admin dashboard</h1>
           </div>
           <div className="flex items-center gap-2 text-sm">
+            <AboutHeaderLink />
             <span className="hidden text-muted-foreground sm:inline">{email}</span>
             <Button
               variant="ghost"

@@ -242,6 +242,11 @@ export const UI = {
     si: "පර්යේෂක පිවිසුම",
     ta: "ஆராய்ச்சியாளர் உள்நுழைவு",
   },
+  aboutLink: {
+    en: "About this research",
+    si: "මෙම පර්යේෂණය ගැන",
+    ta: "இந்த ஆராய்ச்சி பற்றி",
+  },
   placeholderText: {
     en: "Type your answer",
     si: "ඔබේ පිළිතුර ටයිප් කරන්න",

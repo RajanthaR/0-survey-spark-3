@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { AboutHeaderLink } from "@/about/components/AboutHeaderLink";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,9 @@ export function LoginPanel() {
   const isForgot = mode === "forgot";
   return (
     <CenteredCard>
+      <div className="mb-3 flex justify-end">
+        <AboutHeaderLink />
+      </div>
       <h1 className="text-xl font-semibold">{isForgot ? "Reset password" : "Admin access"}</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         {isForgot ? (
