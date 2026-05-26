@@ -59,4 +59,13 @@ describe("AboutLayout", () => {
 
     expect(screen.queryByTestId("language-toggle")).not.toBeInTheDocument();
   });
+
+  it("uses minimal chrome on the presentation route", () => {
+    renderLayout("/about/present");
+
+    expect(screen.getByText("Lane content")).toBeInTheDocument();
+    expect(screen.queryByText("EIP Insight")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("language-toggle")).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
 });

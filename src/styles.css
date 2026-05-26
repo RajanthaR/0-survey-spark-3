@@ -260,6 +260,18 @@
   .markdown-view input[type="checkbox"] {
     margin-right: 0.4rem;
   }
+  body.presentation .stat-tile-number {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
+  body.presentation .mermaid-block {
+    width: 100%;
+  }
+  body.presentation .mermaid-block svg {
+    display: block;
+    max-height: 68vh;
+    width: 100%;
+  }
 }
 
 @property --rainbow-angle {

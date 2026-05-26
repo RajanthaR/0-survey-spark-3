@@ -48,14 +48,14 @@ export function MermaidBlock({ source }: { source: string }) {
   if (state.status === "ready") {
     return (
       <div
-        className="overflow-x-auto rounded-lg border bg-card p-4"
+        className="mermaid-block overflow-x-auto rounded-lg border bg-card p-4"
         dangerouslySetInnerHTML={{ __html: state.svg }}
       />
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-4">
+    <div className="mermaid-block flex flex-col gap-2 rounded-lg border bg-muted/40 p-4">
       {state.status === "error" && (
         <p role="alert" className="text-sm font-medium text-destructive">
           Mermaid render failed: {state.message}

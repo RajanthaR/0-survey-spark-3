@@ -183,7 +183,9 @@ function StatTile({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="mt-2 text-3xl font-semibold leading-none text-foreground">{value.label}</p>
+          <p className="stat-tile-number mt-2 text-3xl font-semibold leading-none text-foreground">
+            {value.label}
+          </p>
         </div>
         <Icon className="size-5 shrink-0 text-primary" aria-hidden="true" />
       </div>

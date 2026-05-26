@@ -200,6 +200,11 @@ export function AboutLayout({ children }: { children: React.ReactNode }) {
   const activeSection = getAboutSectionForPath(pathname);
   const showLanguageToggle =
     activeSection?.id !== "research" && activeSection?.id !== "engineering";
+  const isPresentationRoute = activeSection?.id === "present";
+
+  if (isPresentationRoute) {
+    return <main id="main">{children}</main>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
