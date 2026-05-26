@@ -7,7 +7,7 @@ import tseslint from "typescript-eslint";
 
 // Sinhala: U+0D80–U+0DFF, Tamil: U+0B80–U+0BFF
 const SI_TA_MSG =
-  "Sinhala/Tamil characters are only allowed in dictionary files (src/lib/i18n.tsx, src/lib/format.ts, src/surveys/*) and tests. Move the string into the dictionary and reference it via pickText / UI / format helpers.";
+  "Sinhala/Tamil characters are only allowed in dictionary files (src/lib/i18n.tsx, src/lib/format.ts, src/about/copy/*, src/surveys/*) and tests. Move the string into the dictionary and reference it via pickText / UI / format helpers.";
 
 export default tseslint.config(
   {
@@ -61,6 +61,7 @@ export default tseslint.config(
       "src/lib/analytics-report-i18n.ts",
       "src/lib/format.ts",
       "src/components/QuestionCount.tsx",
+      "src/about/copy/**",
       "src/surveys/**",
       "src/**/__tests__/**",
       "src/**/*.test.{ts,tsx}",

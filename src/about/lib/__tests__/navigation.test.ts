@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { ABOUT_UI } from "@/about/copy/ui";
 import { buildAboutBreadcrumbs } from "@/about/lib/navigation";
 import { getAboutSectionForPath } from "@/about/lib/sections";
+import { pickText } from "@/lib/i18n";
 
 describe("about navigation helpers", () => {
   it("detects the active section from the pathname", () => {
@@ -17,6 +19,13 @@ describe("about navigation helpers", () => {
     expect(buildAboutBreadcrumbs({ pathname: "/about/study" })).toEqual([
       { label: "About", href: "/about" },
       { label: "Study", href: undefined },
+    ]);
+  });
+
+  it("localizes lane breadcrumbs when a language is provided", () => {
+    expect(buildAboutBreadcrumbs({ pathname: "/about/study", lang: "si" })).toEqual([
+      { label: pickText(ABOUT_UI.breadcrumbAbout, "si"), href: "/about" },
+      { label: pickText(ABOUT_UI.sections.study.label, "si"), href: undefined },
     ]);
   });
 

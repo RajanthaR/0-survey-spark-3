@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 
+import { ABOUT_UI, aboutLaneLabel } from "@/about/copy/ui";
 import { buildAboutBreadcrumbs } from "@/about/lib/navigation";
 import { ABOUT_SECTIONS, getAboutSectionForPath } from "@/about/lib/sections";
 import { buildDocSearchIndex, extractMarkdownTitle, loadDoc } from "@/about/lib/load-doc";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
@@ -32,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { pickText, useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 function docTitleFromSearch(search: unknown): string | undefined {
@@ -42,28 +45,32 @@ function docTitleFromSearch(search: unknown): string | undefined {
 }
 
 function AboutBreadcrumbs() {
+  const { lang } = useLang();
   const { pathname, search } = useRouterState({
     select: (state) => ({ pathname: state.location.pathname, search: state.location.search }),
   });
   const breadcrumbs = buildAboutBreadcrumbs({
     pathname,
     docTitle: docTitleFromSearch(search),
+    lang,
   });
 
   return (
     <Breadcrumb>
       <BreadcrumbList>
         {breadcrumbs.map((crumb, index) => (
-          <BreadcrumbItem key={`${crumb.label}-${index}`}>
+          <Fragment key={`${crumb.label}-${index}`}>
             {index > 0 && <BreadcrumbSeparator />}
-            {crumb.href ? (
-              <BreadcrumbLink asChild>
-                <Link to={crumb.href}>{crumb.label}</Link>
-              </BreadcrumbLink>
-            ) : (
-              <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-            )}
-          </BreadcrumbItem>
+            <BreadcrumbItem>
+              {crumb.href ? (
+                <BreadcrumbLink asChild>
+                  <Link to={crumb.href}>{crumb.label}</Link>
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+          </Fragment>
         ))}
       </BreadcrumbList>
     </Breadcrumb>
@@ -71,13 +78,17 @@ function AboutBreadcrumbs() {
 }
 
 function SectionNav() {
+  const { lang } = useLang();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const active = getAboutSectionForPath(pathname);
   const navigate = useNavigate();
 
   return (
     <>
-      <nav className="hidden flex-col gap-1 lg:flex" aria-label="About lanes">
+      <nav
+        className="hidden flex-col gap-1 lg:flex"
+        aria-label={pickText(ABOUT_UI.navAriaLabel, lang)}
+      >
         {ABOUT_SECTIONS.map((section) => {
           const isActive = active?.id === section.id;
           return (
@@ -92,8 +103,12 @@ function SectionNav() {
               )}
               aria-current={isActive ? "page" : undefined}
             >
-              <span className="font-medium">{section.label}</span>
-              <span className="mt-1 block text-xs opacity-80">Lane {section.laneNumber}</span>
+              <span className="font-medium">
+                {pickText(ABOUT_UI.sections[section.id].label, lang)}
+              </span>
+              <span className="mt-1 block text-xs opacity-80">
+                {aboutLaneLabel(section.laneNumber, lang)}
+              </span>
             </Link>
           );
         })}
@@ -103,15 +118,15 @@ function SectionNav() {
           value={active?.path ?? "/about"}
           onValueChange={(value) => void navigate({ to: value })}
         >
-          <SelectTrigger aria-label="Choose about lane">
-            <SelectValue placeholder="Choose lane" />
+          <SelectTrigger aria-label={pickText(ABOUT_UI.chooseLane, lang)}>
+            <SelectValue placeholder={pickText(ABOUT_UI.chooseLane, lang)} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="/about">Hub</SelectItem>
+              <SelectItem value="/about">{pickText(ABOUT_UI.hubLabel, lang)}</SelectItem>
               {ABOUT_SECTIONS.map((section) => (
                 <SelectItem key={section.id} value={section.path}>
-                  {section.label}
+                  {pickText(ABOUT_UI.sections[section.id].label, lang)}
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -123,6 +138,7 @@ function SectionNav() {
 }
 
 function DocSearch() {
+  const { lang } = useLang();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -138,7 +154,7 @@ function DocSearch() {
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-full justify-start text-muted-foreground lg:w-72">
           <Search data-icon="inline-start" aria-hidden="true" />
-          Search docs
+          {pickText(ABOUT_UI.searchButton, lang)}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[min(34rem,calc(100vw-2rem))] p-0" align="end">
@@ -146,11 +162,11 @@ function DocSearch() {
           <CommandInput
             value={query}
             onValueChange={setQuery}
-            placeholder="Search titles and headings..."
+            placeholder={pickText(ABOUT_UI.searchPlaceholder, lang)}
           />
           <CommandList>
-            <CommandEmpty>No documents found.</CommandEmpty>
-            <CommandGroup heading="Documents">
+            <CommandEmpty>{pickText(ABOUT_UI.searchEmpty, lang)}</CommandEmpty>
+            <CommandGroup heading={pickText(ABOUT_UI.searchGroup, lang)}>
               {results.map((entry) => (
                 <CommandItem
                   key={entry.path}
@@ -179,17 +195,24 @@ function DocSearch() {
 }
 
 export function AboutLayout({ children }: { children: React.ReactNode }) {
+  const { lang } = useLang();
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <Link to="/" className="text-sm font-semibold uppercase tracking-wider text-primary">
-              EIP Insight
+              {pickText(ABOUT_UI.appName, lang)}
             </Link>
-            <p className="mt-1 text-sm text-muted-foreground">Research documentation explorer</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {pickText(ABOUT_UI.shellSubtitle, lang)}
+            </p>
           </div>
-          <DocSearch />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <DocSearch />
+            <LanguageToggle compact />
+          </div>
         </div>
       </header>
       <main
