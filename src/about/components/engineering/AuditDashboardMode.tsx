@@ -71,10 +71,11 @@ function itemsByTopic(items: AuditItem[]): Array<[string, AuditItem[]]> {
     const aIndex = TOPIC_ORDER.indexOf(a);
     const bIndex = TOPIC_ORDER.indexOf(b);
     if (aIndex !== -1 || bIndex !== -1) {
-      return (
-        (aIndex === -1 ? Number.POSITIVE_INFINITY : aIndex) -
-        (bIndex === -1 ? Number.POSITIVE_INFINITY : bIndex)
-      );
+      // Use a finite sentinel (TOPIC_ORDER.length) for unknown topics so they
+      // sort after all known ones without involving Infinity in the comparator.
+      const aVal = aIndex === -1 ? TOPIC_ORDER.length : aIndex;
+      const bVal = bIndex === -1 ? TOPIC_ORDER.length : bIndex;
+      return aVal - bVal;
     }
     return a.localeCompare(b);
   });
