@@ -41,3 +41,4 @@ test-results
 *.njsproj
 *.sln
 *.sw?
+/.playwright-mcp
