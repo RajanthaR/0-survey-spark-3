@@ -10,10 +10,13 @@ type Threshold = {
 };
 
 const BASE_URL = (process.env.BASE_URL ?? process.argv[2] ?? "").replace(/\/+$/, "");
-const PATHS = (process.env.LIGHTHOUSE_PATHS ?? "/,/s/phase-1,/admin,/about,/about/study")
-  .split(",")
-  .map((path) => path.trim())
-  .filter(Boolean);
+const DEFAULT_PATHS = ["/", "/s/phase-1", "/admin", "/about", "/about/study"];
+
+const PATHS = process.env.LIGHTHOUSE_PATHS
+  ? process.env.LIGHTHOUSE_PATHS.split(",")
+      .map((path) => path.trim())
+      .filter(Boolean)
+  : DEFAULT_PATHS;
 
 const THRESHOLDS: Threshold[] = [
   { auditId: "largest-contentful-paint", label: "LCP", max: 2500, unit: "ms" },
