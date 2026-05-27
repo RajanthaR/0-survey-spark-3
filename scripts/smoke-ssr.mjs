@@ -16,7 +16,18 @@ const BASE = (process.argv[2] || process.env.BASE_URL || "http://localhost:5173"
   "",
 );
 
-const ROUTES = ["/", "/s/phase-1", "/s/phase-3", "/r/smoke-test-token", "/admin"];
+const ROUTES = [
+  "/",
+  "/s/phase-1",
+  "/s/phase-3",
+  "/r/smoke-test-token",
+  "/admin",
+  "/about",
+  "/about/study",
+  "/about/research",
+  "/about/engineering",
+  "/about/present",
+];
 
 const MIN_HTML_BYTES = 500;
 

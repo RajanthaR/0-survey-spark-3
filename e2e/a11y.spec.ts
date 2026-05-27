@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { AxeBuilder } from "@axe-core/playwright";
 
-const ROUTES = (process.env.AXE_PATHS ?? "/,/s/phase-1,/admin")
+const ROUTES = (
+  process.env.AXE_PATHS ??
+  "/,/s/phase-1,/admin,/about,/about/study,/about/research,/about/engineering,/about/present"
+)
   .split(",")
   .map((path) => path.trim())
   .filter(Boolean);
