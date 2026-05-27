@@ -31,6 +31,13 @@ jobs:
   smoke:
     name: Build + preview + SSR smoke
     runs-on: ubuntu-latest
+    env:
+      # Vite preview boots the production build with NODE_ENV=production, so
+      # `assertProductionSecurityConfig` requires a non-empty TURNSTILE_SECRET.
+      # No real Turnstile verification runs during SSR smoke; this is a CI-only
+      # placeholder. Production fail-closed behavior on Railway is unaffected.
+      TURNSTILE_SECRET: ci-preview-not-secret
+      ALLOW_TURNSTILE_BYPASS: "false"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
