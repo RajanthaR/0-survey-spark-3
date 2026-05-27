@@ -12,10 +12,17 @@ import { TextSlide } from "./slides/TextSlide";
 import { TitleSlide } from "./slides/TitleSlide";
 import type { SlideDefinition } from "./types";
 
-function isEditableTarget(target: EventTarget | null): boolean {
+function isInteractiveTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   const tag = target.tagName.toLowerCase();
-  return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
+  return (
+    tag === "input" ||
+    tag === "textarea" ||
+    tag === "select" ||
+    tag === "button" ||
+    tag === "a" ||
+    target.isContentEditable
+  );
 }
 
 function renderSlide(slide: SlideDefinition) {
@@ -49,14 +56,13 @@ export function SlideDeck({ slides }: { slides: SlideDefinition[] }) {
 
   const toggleFullscreen = useCallback(async () => {
     if (typeof document === "undefined") return;
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-      setFullscreenFallback(false);
-      return;
-    }
-
     try {
-      await rootRef.current?.requestFullscreen();
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        setFullscreenFallback(false);
+      } else {
+        await rootRef.current?.requestFullscreen();
+      }
     } catch {
       setFullscreenFallback((value) => !value);
     }
@@ -99,7 +105,7 @@ export function SlideDeck({ slides }: { slides: SlideDefinition[] }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target)) return;
+      if (isInteractiveTarget(event.target)) return;
       if (event.key === "ArrowRight" || event.key === " ") {
         event.preventDefault();
         navigate("next");
@@ -184,24 +190,28 @@ export function SlideDeck({ slides }: { slides: SlideDefinition[] }) {
       </div>
 
       {helpOpen && (
-        <button
-          type="button"
+        <div
           className="absolute inset-0 z-30 flex cursor-default items-center justify-center bg-background/80 p-6 text-left backdrop-blur-sm"
           onClick={() => setHelpOpen(false)}
-          aria-label="Dismiss presentation shortcuts"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Presentation shortcuts"
         >
-          <span className="w-full max-w-xl rounded-3xl border bg-card p-6 shadow-soft">
-            <span className="block text-2xl font-semibold text-foreground">Keyboard shortcuts</span>
-            <span className="mt-5 grid gap-3 text-base text-muted-foreground">
-              <span>Right arrow or Space: next slide</span>
-              <span>Left arrow: previous slide</span>
-              <span>Home / End: first or last slide</span>
-              <span>F: toggle fullscreen</span>
-              <span>?: show or hide this help</span>
-              <span>Esc: close overlays or exit fullscreen</span>
-            </span>
-          </span>
-        </button>
+          <div
+            className="w-full max-w-xl rounded-3xl border bg-card p-6 shadow-soft"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 className="text-2xl font-semibold text-foreground">Keyboard shortcuts</h2>
+            <div className="mt-5 grid gap-3 text-base text-muted-foreground">
+              <p>Right arrow or Space: next slide</p>
+              <p>Left arrow: previous slide</p>
+              <p>Home / End: first or last slide</p>
+              <p>F: toggle fullscreen</p>
+              <p>?: show or hide this help</p>
+              <p>Esc: close overlays or exit fullscreen</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
