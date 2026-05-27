@@ -1,13 +1,22 @@
 import { expect, test } from "@playwright/test";
 import { AxeBuilder } from "@axe-core/playwright";
 
-const ROUTES = (
-  process.env.AXE_PATHS ??
-  "/,/s/phase-1,/admin,/about,/about/study,/about/research,/about/engineering,/about/present"
-)
-  .split(",")
-  .map((path) => path.trim())
-  .filter(Boolean);
+const DEFAULT_ROUTES = [
+  "/",
+  "/s/phase-1",
+  "/admin",
+  "/about",
+  "/about/study",
+  "/about/research",
+  "/about/engineering",
+  "/about/present",
+];
+
+const ROUTES = process.env.AXE_PATHS
+  ? process.env.AXE_PATHS.split(",")
+      .map((path) => path.trim())
+      .filter(Boolean)
+  : DEFAULT_ROUTES;
 
 function violationSummary(violations: Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"]) {
   return violations
