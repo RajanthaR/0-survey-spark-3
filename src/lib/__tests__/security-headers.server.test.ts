@@ -35,6 +35,18 @@ describe("security headers and production boot policy", () => {
     ).not.toThrow();
   });
 
+  it("still rejects ALLOW_TURNSTILE_BYPASS even when Turnstile is disabled", () => {
+    // The disable flag must only waive the secret requirement, not act as a
+    // blanket skip of the other production invariants.
+    expect(() =>
+      assertProductionSecurityConfig({
+        APP_ENV: "production",
+        TURNSTILE_DISABLED: "true",
+        ALLOW_TURNSTILE_BYPASS: "true",
+      }),
+    ).toThrow(/ALLOW_TURNSTILE_BYPASS/);
+  });
+
   it("keeps development and preview fail-open", () => {
     expect(() => assertProductionSecurityConfig({ NODE_ENV: "development" })).not.toThrow();
     expect(() => assertProductionSecurityConfig({ ENVIRONMENT: "preview" })).not.toThrow();
