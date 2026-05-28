@@ -157,7 +157,6 @@ export const SLIDES: SlideDefinition[] = [
     props: {
       eyebrow: "Thank you",
       title: "Questions and discussion",
-      subtitle: `${ABOUT_STUDY.contactName.en} - ${ABOUT_STUDY.contactEmail.en}`,
       meta: "eip-insight research platform",
     },
   },
