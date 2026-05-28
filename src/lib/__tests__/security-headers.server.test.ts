@@ -27,6 +27,14 @@ describe("security headers and production boot policy", () => {
     ).not.toThrow();
   });
 
+  it("allows production boot when Turnstile is explicitly disabled", () => {
+    // The kill-switch lets prod boot without a secret; without the flag the
+    // secret is still required (asserted above).
+    expect(() =>
+      assertProductionSecurityConfig({ APP_ENV: "production", TURNSTILE_DISABLED: "true" }),
+    ).not.toThrow();
+  });
+
   it("keeps development and preview fail-open", () => {
     expect(() => assertProductionSecurityConfig({ NODE_ENV: "development" })).not.toThrow();
     expect(() => assertProductionSecurityConfig({ ENVIRONMENT: "preview" })).not.toThrow();

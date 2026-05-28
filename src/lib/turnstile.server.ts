@@ -47,6 +47,17 @@ export async function verifyTurnstile(
   token: string | undefined | null,
   opts?: { bypassRequested?: boolean },
 ): Promise<void> {
+  // Global kill-switch. When `TURNSTILE_DISABLED=true` the server skips
+  // verification entirely, in every environment. Pairs with
+  // `VITE_TURNSTILE_DISABLED=true` on the client (the widget is never
+  // rendered). The production boot guard in `security-headers.server.ts`
+  // only permits booting without a secret when this same flag is set, so
+  // disabling is a deliberate, reversible operator choice — unset the flag
+  // to restore full bot protection.
+  if (envString("TURNSTILE_DISABLED") === "true") {
+    console.warn("[turnstile] verification disabled (TURNSTILE_DISABLED=true).");
+    return;
+  }
   const secret = envString("TURNSTILE_SECRET");
   // Internal preview/dev escape hatch. The client can request a bypass from
   // the consent panel's "Continue anyway" button, but we only honour it when

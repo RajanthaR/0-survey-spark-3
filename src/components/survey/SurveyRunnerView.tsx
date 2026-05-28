@@ -299,7 +299,11 @@ export function SurveyRunnerView({
                     onRetryVerify={onRetryVerify}
                     allowBypass={allowBypass}
                     onBypass={onBypassVerify}
-                    turnstileSiteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                    turnstileSiteKey={
+                      import.meta.env.VITE_TURNSTILE_DISABLED === "true"
+                        ? undefined
+                        : import.meta.env.VITE_TURNSTILE_SITE_KEY
+                    }
                     onTurnstileToken={onTurnstileToken}
                   />
                 );

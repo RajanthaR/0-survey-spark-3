@@ -19,6 +19,16 @@ function isProductionEnv(env: EnvRecord): boolean {
 
 export function assertProductionSecurityConfig(env: EnvRecord = process.env): void {
   if (!isProductionEnv(env)) return;
+  // Explicit operator kill-switch. When Turnstile is intentionally disabled,
+  // allow the service to boot without a secret. This is deliberate and
+  // reversible (unset TURNSTILE_DISABLED to restore bot protection). When the
+  // flag is NOT set, the original production invariants below still apply.
+  if (envString(env, "TURNSTILE_DISABLED") === "true") {
+    console.warn(
+      "[security] TURNSTILE_DISABLED=true in production — Cloudflare bot protection is OFF.",
+    );
+    return;
+  }
   if (!envString(env, "TURNSTILE_SECRET")) {
     throw new Error("TURNSTILE_SECRET required in production");
   }
