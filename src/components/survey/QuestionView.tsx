@@ -11,6 +11,23 @@ import { questionHasVisuals } from "@/surveys/validate";
 
 export type AnswerInputMeta = { source: "keyboard" | "pointer" | "programmatic" };
 
+// "Other" free-text answers are encoded inline on the option value so they
+// flow through the existing string / string[] answer shapes untouched:
+//   • selected, no text → "other"
+//   • selected, w/ text → "other:<free text>"
+// This matches the encoding the CSV export already accepts
+// (see collectInvalidCodes in exports-extended.ts).
+const OTHER_PREFIX = "other:";
+function isOtherValue(s: string): boolean {
+  return s === "other" || s.startsWith(OTHER_PREFIX);
+}
+function otherText(s: string): string {
+  return s.startsWith(OTHER_PREFIX) ? s.slice(OTHER_PREFIX.length) : "";
+}
+function encodeOther(text: string): string {
+  return text ? `${OTHER_PREFIX}${text}` : "other";
+}
+
 const FIELD_FOCUSABLE_SELECTOR =
   'input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [role="radio"]:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -197,17 +214,60 @@ function Field({
     case "yes_no": {
       const opts = q.type === "yes_no" ? YES_NO_OPTIONS : (q.options ?? []);
       const hasVisuals = questionHasVisuals(opts);
+      const cur = String(value ?? "");
+      const allowOther = q.type === "single_choice" && !!q.allowOther;
+      const otherActive = allowOther && isOtherValue(cur);
       return (
-        <div className="grid gap-2" role="radiogroup">
-          {opts.map((o) => {
-            const active = String(value ?? "") === o.value;
-            return (
+        <>
+          <div className="grid gap-2" role="radiogroup">
+            {opts.map((o) => {
+              const active = cur === o.value;
+              return (
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  key={o.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onPointerDown={() => {
+                    lastChoiceInputRef.current = "pointer";
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                      lastChoiceInputRef.current = "keyboard";
+                    }
+                  }}
+                  onClick={() => {
+                    const source = lastChoiceInputRef.current;
+                    lastChoiceInputRef.current = "programmatic";
+                    onChange(o.value, { source });
+                  }}
+                  className={`flex min-h-14 items-center gap-3 rounded-2xl border p-4 text-left transition ${
+                    active
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-card hover:bg-accent/30"
+                  }`}
+                >
+                  <span
+                    className={`grid size-5 place-items-center rounded-full border ${
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/40"
+                    }`}
+                  >
+                    {active && <Check className="size-3.5" />}
+                  </span>
+                  {hasVisuals && <OptionVisual visual={o.visual} active={active} />}
+                  <span className="text-sm">{pickText(o.label, lang)}</span>
+                </motion.button>
+              );
+            })}
+            {allowOther && (
               <motion.button
                 whileTap={{ scale: 0.98 }}
-                key={o.value}
                 type="button"
                 role="radio"
-                aria-checked={active}
+                aria-checked={otherActive}
                 onPointerDown={() => {
                   lastChoiceInputRef.current = "pointer";
                 }}
@@ -219,73 +279,123 @@ function Field({
                 onClick={() => {
                   const source = lastChoiceInputRef.current;
                   lastChoiceInputRef.current = "programmatic";
-                  onChange(o.value, { source });
+                  // Preserve any text already typed if Other is re-selected.
+                  onChange(otherActive ? cur : "other", { source });
                 }}
                 className={`flex min-h-14 items-center gap-3 rounded-2xl border p-4 text-left transition ${
-                  active
+                  otherActive
                     ? "border-primary bg-primary/10"
                     : "border-border bg-card hover:bg-accent/30"
                 }`}
               >
                 <span
                   className={`grid size-5 place-items-center rounded-full border ${
-                    active
+                    otherActive
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-muted-foreground/40"
                   }`}
                 >
-                  {active && <Check className="size-3.5" />}
+                  {otherActive && <Check className="size-3.5" />}
                 </span>
-                {hasVisuals && <OptionVisual visual={o.visual} active={active} />}
-                <span className="text-sm">{pickText(o.label, lang)}</span>
+                <span className="text-sm">{pickText(UI.optionOther, lang)}</span>
               </motion.button>
-            );
-          })}
-        </div>
+            )}
+          </div>
+          {otherActive && (
+            <Input
+              className="mt-2 h-12"
+              aria-label={pickText(UI.optionOther, lang)}
+              placeholder={pickText(UI.placeholderOther, lang)}
+              value={otherText(cur)}
+              onChange={(e) => onChange(encodeOther(e.target.value))}
+            />
+          )}
+        </>
       );
     }
     case "multi_choice": {
       const arr = Array.isArray(value) ? (value as string[]) : [];
       const max = q.maxSelect;
       const hasVisuals = questionHasVisuals(q.options);
+      const allowOther = !!q.allowOther;
+      const otherVal = allowOther ? arr.find(isOtherValue) : undefined;
+      const otherActive = otherVal != null;
       return (
-        <div className="grid gap-2">
-          {(q.options ?? []).map((o) => {
-            const active = arr.includes(o.value);
-            return (
+        <>
+          <div className="grid gap-2">
+            {(q.options ?? []).map((o) => {
+              const active = arr.includes(o.value);
+              return (
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  key={o.value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    if (active) onChange(arr.filter((v) => v !== o.value));
+                    else if (!max || arr.length < max) onChange([...arr, o.value]);
+                  }}
+                  className={`flex min-h-14 items-center gap-3 rounded-2xl border p-4 text-left transition ${
+                    active ? "border-primary bg-primary/10" : "border-border bg-card"
+                  }`}
+                >
+                  <span
+                    className={`grid size-5 place-items-center rounded-md border ${
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/40"
+                    }`}
+                  >
+                    {active && <Check className="size-3.5" />}
+                  </span>
+                  {hasVisuals && <OptionVisual visual={o.visual} active={active} />}
+                  <span className="text-sm">{pickText(o.label, lang)}</span>
+                </motion.button>
+              );
+            })}
+            {allowOther && (
               <motion.button
                 whileTap={{ scale: 0.98 }}
-                key={o.value}
                 type="button"
-                aria-pressed={active}
+                aria-pressed={otherActive}
                 onClick={() => {
-                  if (active) onChange(arr.filter((v) => v !== o.value));
-                  else if (!max || arr.length < max) onChange([...arr, o.value]);
+                  if (otherActive) onChange(arr.filter((v) => !isOtherValue(v)));
+                  else if (!max || arr.length < max) onChange([...arr, "other"]);
                 }}
                 className={`flex min-h-14 items-center gap-3 rounded-2xl border p-4 text-left transition ${
-                  active ? "border-primary bg-primary/10" : "border-border bg-card"
+                  otherActive ? "border-primary bg-primary/10" : "border-border bg-card"
                 }`}
               >
                 <span
                   className={`grid size-5 place-items-center rounded-md border ${
-                    active
+                    otherActive
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-muted-foreground/40"
                   }`}
                 >
-                  {active && <Check className="size-3.5" />}
+                  {otherActive && <Check className="size-3.5" />}
                 </span>
-                {hasVisuals && <OptionVisual visual={o.visual} active={active} />}
-                <span className="text-sm">{pickText(o.label, lang)}</span>
+                <span className="text-sm">{pickText(UI.optionOther, lang)}</span>
               </motion.button>
-            );
-          })}
-          {max && (
-            <p className="text-xs text-muted-foreground">
-              {arr.length}/{max}
-            </p>
+            )}
+            {max && (
+              <p className="text-xs text-muted-foreground">
+                {arr.length}/{max}
+              </p>
+            )}
+          </div>
+          {otherActive && (
+            <Input
+              className="mt-2 h-12"
+              aria-label={pickText(UI.optionOther, lang)}
+              placeholder={pickText(UI.placeholderOther, lang)}
+              value={otherText(otherVal!)}
+              onChange={(e) =>
+                onChange(arr.map((v) => (isOtherValue(v) ? encodeOther(e.target.value) : v)))
+              }
+            />
           )}
-        </div>
+        </>
       );
     }
     case "likert_5": {
