@@ -298,6 +298,16 @@ export const UI = {
     si: "ඉදිරියට යාමට මෙය නිවැරදි කරන්න",
     ta: "தொடர இதைச் சரிசெய்யவும்",
   },
+  optionOther: {
+    en: "Other",
+    si: "වෙනත්",
+    ta: "மற்றவை",
+  },
+  placeholderOther: {
+    en: "Please specify",
+    si: "කරුණාකර සඳහන් කරන්න",
+    ta: "தயவுசெய்து குறிப்பிடவும்",
+  },
 } satisfies Record<string, LocalizedString | LocalizedString[]>;
 
 export function t(key: keyof typeof UI, lang: Lang): string {
