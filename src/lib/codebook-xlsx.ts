@@ -71,20 +71,58 @@ function bufferToBase64(buf: ArrayBuffer | Uint8Array): string {
   return btoa(bin);
 }
 
-async function persistFrozenHeaderRows(buf: ArrayBuffer): Promise<Uint8Array> {
+/**
+ * Post-write zip patch for formatting the community `xlsx` build drops:
+ * the frozen header pane (`!freeze` is ignored by the writer) and the
+ * bold header font (`cell.s` styles are a Pro-build feature, so
+ * `XLSX.write` discards them). We patch the raw OOXML instead — a bold
+ * font + cellXf appended to `xl/styles.xml`, an `s="…"` ref stamped on
+ * every row-1 cell, and the frozen-pane `<sheetViews>` block — across
+ * every worksheet in the archive.
+ */
+async function persistHeaderFormatting(buf: ArrayBuffer): Promise<Uint8Array> {
   const { strFromU8, strToU8, unzipSync, zipSync } = await import("fflate");
   const zip = unzipSync(new Uint8Array(buf));
   const sheetNames = Object.keys(zip).filter((name) =>
     /^xl\/worksheets\/sheet\d+\.xml$/.test(name),
   );
 
+  // Append a bold variant of the default font and a cellXf pointing at
+  // it. The new xf's index (= previous <cellXfs count>) is what row-1
+  // cells reference via their `s` attribute.
+  let boldStyleIdx = 0;
+  const stylesXml = strFromU8(zip["xl/styles.xml"]);
+  const fontsMatch = /<fonts count="(\d+)">([\s\S]*?)<\/fonts>/.exec(stylesXml);
+  const xfsMatch = /<cellXfs count="(\d+)">([\s\S]*?)<\/cellXfs>/.exec(stylesXml);
+  if (fontsMatch && xfsMatch) {
+    const boldFontId = Number(fontsMatch[1]);
+    boldStyleIdx = Number(xfsMatch[1]);
+    const baseFont = /<font>[\s\S]*?<\/font>/.exec(fontsMatch[2])?.[0] ?? "<font></font>";
+    const boldFont = baseFont.replace("<font>", "<font><b/>");
+    const boldXf = `<xf numFmtId="0" fontId="${boldFontId}" fillId="0" borderId="0" xfId="0" applyFont="1"/>`;
+    zip["xl/styles.xml"] = strToU8(
+      stylesXml
+        .replace(
+          fontsMatch[0],
+          `<fonts count="${boldFontId + 1}">${fontsMatch[2]}${boldFont}</fonts>`,
+        )
+        .replace(
+          xfsMatch[0],
+          `<cellXfs count="${boldStyleIdx + 1}">${xfsMatch[2]}${boldXf}</cellXfs>`,
+        ),
+    );
+  }
+
   for (const name of sheetNames) {
     const xml = strFromU8(zip[name]);
     const sheetView =
       '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>';
-    const patched = xml.includes("<sheetViews>")
+    let patched = xml.includes("<sheetViews>")
       ? xml.replace(/<sheetViews>[\s\S]*?<\/sheetViews>/, sheetView)
       : xml.replace(/<sheetData>/, `${sheetView}<sheetData>`);
+    if (boldStyleIdx > 0) {
+      patched = patched.replace(/<c r="([A-Z]+1)"( s="\d+")?/g, `<c r="$1" s="${boldStyleIdx}"`);
+    }
     zip[name] = strToU8(patched);
   }
 
@@ -215,7 +253,7 @@ export async function buildCodebookXlsx(input: CodebookXlsxInput): Promise<Codeb
   }
 
   const buf: ArrayBuffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-  const frozenBuf = await persistFrozenHeaderRows(buf);
+  const frozenBuf = await persistHeaderFormatting(buf);
   const base64 = bufferToBase64(frozenBuf);
 
   const value: CacheValue = {

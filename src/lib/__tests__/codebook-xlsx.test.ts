@@ -1,3 +1,12 @@
+// @vitest-environment node
+//
+// Server-side test — no DOM needed. Must NOT run under the default jsdom
+// environment: there, vitest inlines fflate/xlsx through the web transform
+// pipeline with jsdom-realm typed-array intrinsics, while strToU8's
+// TextEncoder output stays node-realm. fflate's deflate hot loop reading
+// cross-realm Uint8Arrays falls off V8's fast path (~400x slower), so a
+// single buildCodebookXlsx call goes from <1s to >15s and every test here
+// times out. Under the node environment everything shares one realm.
 /**
  * Unit + integration tests for the codebook XLSX builder
  * (`src/lib/codebook-xlsx.ts`) and the auth-protected server fns that
@@ -6,8 +15,11 @@
  * Covers the contracts the admin UI relies on:
  *   1. Base64 — non-empty, decodes back to a valid XLSX (PK zip header).
  *   2. Single-sheet mode — workbook has exactly one sheet named "Codebook".
- *   3. Header row — frozen at row 1 (`!freeze.ySplit === 1`) and every
- *      header cell carries `font.bold === true`.
+ *   3. Header row — frozen at row 1 (`ySplit="1"` pane in the sheet XML)
+ *      and bolded: `xl/styles.xml` carries a bold font + applyFont xf,
+ *      and every row-1 cell references it via `s="…"`. Asserted on the
+ *      raw OOXML because the community `xlsx` build neither writes
+ *      `cell.s` styles nor surfaces fonts on read.
  *   4. Header / row count fidelity — header column count matches
  *      `buildCodebookHeaders(langs)`, row count matches the codebook
  *      total (questions + every option row), every cell value matches
@@ -122,16 +134,27 @@ describe("buildCodebookXlsx — base64 + workbook structure", () => {
     const xml = firstSheetXml(r.base64);
     expect(xml).toContain('ySplit="1"');
     expect(xml).toContain('state="frozen"');
-    const wb = readWorkbook(r.base64);
-    const ws = wb.Sheets[CODEBOOK_SHEET_NAME];
-    // Every header cell carries `font.bold === true`.
+    // Bold headers are persisted as raw OOXML (the community `xlsx`
+    // build drops `cell.s` on write and never parses fonts on read):
+    // styles.xml must carry a bold font + an applyFont cellXf, and every
+    // row-1 cell must reference that xf via its `s` attribute.
+    const zip = unzipSync(decode(r.base64));
+    const styles = strFromU8(zip["xl/styles.xml"]);
+    expect(styles).toMatch(/<font><b\/>/);
+    const xfs = /<cellXfs count="(\d+)">/.exec(styles);
+    expect(xfs).not.toBeNull();
+    const boldStyleIdx = Number(xfs![1]) - 1;
+    expect(boldStyleIdx).toBeGreaterThan(0);
+    expect(styles).toContain(`<xf numFmtId="0" fontId="`);
+    expect(styles).toContain(`applyFont="1"`);
     for (let c = 0; c < r.headerRow.length; c += 1) {
       const addr = XLSXNS.utils.encode_cell({ r: 0, c });
-      const cell = ws[addr] as XLSXNS.CellObject | undefined;
-      expect(cell, `header cell ${addr}`).toBeDefined();
-      const style = (cell as unknown as { s?: { font?: { bold?: boolean } } }).s;
-      expect(style?.font?.bold).toBe(true);
+      expect(xml, `header cell ${addr} carries the bold style`).toContain(
+        `<c r="${addr}" s="${boldStyleIdx}"`,
+      );
     }
+    // Data rows stay unstyled — the bold xf is header-row-only.
+    expect(xml).not.toMatch(/<c r="A2" s="/);
   });
 });
 
