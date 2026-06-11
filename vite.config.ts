@@ -76,6 +76,24 @@ function bundleShapePlugin(): PluginOption {
   };
 }
 
+// @tanstack/start-storage-context does `new AsyncLocalStorage()` at module
+// scope. The dev server doesn't tree-shake it out of the client graph (the
+// production client bundle does), so the browser hits Vite's external stub
+// and the client entry crashes before hydration. Resolve `node:async_hooks`
+// to a small browser shim for non-SSR resolution only.
+function clientAsyncHooksShimPlugin(): PluginOption {
+  const shimPath = resolve(import.meta.dirname, "src/lib/node-async-hooks.browser.ts");
+  return {
+    name: "survey-spark:client-async-hooks-shim",
+    enforce: "pre",
+    resolveId(source, _importer, options) {
+      if (source !== "node:async_hooks" && source !== "async_hooks") return null;
+      if (options?.ssr) return null;
+      return shimPath;
+    },
+  };
+}
+
 // TanStack Start emits dist/server/server.js (Web-Fetch handler) and dist/client/* assets.
 // The Node runtime entry at server-node.mjs imports the server bundle and serves both via srvx.
 export default defineConfig(() => {
@@ -87,12 +105,18 @@ export default defineConfig(() => {
     react(),
     devRouteRefreshPlugin(),
     bundleShapePlugin(),
+    clientAsyncHooksShimPlugin(),
   ];
 
   return {
     plugins,
     define: {
       __COMMIT_SHA__: JSON.stringify(commitSha),
+    },
+    optimizeDeps: {
+      // Keep these out of the esbuild prebundle so the async_hooks shim
+      // plugin can intercept their `node:async_hooks` import in dev.
+      exclude: ["@tanstack/start-client-core", "@tanstack/start-storage-context"],
     },
     resolve: {
       dedupe: ["react", "react-dom", "@tanstack/react-router", "@tanstack/react-start"],
