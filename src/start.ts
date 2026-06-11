@@ -12,7 +12,7 @@ const securityMiddleware = createMiddleware().server(async ({ next, request }) =
   const nonce = createCspNonce();
   const initialLang = readInitialLang(request.headers.get("cookie"));
   const result = await next({ context: { nonce, initialLang } });
-  applySecurityHeaders(result.response.headers, nonce);
+  applySecurityHeaders(result.response.headers, nonce, process.env);
   return result;
 });
 

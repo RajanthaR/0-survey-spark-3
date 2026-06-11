@@ -54,9 +54,6 @@ function checkSecurityHeaders(route, res) {
 
   const csp = res.headers.get("content-security-policy") ?? "";
   if (!csp) return fail(route, "missing content-security-policy");
-  if (!res.headers.get("content-security-policy-report-only")) {
-    return fail(route, "missing content-security-policy-report-only");
-  }
   if (!/script-src[^;]*'nonce-[^']+'/.test(csp)) {
     return fail(route, "CSP script-src missing nonce", csp);
   }

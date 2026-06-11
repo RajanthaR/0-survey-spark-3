@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  applySecurityHeaders,
   assertProductionSecurityConfig,
   buildContentSecurityPolicy,
   readInitialLang,
@@ -86,11 +87,41 @@ describe("security headers and production boot policy", () => {
   });
 
   it("builds a nonce-based CSP without script unsafe-inline", () => {
-    const csp = buildContentSecurityPolicy("abc123");
+    const csp = buildContentSecurityPolicy("abc123", {});
     expect(csp).toContain("script-src 'self' 'nonce-abc123'");
     expect(csp).toContain("script-src-elem 'self' 'nonce-abc123'");
     expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
     expect(csp).toMatch(/style-src[^;]*'unsafe-inline'/);
+  });
+
+  it("narrows CSP connect-src to Supabase and Cloudflare when Supabase env exists", () => {
+    const csp = buildContentSecurityPolicy("abc123", {
+      VITE_SUPABASE_URL: "https://project-ref.supabase.co",
+    });
+
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain(
+      "connect-src 'self' https://project-ref.supabase.co wss://project-ref.supabase.co https://challenges.cloudflare.com",
+    );
+    expect(csp).not.toContain("connect-src 'self' https: wss:");
+  });
+
+  it("keeps broad HTTPS/WSS connect-src when Supabase env is unavailable", () => {
+    const csp = buildContentSecurityPolicy("abc123", {});
+
+    expect(csp).toContain("connect-src 'self' https: wss: https://challenges.cloudflare.com");
+  });
+
+  it("applies enforced security headers without duplicate report-only CSP", () => {
+    const headers = new Headers({ "Content-Security-Policy-Report-Only": "old" });
+
+    applySecurityHeaders(headers, "abc123", {
+      VITE_SUPABASE_URL: "https://project-ref.supabase.co",
+    });
+
+    expect(headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
+    expect(headers.get("Content-Security-Policy-Report-Only")).toBeNull();
+    expect(headers.get("X-Frame-Options")).toBe("DENY");
   });
 
   it("reads the SSR language cookie", () => {

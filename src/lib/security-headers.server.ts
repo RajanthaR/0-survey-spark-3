@@ -77,19 +77,44 @@ export function createCspNonce(): string {
   throw new Error("No base64 encoder available for CSP nonce generation");
 }
 
-export function buildContentSecurityPolicy(nonce: string): string {
+function supabaseConnectSources(env: EnvRecord): string[] | undefined {
+  const rawUrl = envString(env, "VITE_SUPABASE_URL") || envString(env, "SUPABASE_URL");
+  if (!rawUrl) return undefined;
+
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return undefined;
+    const apiScheme = url.protocol === "http:" ? "http" : "https";
+    const realtimeScheme = url.protocol === "http:" ? "ws" : "wss";
+    return [`${apiScheme}://${url.host}`, `${realtimeScheme}://${url.host}`];
+  } catch {
+    return undefined;
+  }
+}
+
+function connectSrc(env: EnvRecord): string {
+  const supabaseSources = supabaseConnectSources(env);
+  if (!supabaseSources) {
+    // Build/preview paths may not expose Supabase env when SSR headers are built;
+    // keep HTTPS/WSS broad rather than breaking auth, API calls, or realtime.
+    return "connect-src 'self' https: wss: https://challenges.cloudflare.com";
+  }
+  return ["connect-src 'self'", ...supabaseSources, "https://challenges.cloudflare.com"].join(" ");
+}
+
+export function buildContentSecurityPolicy(nonce: string, env: EnvRecord = process.env): string {
   const script = `'nonce-${nonce}'`;
   return [
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
     "form-action 'self'",
-    "frame-ancestors 'self'",
+    "frame-ancestors 'none'",
     `script-src 'self' ${script} https://challenges.cloudflare.com`,
     `script-src-elem 'self' ${script} https://challenges.cloudflare.com`,
     "frame-src 'self' https://challenges.cloudflare.com",
     "child-src 'self' https://challenges.cloudflare.com blob:",
-    "connect-src 'self' https: wss:",
+    connectSrc(env),
     "img-src 'self' data: blob: https:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -99,10 +124,14 @@ export function buildContentSecurityPolicy(nonce: string): string {
   ].join("; ");
 }
 
-export function applySecurityHeaders(headers: Headers, nonce: string): void {
-  const csp = buildContentSecurityPolicy(nonce);
+export function applySecurityHeaders(
+  headers: Headers,
+  nonce: string,
+  env: EnvRecord = process.env,
+): void {
+  const csp = buildContentSecurityPolicy(nonce, env);
   headers.set("Content-Security-Policy", csp);
-  headers.set("Content-Security-Policy-Report-Only", csp);
+  headers.delete("Content-Security-Policy-Report-Only");
   headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   headers.set(
     "Permissions-Policy",
