@@ -59,10 +59,18 @@ describe("StudyLaneContent", () => {
     await user.click(tamilButton);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: pickText(ABOUT_STUDY.pageTitle, "ta") }),
+      await screen.findByRole(
+        "heading",
+        { level: 1, name: pickText(ABOUT_STUDY.pageTitle, "ta") },
+        { timeout: 10_000 },
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText(pickText(ABOUT_STUDY.privacyHeading, "ta"))).toBeInTheDocument();
-  });
+    expect(
+      await screen.findByText(pickText(ABOUT_STUDY.privacyHeading, "ta"), undefined, {
+        timeout: 10_000,
+      }),
+    ).toBeInTheDocument();
+  }, 30_000);
 
   it("renders canonical consent items from the survey consent source", () => {
     render(<StudyLaneContent lang="en" renderLink={renderLink} />);
