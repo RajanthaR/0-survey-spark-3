@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutIndexRouteImport } from './routes/about.index'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as ApiErrorReportRouteImport } from './routes/api/error-report'
 import { Route as AboutStudyRouteImport } from './routes/about.study'
 import { Route as AboutResearchRouteImport } from './routes/about.research'
 import { Route as AboutPresentRouteImport } from './routes/about.present'
@@ -56,6 +57,11 @@ const SSlugRoute = SSlugRouteImport.update({
 const RTokenRoute = RTokenRouteImport.update({
   id: '/r/$token',
   path: '/r/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiErrorReportRoute = ApiErrorReportRouteImport.update({
+  id: '/api/error-report',
+  path: '/api/error-report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutStudyRoute = AboutStudyRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/about/present': typeof AboutPresentRoute
   '/about/research': typeof AboutResearchRoute
   '/about/study': typeof AboutStudyRoute
+  '/api/error-report': typeof ApiErrorReportRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/about/': typeof AboutIndexRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/about/present': typeof AboutPresentRoute
   '/about/research': typeof AboutResearchRoute
   '/about/study': typeof AboutStudyRoute
+  '/api/error-report': typeof ApiErrorReportRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/about': typeof AboutIndexRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/about/present': typeof AboutPresentRoute
   '/about/research': typeof AboutResearchRoute
   '/about/study': typeof AboutStudyRoute
+  '/api/error-report': typeof ApiErrorReportRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
   '/about/': typeof AboutIndexRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/about/present'
     | '/about/research'
     | '/about/study'
+    | '/api/error-report'
     | '/r/$token'
     | '/s/$slug'
     | '/about/'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/about/present'
     | '/about/research'
     | '/about/study'
+    | '/api/error-report'
     | '/r/$token'
     | '/s/$slug'
     | '/about'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/about/present'
     | '/about/research'
     | '/about/study'
+    | '/api/error-report'
     | '/r/$token'
     | '/s/$slug'
     | '/about/'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRouteWithChildren
   AdminRoute: typeof AdminRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiErrorReportRoute: typeof ApiErrorReportRoute
   RTokenRoute: typeof RTokenRoute
   SSlugRoute: typeof SSlugRoute
   ApiAboutResearchAggregatesRoute: typeof ApiAboutResearchAggregatesRoute
@@ -242,6 +255,13 @@ declare module '@tanstack/react-router' {
       path: '/r/$token'
       fullPath: '/r/$token'
       preLoaderRoute: typeof RTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/error-report': {
+      id: '/api/error-report'
+      path: '/api/error-report'
+      fullPath: '/api/error-report'
+      preLoaderRoute: typeof ApiErrorReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about/study': {
@@ -312,6 +332,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRouteWithChildren,
   AdminRoute: AdminRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiErrorReportRoute: ApiErrorReportRoute,
   RTokenRoute: RTokenRoute,
   SSlugRoute: SSlugRoute,
   ApiAboutResearchAggregatesRoute: ApiAboutResearchAggregatesRoute,

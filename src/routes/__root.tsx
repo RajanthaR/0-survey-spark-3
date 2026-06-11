@@ -45,10 +45,38 @@ function NotFoundComponent() {
   );
 }
 
+function truncateForErrorReport(value: string, maxLength: number): string {
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+
+function reportClientError(error: Error, lang: Lang) {
+  if (typeof window === "undefined" || typeof fetch !== "function") return;
+
+  const payload: { message: string; stack?: string; url?: string; lang: Lang } = {
+    message: truncateForErrorReport(error.message || "Unknown client error", 2000),
+    lang,
+    url: truncateForErrorReport(window.location.href, 500),
+  };
+  if (error.stack) {
+    payload.stack = truncateForErrorReport(error.stack, 8000);
+  }
+
+  void fetch("/api/error-report", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   const { lang } = useLang();
+
+  useEffect(() => {
+    reportClientError(error, lang);
+  }, [error, lang]);
 
   return (
     <main id="main" className="flex min-h-screen items-center justify-center bg-background px-4">
