@@ -24,11 +24,27 @@ if (!handler || typeof handler.fetch !== "function") {
 const port = Number(process.env.PORT) || 3000;
 const hostname = process.env.HOSTNAME || "0.0.0.0";
 
+function healthzResponse() {
+  return new Response(JSON.stringify({ status: "ok" }), {
+    status: 200,
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json; charset=utf-8",
+    },
+  });
+}
+
 const server = serve({
   port,
   hostname,
   middleware: [serveStatic({ dir: clientDir })],
-  fetch: (request) => handler.fetch(request),
+  fetch: (request) => {
+    const url = new URL(request.url);
+    if (url.pathname === "/healthz") {
+      return healthzResponse();
+    }
+    return handler.fetch(request);
+  },
 });
 
 await server.ready();

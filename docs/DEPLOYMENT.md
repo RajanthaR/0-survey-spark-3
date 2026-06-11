@@ -98,7 +98,7 @@ For production, configure the Railway service:
 
 - Region: pick one close to the Supabase region for low server-fn latency.
 - Replicas: any count, since rate-limit state is in Redis.
-- Healthcheck: HTTP `GET /` expecting 2xx.
+- Healthcheck: HTTP `GET /healthz` expecting 200.
 - Custom domain (optional): add to Supabase Auth Site/Redirect URLs and to
   the Cloudflare Turnstile site-key allowlist before promoting traffic.
 
@@ -123,6 +123,7 @@ bun run smoke:db
 
 Confirm:
 
+- `/healthz` returns 200 with `{"status":"ok"}`.
 - `/` returns 200 and non-blank HTML.
 - `/admin` renders the unauthenticated admin shell without SSR failure.
 - Security headers include HSTS, CSP nonce, Permissions-Policy,

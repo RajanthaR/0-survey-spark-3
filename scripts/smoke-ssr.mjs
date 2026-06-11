@@ -115,8 +115,49 @@ async function check(route) {
   return true;
 }
 
+async function checkHealthz() {
+  const route = "/healthz";
+  const url = `${BASE}${route}`;
+  let res;
+  try {
+    res = await fetch(url, { headers: { accept: "application/json" }, redirect: "manual" });
+  } catch (e) {
+    return fail(route, "fetch threw", String(e));
+  }
+
+  if (res.status !== 200) {
+    const body = await res.text().catch(() => "");
+    return fail(route, `status ${res.status}`, body.slice(0, 300));
+  }
+
+  const cacheControl = res.headers.get("cache-control") ?? "";
+  if (!/\bno-store\b/i.test(cacheControl)) {
+    return fail(route, "missing Cache-Control: no-store", cacheControl || "(missing)");
+  }
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return fail(route, `unexpected content-type ${contentType || "(missing)"}`);
+  }
+
+  let body;
+  try {
+    body = await res.json();
+  } catch (e) {
+    return fail(route, "invalid JSON body", String(e));
+  }
+
+  if (body?.status !== "ok") {
+    return fail(route, "unexpected JSON body", JSON.stringify(body));
+  }
+
+  console.log(`✓ ${route} -> ${res.status} ${JSON.stringify(body)}`);
+  return true;
+}
+
 console.log(`SSR smoke test against ${BASE}\n`);
-const results = await Promise.all(ROUTES.map(check));
+const routeResults = await Promise.all(ROUTES.map(check));
+const results = [...routeResults, await checkHealthz()];
 const failed = results.filter((ok) => !ok).length;
 console.log(`\n${results.length - failed}/${results.length} passed`);
 process.exit(failed === 0 ? 0 : 1);
