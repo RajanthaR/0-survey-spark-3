@@ -50,7 +50,7 @@ export const SLIDES: SlideDefinition[] = [
       eyebrow: "EIP Insight",
       title: "Eco-Industrial Park research platform",
       subtitle: "Study status, instrument design, and system overview",
-      meta: "Rajantha R Ambegala - University of Sri Jayewardenepura - 2026",
+      meta: "University of Sri Jayewardenepura - 2026",
     },
   },
   {
