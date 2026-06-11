@@ -12,6 +12,7 @@
  * the user toggles between EN / SI / TA mid-survey.
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { runWithStartContext } from "@tanstack/start-storage-context";
 
 type UpdatePayload = Record<string, unknown>;
 type InsertPayload = Record<string, unknown>;
@@ -63,6 +64,20 @@ vi.mock("@/integrations/supabase/client.server", () => {
 import { startResponseImpl } from "@/lib/responses.impl.server";
 import { saveAnswers, completeResponse } from "@/lib/responses.functions";
 
+async function callServerFn<T>(fn: () => Promise<T>): Promise<T> {
+  return runWithStartContext(
+    {
+      getRouter: async () => ({}) as never,
+      request: new Request("http://test.local/_server"),
+      startOptions: { functionMiddleware: [] },
+      contextAfterGlobalMiddlewares: {},
+      executedRequestMiddlewares: new Set(),
+      handlerType: "serverFn",
+    },
+    fn,
+  );
+}
+
 beforeEach(() => {
   insertCalls.length = 0;
   updateCalls.length = 0;
@@ -84,14 +99,16 @@ describe("responses persistence — language is recorded on every write", () => 
   it.each(["en", "si", "ta"] as const)(
     "saveAnswers includes language=%s in the update payload",
     async (lang) => {
-      await saveAnswers({
-        data: {
-          resumeToken: "tok-12345678",
-          answers: { q1: "v" },
-          progressPct: 25,
-          language: lang,
-        },
-      });
+      await callServerFn(() =>
+        saveAnswers({
+          data: {
+            resumeToken: "tok-12345678",
+            answers: { q1: "v" },
+            progressPct: 25,
+            language: lang,
+          },
+        }),
+      );
       expect(updateCalls).toHaveLength(1);
       expect(updateCalls[0]).toMatchObject({
         answers: { q1: "v" },
@@ -102,13 +119,15 @@ describe("responses persistence — language is recorded on every write", () => 
   );
 
   it("saveAnswers without a language does NOT overwrite the stored language column", async () => {
-    await saveAnswers({
-      data: {
-        resumeToken: "tok-12345678",
-        answers: { q1: "v" },
-        progressPct: 10,
-      },
-    });
+    await callServerFn(() =>
+      saveAnswers({
+        data: {
+          resumeToken: "tok-12345678",
+          answers: { q1: "v" },
+          progressPct: 10,
+        },
+      }),
+    );
     expect(updateCalls).toHaveLength(1);
     // language key must be omitted entirely so Postgres keeps the previous value.
     expect(Object.keys(updateCalls[0])).not.toContain("language");
@@ -122,14 +141,16 @@ describe("responses persistence — language is recorded on every write", () => 
       { lang: "en", pct: 90 },
     ] as const;
     for (const { lang, pct } of sequence) {
-      await saveAnswers({
-        data: {
-          resumeToken: "tok-12345678",
-          answers: { q1: "v" },
-          progressPct: pct,
-          language: lang,
-        },
-      });
+      await callServerFn(() =>
+        saveAnswers({
+          data: {
+            resumeToken: "tok-12345678",
+            answers: { q1: "v" },
+            progressPct: pct,
+            language: lang,
+          },
+        }),
+      );
     }
     expect(updateCalls).toHaveLength(sequence.length);
     expect(updateCalls.map((u) => u.language)).toEqual(sequence.map((s) => s.lang));
@@ -137,12 +158,14 @@ describe("responses persistence — language is recorded on every write", () => 
   });
 
   it("completeResponse marks status=completed and progress=100 (language preserved from prior saves)", async () => {
-    await completeResponse({
-      data: {
-        resumeToken: "tok-12345678",
-        answers: { q1: "v" },
-      },
-    });
+    await callServerFn(() =>
+      completeResponse({
+        data: {
+          resumeToken: "tok-12345678",
+          answers: { q1: "v" },
+        },
+      }),
+    );
     expect(updateCalls).toHaveLength(1);
     expect(updateCalls[0]).toMatchObject({
       status: "completed",
