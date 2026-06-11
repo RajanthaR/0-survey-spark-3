@@ -34,6 +34,15 @@ export function assertProductionSecurityConfig(env: EnvRecord = process.env): vo
   if (envString(env, "ALLOW_TURNSTILE_BYPASS") === "true") {
     throw new Error("ALLOW_TURNSTILE_BYPASS must not be true in production");
   }
+  if (!envString(env, "REDIS_URL")) {
+    if (envString(env, "ALLOW_IN_MEMORY_RATE_LIMIT") === "true") {
+      console.warn(
+        "[security] ALLOW_IN_MEMORY_RATE_LIMIT=true in production - Redis-backed rate limiting is OFF.",
+      );
+    } else {
+      throw new Error("REDIS_URL required in production");
+    }
+  }
 }
 
 export function readInitialLang(cookieHeader: string | null): InitialLang {

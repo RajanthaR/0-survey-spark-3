@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   assertProductionSecurityConfig,
@@ -7,6 +7,10 @@ import {
 } from "@/lib/security-headers.server";
 
 describe("security headers and production boot policy", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("requires Turnstile in production", () => {
     expect(() => assertProductionSecurityConfig({ NODE_ENV: "production" })).toThrow(
       /TURNSTILE_SECRET/,
@@ -15,6 +19,7 @@ describe("security headers and production boot policy", () => {
       assertProductionSecurityConfig({
         APP_ENV: "production",
         TURNSTILE_SECRET: "secret",
+        REDIS_URL: "redis://example",
         ALLOW_TURNSTILE_BYPASS: "true",
       }),
     ).toThrow(/ALLOW_TURNSTILE_BYPASS/);
@@ -22,6 +27,7 @@ describe("security headers and production boot policy", () => {
       assertProductionSecurityConfig({
         APP_ENV: "production",
         TURNSTILE_SECRET: "secret",
+        REDIS_URL: "redis://example",
         ALLOW_TURNSTILE_BYPASS: "false",
       }),
     ).not.toThrow();
@@ -31,7 +37,11 @@ describe("security headers and production boot policy", () => {
     // The kill-switch lets prod boot without a secret; without the flag the
     // secret is still required (asserted above).
     expect(() =>
-      assertProductionSecurityConfig({ APP_ENV: "production", TURNSTILE_DISABLED: "true" }),
+      assertProductionSecurityConfig({
+        APP_ENV: "production",
+        TURNSTILE_DISABLED: "true",
+        REDIS_URL: "redis://example",
+      }),
     ).not.toThrow();
   });
 
@@ -42,9 +52,32 @@ describe("security headers and production boot policy", () => {
       assertProductionSecurityConfig({
         APP_ENV: "production",
         TURNSTILE_DISABLED: "true",
+        REDIS_URL: "redis://example",
         ALLOW_TURNSTILE_BYPASS: "true",
       }),
     ).toThrow(/ALLOW_TURNSTILE_BYPASS/);
+  });
+
+  it("requires Redis-backed rate limiting in production", () => {
+    expect(() =>
+      assertProductionSecurityConfig({
+        APP_ENV: "production",
+        TURNSTILE_SECRET: "secret",
+      }),
+    ).toThrow(/REDIS_URL/);
+  });
+
+  it("allows in-memory rate limiting in production only with an explicit warning flag", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    expect(() =>
+      assertProductionSecurityConfig({
+        APP_ENV: "production",
+        TURNSTILE_SECRET: "secret",
+        ALLOW_IN_MEMORY_RATE_LIMIT: "true",
+      }),
+    ).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("ALLOW_IN_MEMORY_RATE_LIMIT=true"));
   });
 
   it("keeps development and preview fail-open", () => {

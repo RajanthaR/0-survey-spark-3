@@ -17,8 +17,10 @@ Server-only secrets (Railway service variables):
 - `TURNSTILE_SECRET`
 - `ALLOW_TURNSTILE_BYPASS=false`
 - `REDIS_URL` — Railway Redis add-on connection string. Required for
-  cross-replica rate limiting; if unset the service silently degrades to a
-  per-process in-memory bucket and effective limits diverge across replicas.
+  cross-replica rate limiting; production boot fails if it is unset.
+- `ALLOW_IN_MEMORY_RATE_LIMIT=false` — emergency opt-out for a missing
+  `REDIS_URL`. Set to `true` only for a deliberate, temporary production boot
+  with per-process rate limiting; the service logs a warning while this is on.
 - `APP_ENV=production` (or `staging`)
 - `NODE_ENV=production`
 
