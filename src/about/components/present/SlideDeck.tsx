@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 
+import { Birds, Landscape, SunGlow } from "@/components/LandscapeScene";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -147,18 +148,29 @@ export function SlideDeck({ slides }: { slides: SlideDefinition[] }) {
     <div
       ref={rootRef}
       className={cn(
-        "relative min-h-screen overflow-hidden bg-background text-foreground",
+        "hero-sky relative min-h-screen overflow-hidden text-foreground",
         fullscreenFallback && "fixed inset-0 z-50",
       )}
       data-fullscreen={isFullscreen ? "true" : "false"}
     >
+      {/* ambient Living Landscape scenery behind every slide */}
+      <SunGlow className="-top-40 right-[2%] opacity-80" />
+      <Birds className="top-20" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-0">
+        <Landscape className="h-32 opacity-90 sm:h-40 md:h-48" withMist={false} />
+      </div>
+
       {!isFullscreen && (
-        <Button asChild variant="outline" className="absolute right-4 top-4 z-20">
+        <Button
+          asChild
+          variant="outline"
+          className="glass-chip absolute right-4 top-4 z-20 rounded-full"
+        >
           <Link to="/about">Exit presentation</Link>
         </Button>
       )}
 
-      <div className="mx-auto flex min-h-screen max-w-[118rem] flex-col px-5 py-16 sm:px-8 lg:px-12">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-[118rem] flex-col px-5 py-16 sm:px-8 lg:px-12">
         <div className="relative min-h-0 flex-1">
           <AnimatePresence mode="wait">
             <motion.div
@@ -175,15 +187,23 @@ export function SlideDeck({ slides }: { slides: SlideDefinition[] }) {
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20 border-t bg-background/90 px-4 py-3 backdrop-blur">
+      <div className="absolute inset-x-0 bottom-0 z-20 border-t border-white/15 bg-background/60 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-[118rem] items-center gap-4">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${progressPct}%` }} />
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-foreground/10">
+            <div
+              className="gradient-eco h-full rounded-full transition-[width] duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
-          <p className="min-w-20 text-right text-sm font-medium text-muted-foreground">
+          <p className="min-w-20 text-right text-sm font-medium text-foreground/80">
             {currentIndex + 1} / {total}
           </p>
-          <Button variant="secondary" size="sm" onClick={() => setHelpOpen(true)}>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="rounded-full"
+            onClick={() => setHelpOpen(true)}
+          >
             ?
           </Button>
         </div>

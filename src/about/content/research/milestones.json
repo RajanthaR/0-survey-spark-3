@@ -1,6 +1,9 @@
 [
   { "date": "2025-11-01", "label": "Proposal defended", "status": "done" },
   { "date": "2026-03-15", "label": "Phase 1 instrument finalised", "status": "done" },
-  { "date": "2026-05-26", "label": "Phase 1 data collection mid-point", "status": "in-progress" },
-  { "date": "2026-08-01", "label": "Phase 3 launch", "status": "upcoming" }
+  { "date": "2026-05-26", "label": "Phase 1 data collection mid-point", "status": "done" },
+  { "date": "2026-07-31", "label": "Phase 1 data collection complete", "status": "in-progress" },
+  { "date": "2026-08-01", "label": "Phase 3 launch", "status": "upcoming" },
+  { "date": "2026-11-30", "label": "Phase 3 data collection complete", "status": "upcoming" },
+  { "date": "2027-02-15", "label": "Analysis & EIP model synthesis", "status": "upcoming" }
 ]

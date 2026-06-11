@@ -11,6 +11,14 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { AboutHeaderLink } from "@/about/components/AboutHeaderLink";
+import {
+  Birds,
+  CREAM,
+  Fireflies,
+  HILL_NEAR,
+  Landscape,
+  SunGlow,
+} from "@/components/LandscapeScene";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { QuestionCount } from "@/components/QuestionCount";
 import { pickText, useLang, UI } from "@/lib/i18n";
@@ -36,85 +44,6 @@ export const Route = createFileRoute("/")({
     links: [{ rel: "canonical", href: "/" }],
   }),
 });
-
-/* Landscape palette — defined as CSS variables in styles.css; the near hill
-   doubles as the survey-section background so the illustration flows
-   seamlessly into the page below it. */
-const HILL_FAR = "var(--hill-far, oklch(0.78 0.05 150))";
-const HILL_MID = "var(--hill-mid, oklch(0.52 0.09 158))";
-const HILL_NEAR = "var(--hill-near, oklch(0.33 0.06 163))";
-const CREAM = "var(--cream, oklch(0.97 0.015 95))";
-
-const FIREFLIES: Array<{ left: string; top: string; delay: string; size: number }> = [
-  { left: "6%", top: "18%", delay: "0s", size: 5 },
-  { left: "16%", top: "62%", delay: "2.1s", size: 4 },
-  { left: "30%", top: "30%", delay: "0.9s", size: 6 },
-  { left: "46%", top: "74%", delay: "3.4s", size: 4 },
-  { left: "62%", top: "22%", delay: "1.5s", size: 5 },
-  { left: "76%", top: "58%", delay: "2.8s", size: 6 },
-  { left: "90%", top: "34%", delay: "0.4s", size: 4 },
-];
-
-function Landscape() {
-  return (
-    <div aria-hidden="true" className="pointer-events-none relative -mb-px select-none">
-      <div className="mist-band absolute left-0 top-[26%] h-16 w-full" />
-      <svg
-        viewBox="0 0 1440 420"
-        preserveAspectRatio="xMidYMax slice"
-        className="block h-52 w-full sm:h-72 md:h-80"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          {/* Stylised coconut palm silhouette, reused at three scales */}
-          <g id="palm" stroke={HILL_NEAR} fill="none" strokeLinecap="round">
-            <path d="M0 0 C -4 -22 -2 -44 8 -62" strokeWidth="6" />
-            <g strokeWidth="4.5">
-              <path d="M8 -62 q -30 -14 -56 -4" />
-              <path d="M8 -62 q -22 -24 -48 -26" />
-              <path d="M8 -62 q 4 -28 -12 -44" />
-              <path d="M8 -62 q 24 -20 48 -16" />
-              <path d="M8 -62 q 30 -6 48 12" />
-              <path d="M8 -62 q 20 10 26 30" />
-            </g>
-            <circle cx="4" cy="-58" r="5" fill={HILL_NEAR} stroke="none" />
-            <circle cx="13" cy="-55" r="5" fill={HILL_NEAR} stroke="none" />
-          </g>
-        </defs>
-
-        <path
-          fill={HILL_FAR}
-          opacity="0.65"
-          d="M0 240 C 180 195, 360 228, 540 202 C 760 172, 900 232, 1080 207 C 1240 185, 1340 212, 1440 198 L 1440 420 L 0 420 Z"
-        />
-        <path
-          fill={HILL_MID}
-          d="M0 302 C 200 262, 420 322, 640 292 C 860 262, 1040 332, 1240 302 C 1320 290, 1390 302, 1440 297 L 1440 420 L 0 420 Z"
-        />
-
-        <use href="#palm" transform="translate(1146 300)" />
-        <use href="#palm" transform="translate(1238 308) scale(0.72)" />
-        <use href="#palm" transform="translate(196 296) scale(0.85)" />
-
-        <path
-          fill={HILL_NEAR}
-          d="M0 362 C 240 324, 480 396, 760 362 C 1020 332, 1240 392, 1440 357 L 1440 420 L 0 420 Z"
-        />
-      </svg>
-    </div>
-  );
-}
-
-function Birds() {
-  return (
-    <div aria-hidden="true" className="bird-drift absolute left-0 top-32 z-0 text-foreground/45">
-      <svg width="72" height="24" viewBox="0 0 72 24" fill="none" stroke="currentColor">
-        <path d="M2 14 q 7 -9 14 0 q 7 -9 14 0" strokeWidth="2" strokeLinecap="round" />
-        <path d="M46 8 q 5 -7 11 0 q 5 -7 11 0" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    </div>
-  );
-}
 
 function HeroBadge({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
@@ -143,10 +72,7 @@ function Index() {
   return (
     <div className="hero-sky relative min-h-screen overflow-x-clip">
       {/* ambient sky */}
-      <div
-        aria-hidden="true"
-        className="sun-glow pointer-events-none absolute -top-28 right-[4%] z-0 size-72 rounded-full sm:size-[28rem]"
-      />
+      <SunGlow />
       <Birds />
 
       <header className="relative z-20 mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-5 py-5">
@@ -207,21 +133,7 @@ function Index() {
 
         {/* survey field — continues the near hill */}
         <section className="relative" style={{ backgroundColor: HILL_NEAR }}>
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            {FIREFLIES.map((f, i) => (
-              <span
-                key={i}
-                className="firefly absolute rounded-full"
-                style={{
-                  left: f.left,
-                  top: f.top,
-                  width: f.size,
-                  height: f.size,
-                  animationDelay: f.delay,
-                }}
-              />
-            ))}
-          </div>
+          <Fireflies />
 
           <div className="relative mx-auto max-w-4xl px-5 pb-16 pt-12 sm:pt-16">
             <h2 className="text-center text-2xl font-semibold sm:text-3xl" style={{ color: CREAM }}>

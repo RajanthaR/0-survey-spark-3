@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { Leaf, Search } from "lucide-react";
 
 import { ABOUT_UI, aboutLaneLabel } from "@/about/copy/ui";
 import { buildAboutBreadcrumbs } from "@/about/lib/navigation";
@@ -96,9 +96,9 @@ function SectionNav() {
               key={section.id}
               to={section.path}
               className={cn(
-                "rounded-lg px-3 py-2 text-sm transition hover:bg-accent/30",
+                "rounded-xl px-3 py-2 text-sm transition hover:bg-accent/30",
                 isActive
-                  ? "bg-primary text-primary-foreground hover:bg-primary"
+                  ? "gradient-eco text-primary-foreground shadow-soft hover:bg-transparent"
                   : "text-muted-foreground hover:text-foreground",
               )}
               aria-current={isActive ? "page" : undefined}
@@ -208,13 +208,17 @@ export function AboutLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+      <header className="hero-sky border-b">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <Link to="/" className="text-sm font-semibold uppercase tracking-wider text-primary">
+            <Link
+              to="/"
+              className="glass-chip inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold tracking-wide text-primary"
+            >
+              <Leaf className="size-4" aria-hidden="true" />
               {pickText(ABOUT_UI.appName, lang)}
             </Link>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-2 text-sm text-muted-foreground">
               {pickText(ABOUT_UI.shellSubtitle, lang)}
             </p>
           </div>
