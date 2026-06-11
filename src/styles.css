@@ -72,6 +72,11 @@
   --chart-3: oklch(0.78 0.14 75);
   --chart-4: oklch(0.55 0.12 220);
   --chart-5: oklch(0.65 0.18 30);
+  /* Living Landscape palette (landing page illustration + survey field) */
+  --hill-far: oklch(0.78 0.05 150);
+  --hill-mid: oklch(0.52 0.09 158);
+  --hill-near: oklch(0.33 0.06 163);
+  --cream: oklch(0.97 0.015 95);
 }
 
 .dark {

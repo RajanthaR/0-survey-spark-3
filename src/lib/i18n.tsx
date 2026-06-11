@@ -74,6 +74,11 @@ export const UI = {
     si: "ශ්‍රී ජයවර්ධනපුර විශ්වවිද්‍යාලය",
     ta: "ஸ்ரீ ஜயவர்தனபுர பல்கலைக்கழகம்",
   },
+  minutesSuffix: {
+    en: "min",
+    si: "මිනි.",
+    ta: "நிமி",
+  },
   homeAnonymousBadge: {
     en: "100% anonymous",
     si: "සම්පූර්ණයෙන් නිර්නාමිකයි",

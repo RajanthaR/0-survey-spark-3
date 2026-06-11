@@ -37,12 +37,13 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-/* Landscape palette — the near hill doubles as the survey-section background
-   so the illustration flows seamlessly into the page below it. */
-const HILL_FAR = "oklch(0.78 0.05 150)";
-const HILL_MID = "oklch(0.52 0.09 158)";
-const HILL_NEAR = "oklch(0.33 0.06 163)";
-const CREAM = "oklch(0.97 0.015 95)";
+/* Landscape palette — defined as CSS variables in styles.css; the near hill
+   doubles as the survey-section background so the illustration flows
+   seamlessly into the page below it. */
+const HILL_FAR = "var(--hill-far, oklch(0.78 0.05 150))";
+const HILL_MID = "var(--hill-mid, oklch(0.52 0.09 158))";
+const HILL_NEAR = "var(--hill-near, oklch(0.33 0.06 163))";
+const CREAM = "var(--cream, oklch(0.97 0.015 95))";
 
 const FIREFLIES: Array<{ left: string; top: string; delay: string; size: number }> = [
   { left: "6%", top: "18%", delay: "0s", size: 5 },
@@ -56,7 +57,7 @@ const FIREFLIES: Array<{ left: string; top: string; delay: string; size: number 
 
 function Landscape() {
   return (
-    <div aria-hidden className="pointer-events-none relative -mb-px select-none">
+    <div aria-hidden="true" className="pointer-events-none relative -mb-px select-none">
       <div className="mist-band absolute left-0 top-[26%] h-16 w-full" />
       <svg
         viewBox="0 0 1440 420"
@@ -106,7 +107,7 @@ function Landscape() {
 
 function Birds() {
   return (
-    <div aria-hidden className="bird-drift absolute left-0 top-32 z-0 text-foreground/45">
+    <div aria-hidden="true" className="bird-drift absolute left-0 top-32 z-0 text-foreground/45">
       <svg width="72" height="24" viewBox="0 0 72 24" fill="none" stroke="currentColor">
         <path d="M2 14 q 7 -9 14 0 q 7 -9 14 0" strokeWidth="2" strokeLinecap="round" />
         <path d="M46 8 q 5 -7 11 0 q 5 -7 11 0" strokeWidth="1.5" strokeLinecap="round" />
@@ -128,7 +129,13 @@ function Index() {
   const { lang } = useLang();
 
   const minutes = SURVEY_LIST.map((s) => s.estimatedMinutes);
-  const minutesLabel = `~${Math.min(...minutes)}–${Math.max(...minutes)} min`;
+  const minMinutes = Math.min(...minutes);
+  const maxMinutes = Math.max(...minutes);
+  const minutesSuffix = pickText(UI.minutesSuffix, lang);
+  const minutesLabel =
+    minMinutes === maxMinutes
+      ? `~${minMinutes} ${minutesSuffix}`
+      : `~${minMinutes}–${maxMinutes} ${minutesSuffix}`;
 
   /* CSS-only entrance so the page is fully visible even before hydration. */
   const riseDelay = (ms: number) => ({ animationDelay: `${ms}ms` });
@@ -137,7 +144,7 @@ function Index() {
     <div className="hero-sky relative min-h-screen overflow-x-clip">
       {/* ambient sky */}
       <div
-        aria-hidden
+        aria-hidden="true"
         className="sun-glow pointer-events-none absolute -top-28 right-[4%] z-0 size-72 rounded-full sm:size-[28rem]"
       />
       <Birds />
@@ -200,7 +207,7 @@ function Index() {
 
         {/* survey field — continues the near hill */}
         <section className="relative" style={{ backgroundColor: HILL_NEAR }}>
-          <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
             {FIREFLIES.map((f, i) => (
               <span
                 key={i}
@@ -258,7 +265,8 @@ function Index() {
                       <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                         <Clock3 className="size-4" aria-hidden="true" />
                         <span>
-                          ~{s.estimatedMinutes} min · <QuestionCount count={s.questions.length} />
+                          ~{s.estimatedMinutes} {minutesSuffix} ·{" "}
+                          <QuestionCount count={s.questions.length} />
                         </span>
                       </span>
                       <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
