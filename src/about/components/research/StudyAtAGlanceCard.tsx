@@ -13,8 +13,8 @@ const glanceRows = [
     icon: UserRound,
   },
   {
-    label: "Supervisors",
-    value: "Candidate to confirm",
+    label: "Principal investigator",
+    value: STUDY_META.principalResearcher,
     icon: Award,
   },
   {
@@ -24,7 +24,7 @@ const glanceRows = [
   },
   {
     label: "Study period",
-    value: "2025-2027 (candidate to confirm)",
+    value: "2025–2027",
     icon: CalendarDays,
   },
   {
@@ -44,8 +44,8 @@ export function StudyAtAGlanceCard() {
         </div>
         <CardTitle className="text-2xl leading-tight">{pickText(STUDY_META.title, "en")}</CardTitle>
         <CardDescription>
-          Status: Phase 1 data collection in progress. Phase 3 is prepared for the stakeholder
-          instrument lane.
+          Status: Phase 1 data collection in progress. Phase 3, the detailed stakeholder instrument,
+          launches August 2026.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

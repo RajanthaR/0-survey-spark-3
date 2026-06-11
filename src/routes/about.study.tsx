@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
+import { Clock3, Globe2, ShieldCheck } from "lucide-react";
+
 import { ABOUT_STUDY } from "@/about/copy/study";
 import {
   Accordion,
@@ -8,8 +10,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { pickText, useLang, type Lang } from "@/lib/i18n";
+import { pickText, UI, useLang, type Lang } from "@/lib/i18n";
 import { CONSENT_ITEMS } from "@/surveys/consent";
+import { SURVEY_LIST } from "@/surveys";
 
 type StudyLinkTarget = "/" | "/about/study" | "/about/research" | "/about/engineering";
 
@@ -76,6 +79,17 @@ export function StudyLaneContent({ lang, renderLink = defaultRenderLink }: Study
         <p className="mt-3 text-sm leading-6 opacity-90">
           {pickText(ABOUT_STUDY.pageSubtitle, lang)}
         </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <StudyBadge icon={<Clock3 className="size-4" aria-hidden="true" />}>
+            {studyMinutesLabel(lang)}
+          </StudyBadge>
+          <StudyBadge icon={<ShieldCheck className="size-4" aria-hidden="true" />}>
+            {pickText(UI.homeAnonymousBadge, lang)}
+          </StudyBadge>
+          <StudyBadge icon={<Globe2 className="size-4" aria-hidden="true" />}>
+            {pickText(UI.homeLanguagesBadge, lang)}
+          </StudyBadge>
+        </div>
       </section>
 
       <div className="flex flex-col gap-4">
@@ -178,6 +192,23 @@ export function StudyLaneContent({ lang, renderLink = defaultRenderLink }: Study
         </div>
       </footer>
     </article>
+  );
+}
+
+function studyMinutesLabel(lang: Lang): string {
+  const minutes = SURVEY_LIST.map((s) => s.estimatedMinutes);
+  const min = Math.min(...minutes);
+  const max = Math.max(...minutes);
+  const suffix = pickText(UI.minutesSuffix, lang);
+  return min === max ? `~${min} ${suffix}` : `~${min}–${max} ${suffix}`;
+}
+
+function StudyBadge({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-sm font-medium">
+      {icon}
+      {children}
+    </span>
   );
 }
 

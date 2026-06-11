@@ -8,7 +8,7 @@ export const Route = createFileRoute("/about/present")({
   component: PresentLane,
   head: () => ({
     meta: [
-      { title: "Presentation lane - EIP Insight" },
+      { title: "Presentation deck - EIP Insight" },
       { name: "description", content: getAboutSection("present").description },
     ],
   }),

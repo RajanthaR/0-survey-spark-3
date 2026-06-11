@@ -116,9 +116,9 @@ export const ABOUT_UI = {
         ta: "ஆய்வு",
       },
       title: {
-        en: "Study lane",
-        si: "අධ්‍යයන පථය",
-        ta: "ஆய்வு பாதை",
+        en: "Study & participation",
+        si: "අධ්‍යයනය සහ සහභාගීත්වය",
+        ta: "ஆய்வும் பங்கேற்பும்",
       },
       description: {
         en: "Participant-facing context, consent, survey scope, and research purpose.",
@@ -133,9 +133,9 @@ export const ABOUT_UI = {
         ta: "ஆராய்ச்சி",
       },
       title: {
-        en: "Research lane",
-        si: "පර්යේෂණ පථය",
-        ta: "ஆராய்ச்சி பாதை",
+        en: "Research narrative",
+        si: "පර්යේෂණ විස්තරය",
+        ta: "ஆராய்ச்சி விவரணம்",
       },
       description: {
         en: "Narrative evidence, design rationale, and research-method notes.",
@@ -150,9 +150,9 @@ export const ABOUT_UI = {
         ta: "பொறியியல்",
       },
       title: {
-        en: "Engineering lane",
-        si: "ඉංජිනේරු පථය",
-        ta: "பொறியியல் பாதை",
+        en: "Engineering & architecture",
+        si: "ඉංජිනේරු සහ ගෘහනිර්මාණය",
+        ta: "பொறியியலும் கட்டமைப்பும்",
       },
       description: {
         en: "Architecture, audits, runbooks, and implementation traceability.",
@@ -167,9 +167,9 @@ export const ABOUT_UI = {
         ta: "வழங்கல்",
       },
       title: {
-        en: "Presentation lane",
-        si: "ඉදිරිපත් කිරීමේ පථය",
-        ta: "வழங்கல் பாதை",
+        en: "Presentation deck",
+        si: "ඉදිරිපත් කිරීමේ විනිවිදක පෙළ",
+        ta: "விளக்கக்காட்சி ஸ்லைடுகள்",
       },
       description: {
         en: "Reusable presentation views assembled from the other explorer lanes.",

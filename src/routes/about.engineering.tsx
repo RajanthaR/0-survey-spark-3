@@ -28,7 +28,7 @@ export const Route = createFileRoute("/about/engineering")({
   component: EngineeringLane,
   head: () => ({
     meta: [
-      { title: "Engineering lane - EIP Insight" },
+      { title: "Engineering & architecture - EIP Insight" },
       { name: "description", content: getAboutSection("engineering").description },
     ],
   }),
@@ -70,10 +70,10 @@ function EngineeringLane() {
       <div className="flex flex-col gap-3">
         <div>
           <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Engineering lane
+            Engineering
           </p>
           <h1 className="mt-2 text-3xl font-semibold text-foreground">
-            System Architecture And Audit Trail
+            System architecture and audit trail
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
             Architecture diagrams, repository documentation, and audit status for reviewers.
