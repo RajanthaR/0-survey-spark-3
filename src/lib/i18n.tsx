@@ -340,44 +340,111 @@ export const UI = {
   },
   // ── Pairwise (AHP / Saaty) two-step interaction ──
   pairwiseChoosePrompt: {
-    en: "Which factor is more important?",
-    si: "වඩා වැදගත් සාධකය කුමක්ද?",
-    ta: "எந்த காரணி முக்கியமானது?",
+    en: "Tap the factor that is more important.",
+    si: "වඩා වැදගත් සාධකය තට්ටු කරන්න.",
+    ta: "முக்கியமான காரணியைத் தட்டவும்.",
   },
   pairwiseRatePrompt: {
-    en: "How much more important?",
-    si: "කොපමණ වැඩියෙන් වැදගත්ද?",
-    ta: "எவ்வளவு முக்கியமானது?",
+    en: "Rate how much more important the selected factor is.",
+    si: "තෝරාගත් සාධකය කොපමණ වැඩියෙන් වැදගත්දැයි ලකුණු දෙන්න.",
+    ta: "தேர்ந்தெடுத்த காரணி எவ்வளவு முக்கியமானது என்பதை மதிப்பிடுங்கள்.",
   },
-  pairwiseEqual: {
-    en: "Equally important",
-    si: "සමානව වැදගත්",
-    ta: "சமமாக முக்கியம்",
+  pairwiseProgress: {
+    en: "Comparison {current} of {total}",
+    si: "සසඳීම {current}/{total}",
+    ta: "ஒப்பீடு {current}/{total}",
   },
-  saatyModerate: {
-    en: "Moderately (3)",
-    si: "තරමක් (3)",
-    ta: "மிதமாக (3)",
+  pairwiseAnsweredProgress: {
+    en: "{done} of {total} comparisons rated",
+    si: "සසඳීම් {done}/{total}කට ලකුණු දී ඇත",
+    ta: "{done}/{total} ஒப்பீடுகள் மதிப்பிடப்பட்டன",
   },
-  saatyStrong: {
-    en: "Strongly (5)",
-    si: "දැඩි ලෙස (5)",
-    ta: "வலுவாக (5)",
+  pairwiseSelectedTemplate: {
+    en: "You chose {winner}. Rate how much more important it is than {loser}.",
+    si: "ඔබ {winner} තෝරාගෙන ඇත. එය {loser}ට වඩා කොපමණ වැදගත්දැයි ලකුණු දෙන්න.",
+    ta: "நீங்கள் {winner} தேர்ந்தெடுத்துள்ளீர்கள். அது {loser} விட எவ்வளவு முக்கியம் என்பதை மதிப்பிடுங்கள்.",
   },
-  saatyVeryStrong: {
-    en: "Very strongly (7)",
-    si: "ඉතා දැඩි ලෙස (7)",
-    ta: "மிக வலுவாக (7)",
+  pairwiseChangeChoice: {
+    en: "Change choice",
+    si: "තේරීම වෙනස් කරන්න",
+    ta: "தேர்வை மாற்றவும்",
   },
-  saatyExtreme: {
-    en: "Extremely (9)",
-    si: "අතිශයින්ම (9)",
-    ta: "மிக அதிகமாக (9)",
+  pairwiseRatingIdle: {
+    en: "Move the slider or tap a number to set the rating.",
+    si: "ලකුණු තේරීමට ස්ලයිඩරය ගෙන යන්න හෝ අංකයක් තට්ටු කරන්න.",
+    ta: "மதிப்பை அமைக்க ஸ்லைடரை நகர்த்தவும் அல்லது எண்ணைத் தட்டவும்.",
   },
+  pairwiseSliderLabel: {
+    en: "Importance rating from 1 to 9",
+    si: "1 සිට 9 දක්වා වැදගත්කම් ලකුණු",
+    ta: "1 முதல் 9 வரை முக்கியத்துவ மதிப்பு",
+  },
+  pairwisePreviousComparison: {
+    en: "Previous comparison",
+    si: "පෙර සසඳීම",
+    ta: "முந்தைய ஒப்பீடு",
+  },
+  pairwiseNextComparison: {
+    en: "Next comparison",
+    si: "ඊළඟ සසඳීම",
+    ta: "அடுத்த ஒப்பீடு",
+  },
+  pairwiseCompleteHint: {
+    en: "All comparisons are rated. Use Next to continue.",
+    si: "සියලු සසඳීම්වලට ලකුණු දී ඇත. ඉදිරියට යාමට ඊළඟ භාවිත කරන්න.",
+    ta: "அனைத்து ஒப்பீடுகளும் மதிப்பிடப்பட்டன. தொடர அடுத்ததைப் பயன்படுத்தவும்.",
+  },
+  saatyRatingMeanings: [
+    {
+      en: "Slightly more important",
+      si: "තරමක් වඩා වැදගත්",
+      ta: "சற்றே முக்கியம்",
+    },
+    {
+      en: "Between slight and moderate",
+      si: "තරමක් සහ මධ්‍යස්ථ අතර",
+      ta: "சிறிதும் மிதமுமாக",
+    },
+    {
+      en: "Moderately more important",
+      si: "මධ්‍යස්ථ ලෙස වඩා වැදගත්",
+      ta: "மிதமாக முக்கியம்",
+    },
+    {
+      en: "Between moderate and strong",
+      si: "මධ්‍යස්ථ සහ ශක්තිමත් අතර",
+      ta: "மிதமும் வலுவுமாக",
+    },
+    {
+      en: "Strongly more important",
+      si: "ශක්තිමත් ලෙස වඩා වැදගත්",
+      ta: "வலுவாக முக்கியம்",
+    },
+    {
+      en: "Between strong and very strong",
+      si: "ශක්තිමත් සහ ඉතා ශක්තිමත් අතර",
+      ta: "வலுவும் மிக வலுவுமாக",
+    },
+    {
+      en: "Very strongly more important",
+      si: "ඉතා ශක්තිමත් ලෙස වඩා වැදගත්",
+      ta: "மிக வலுவாக முக்கியம்",
+    },
+    {
+      en: "Very strong, almost extreme",
+      si: "ඉතා ශක්තිමත්, අතිශයින්මට ආසන්න",
+      ta: "மிக வலுவாக, மிக அதிகத்திற்கு அருகில்",
+    },
+    {
+      en: "Extremely more important",
+      si: "අතිශයින්ම වඩා වැදගත්",
+      ta: "மிக அதிகமாக முக்கியம்",
+    },
+  ],
   ratePairs: {
-    en: "Please choose a winner and a strength for every pair.",
-    si: "සෑම යුගලයක් සඳහාම වඩා වැදගත් එක තෝරා ලකුණු දෙන්න.",
-    ta: "ஒவ்வொரு ஜோடிக்கும் முக்கியமானதைத் தேர்ந்து மதிப்பிடவும்.",
+    en: "Please complete every comparison: choose one side, then set a 1 to 9 rating.",
+    si: "සෑම සසඳීමක්ම සම්පූර්ණ කරන්න: එක් පැත්තක් තෝරා 1 සිට 9 දක්වා ලකුණු දෙන්න.",
+    ta: "ஒவ்வொரு ஒப்பீட்டையும் முடிக்கவும்: ஒரு பக்கத்தைத் தேர்ந்து 1 முதல் 9 வரை மதிப்பிடவும்.",
   },
 } satisfies Record<string, LocalizedString | LocalizedString[]>;
 

@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, Check } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { pickText, useLang, UI, type Lang, type LocalizedString } from "@/lib/i18n";
+import { pickText, useLang, UI, type Lang } from "@/lib/i18n";
+import {
+  buildPairwisePairs,
+  countPairwiseCompletePairs,
+  pairwiseKey,
+  parsePairwiseCode,
+  PAIRWISE_RATINGS,
+  type PairwiseSide,
+} from "@/lib/pairwise";
 import { type Question, YES_NO_OPTIONS } from "@/surveys/types";
 import { OptionVisual } from "@/components/survey/OptionVisual";
 import { questionHasVisuals } from "@/surveys/validate";
@@ -193,6 +203,278 @@ export function QuestionView({
         <Field q={q} value={value} onChange={onChange} lang={lang} />
       </div>
     </motion.section>
+  );
+}
+
+function fillTemplate(template: string, values: Record<string, string | number>): string {
+  return Object.entries(values).reduce(
+    (text, [key, value]) => text.replace(new RegExp(`\\{${key}\\}`, "g"), String(value)),
+    template,
+  );
+}
+
+function pickUiTemplate(
+  template: Parameters<typeof pickText>[0],
+  lang: Lang,
+  values: Record<string, string | number>,
+): string {
+  return fillTemplate(pickText(template, lang), values);
+}
+
+function asPairwiseAnswerObject(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, string>;
+}
+
+function PairwiseSaatyField({
+  q,
+  value,
+  onChange,
+  lang,
+}: {
+  q: Question;
+  value: unknown;
+  onChange: (v: unknown, meta?: AnswerInputMeta) => void;
+  lang: Lang;
+}) {
+  const obj = asPairwiseAnswerObject(value);
+  const criteria = q.criteria ?? [];
+  const pairs = buildPairwisePairs(criteria);
+  const [activeIndex, setActiveIndex] = useState(() => {
+    const firstIncomplete = pairs.findIndex(
+      (pair) => !parsePairwiseCode(obj[pairwiseKey(pair)]).complete,
+    );
+    return firstIncomplete >= 0 ? firstIncomplete : 0;
+  });
+  const [choosingAgain, setChoosingAgain] = useState(false);
+  const ratingWrapRef = useRef<HTMLDivElement | null>(null);
+  const previousSideRef = useRef<PairwiseSide | null>(null);
+
+  useEffect(() => {
+    setActiveIndex((current) => Math.min(current, Math.max(pairs.length - 1, 0)));
+  }, [pairs.length]);
+
+  const activePair = pairs[activeIndex] ?? null;
+  const activeKey = activePair ? pairwiseKey(activePair) : "";
+  const parsed = parsePairwiseCode(obj[activeKey]);
+  const showChoiceStep = !parsed.side || choosingAgain;
+
+  useEffect(() => {
+    setChoosingAgain(false);
+  }, [activeKey]);
+
+  useEffect(() => {
+    if (!parsed.side || showChoiceStep) {
+      previousSideRef.current = parsed.side;
+      return;
+    }
+    if (previousSideRef.current !== parsed.side) {
+      ratingWrapRef.current
+        ?.querySelector<HTMLElement>('[role="slider"]')
+        ?.focus({ preventScroll: true });
+    }
+    previousSideRef.current = parsed.side;
+  }, [activeKey, parsed.side, showChoiceStep]);
+
+  if (!activePair) return null;
+
+  const labelFor = (key: string) => {
+    const criterion = criteria.find((c) => c.key === key);
+    return criterion ? pickText(criterion.label, lang) : key;
+  };
+
+  const leftLabel = labelFor(activePair.a);
+  const rightLabel = labelFor(activePair.b);
+  const winnerLabel = parsed.side === "a" ? leftLabel : rightLabel;
+  const loserLabel = parsed.side === "a" ? rightLabel : leftLabel;
+  const ratingValue = parsed.rating ?? 5;
+  const ratingMeaning = parsed.rating
+    ? pickText(UI.saatyRatingMeanings[parsed.rating - 1], lang)
+    : pickText(UI.pairwiseRatingIdle, lang);
+  const completeCount = countPairwiseCompletePairs(q, obj);
+  const currentComplete = parsed.complete;
+
+  const setPairCode = (next: string) => onChange({ ...obj, [activeKey]: next });
+  const chooseSide = (side: PairwiseSide) => {
+    const nextCode = parsed.side === side && parsed.rating ? `${side}${parsed.rating}` : side;
+    setPairCode(nextCode);
+    setChoosingAgain(false);
+  };
+  const setRating = (rating: number) => {
+    if (!parsed.side) return;
+    setPairCode(`${parsed.side}${rating}`);
+  };
+
+  const choices: Array<{
+    side: PairwiseSide;
+    key: string;
+    label: string;
+  }> = [
+    { side: "a", key: activePair.a, label: leftLabel },
+    { side: "b", key: activePair.b, label: rightLabel },
+  ];
+
+  return (
+    <div className="space-y-4" data-testid="pairwise-flow">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="rounded-full border bg-card px-3 py-1 text-xs font-medium text-primary">
+          {pickUiTemplate(UI.pairwiseProgress, lang, {
+            current: activeIndex + 1,
+            total: pairs.length,
+          })}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {pickUiTemplate(UI.pairwiseAnsweredProgress, lang, {
+            done: completeCount,
+            total: pairs.length,
+          })}
+        </p>
+      </div>
+
+      <div className="rounded-xl border bg-card p-4" data-testid={`pair-${activeKey}`}>
+        {showChoiceStep ? (
+          <>
+            <p className="mb-3 text-sm font-medium text-muted-foreground">
+              {pickText(UI.pairwiseChoosePrompt, lang)}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
+              {choices.map((choice) => {
+                const active = parsed.side === choice.side;
+                return (
+                  <button
+                    key={choice.side}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    data-testid={`pair-${activeKey}-choice-${choice.side}`}
+                    onClick={() => chooseSide(choice.side)}
+                    className={`flex min-h-28 items-start gap-3 rounded-xl border p-4 text-left transition ${
+                      active
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-background hover:bg-accent/30"
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 grid size-5 flex-none place-items-center rounded-full border ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground/40"
+                      }`}
+                    >
+                      {active && <Check className="size-3.5" />}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-semibold uppercase text-primary">
+                        {choice.key}
+                      </span>
+                      <span className="mt-1 block text-sm font-medium leading-snug">
+                        {choice.label}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="space-y-4" data-testid={`pair-${activeKey}-rating`}>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-sm font-medium leading-snug text-foreground">
+                  {pickUiTemplate(UI.pairwiseSelectedTemplate, lang, {
+                    winner: winnerLabel,
+                    loser: loserLabel,
+                  })}
+                </p>
+                <button
+                  type="button"
+                  className="rounded-lg border bg-background px-2.5 py-1 text-xs font-medium hover:bg-accent/30"
+                  onClick={() => setChoosingAgain(true)}
+                >
+                  {pickText(UI.pairwiseChangeChoice, lang)}
+                </button>
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                {pickText(UI.pairwiseRatePrompt, lang)}
+              </p>
+            </div>
+
+            <div ref={ratingWrapRef} className="rounded-xl border bg-background p-4">
+              <div
+                className="mb-5 rounded-xl bg-primary/10 px-3 py-2 text-center text-sm font-semibold text-primary"
+                data-testid={`pair-${activeKey}-rating-meaning`}
+                aria-live="polite"
+              >
+                {parsed.rating ? `${parsed.rating}: ${ratingMeaning}` : ratingMeaning}
+              </div>
+              <Slider
+                min={1}
+                max={9}
+                step={1}
+                value={[ratingValue]}
+                onValueChange={(next) => setRating(next[0] ?? ratingValue)}
+                aria-label={pickText(UI.pairwiseSliderLabel, lang)}
+                data-testid={`pair-${activeKey}-rating-slider`}
+              />
+              <div
+                className="mt-4 grid grid-cols-9 gap-1"
+                aria-label={pickText(UI.pairwiseSliderLabel, lang)}
+              >
+                {PAIRWISE_RATINGS.map((rating) => {
+                  const active = parsed.rating === rating;
+                  return (
+                    <button
+                      key={rating}
+                      type="button"
+                      aria-pressed={active}
+                      data-testid={`pair-${activeKey}-rating-${rating}`}
+                      onClick={() => setRating(rating)}
+                      className={`h-10 rounded-md border text-sm font-semibold transition ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card hover:bg-accent/30"
+                      }`}
+                    >
+                      {rating}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 rounded-xl"
+          aria-label={pickText(UI.pairwisePreviousComparison, lang)}
+          disabled={activeIndex === 0}
+          onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          <span className="hidden sm:inline">{pickText(UI.pairwisePreviousComparison, lang)}</span>
+        </Button>
+        {currentComplete && activeIndex === pairs.length - 1 && completeCount === pairs.length && (
+          <p className="min-w-0 flex-1 text-center text-xs font-medium text-primary">
+            {pickText(UI.pairwiseCompleteHint, lang)}
+          </p>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 rounded-xl"
+          aria-label={pickText(UI.pairwiseNextComparison, lang)}
+          disabled={!currentComplete || activeIndex === pairs.length - 1}
+          onClick={() => setActiveIndex((index) => Math.min(pairs.length - 1, index + 1))}
+        >
+          <span className="hidden sm:inline">{pickText(UI.pairwiseNextComparison, lang)}</span>
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -483,114 +765,7 @@ function Field({
         />
       );
     case "pairwise_saaty": {
-      const obj = (value as Record<string, string>) ?? {};
-      const crits = q.criteria ?? [];
-      const pairs: { a: string; b: string }[] = [];
-      for (let i = 0; i < crits.length; i++) {
-        for (let j = i + 1; j < crits.length; j++) pairs.push({ a: crits[i].key, b: crits[j].key });
-      }
-      // Two-step "select then rate" per the Word questionnaire (Section F):
-      //   1. choose the more important criterion (or "equally important")
-      //   2. for a winner, rate the strength on the Saaty scale (3/5/7/9)
-      // Stored codes stay backwards-compatible: "eq" | "a3".."a9" | "b3".."b9".
-      // A bare winner ("a"/"b") is a valid intermediate state — the pair is
-      // not complete until a strength is also chosen (enforced in validation).
-      const STRENGTHS: { n: number; label: LocalizedString }[] = [
-        { n: 3, label: UI.saatyModerate },
-        { n: 5, label: UI.saatyStrong },
-        { n: 7, label: UI.saatyVeryStrong },
-        { n: 9, label: UI.saatyExtreme },
-      ];
-      return (
-        <div className="space-y-4">
-          {pairs.map(({ a, b }) => {
-            const k = `${a}__${b}`;
-            const code = obj[k] ?? "";
-            const ca = crits.find((c) => c.key === a)!;
-            const cb = crits.find((c) => c.key === b)!;
-            const side =
-              code === "eq" ? "eq" : code.startsWith("a") ? "a" : code.startsWith("b") ? "b" : "";
-            const strength = /^[ab](\d)$/.test(code) ? Number(code.slice(1)) : null;
-            const set = (next: string) => onChange({ ...obj, [k]: next });
-            const choices: { id: "a" | "eq" | "b"; label: string; active: boolean }[] = [
-              { id: "a", label: pickText(ca.label, lang), active: side === "a" },
-              { id: "eq", label: pickText(UI.pairwiseEqual, lang), active: side === "eq" },
-              { id: "b", label: pickText(cb.label, lang), active: side === "b" },
-            ];
-            return (
-              <div key={k} className="rounded-2xl border bg-card p-3" data-testid={`pair-${k}`}>
-                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                  {pickText(UI.pairwiseChoosePrompt, lang)}
-                </p>
-                <div className="grid gap-2" role="radiogroup">
-                  {choices.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={c.active}
-                      data-testid={`pair-${k}-choice-${c.id}`}
-                      onClick={() => {
-                        // Picking "equal" completes the pair; picking a winner
-                        // keeps any prior strength for that side, else leaves it
-                        // pending so the rating step is required next.
-                        if (c.id === "eq") set("eq");
-                        else if (side === c.id) return;
-                        else set(c.id);
-                      }}
-                      className={`flex min-h-12 items-center gap-3 rounded-2xl border p-3 text-left text-sm transition ${
-                        c.active
-                          ? "border-primary bg-primary/10 font-medium"
-                          : "border-border bg-background hover:bg-accent/30"
-                      }`}
-                    >
-                      <span
-                        className={`grid size-5 flex-none place-items-center rounded-full border ${
-                          c.active
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-muted-foreground/40"
-                        }`}
-                      >
-                        {c.active && <Check className="size-3.5" />}
-                      </span>
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-                {(side === "a" || side === "b") && (
-                  <div className="mt-3" data-testid={`pair-${k}-strength`}>
-                    <p className="mb-2 text-xs font-medium text-muted-foreground">
-                      {pickText(UI.pairwiseRatePrompt, lang)}
-                    </p>
-                    <div className="grid grid-cols-4 gap-1">
-                      {STRENGTHS.map(({ n, label }) => {
-                        const active = strength === n;
-                        return (
-                          <button
-                            key={n}
-                            type="button"
-                            aria-pressed={active}
-                            aria-label={pickText(label, lang)}
-                            data-testid={`pair-${k}-strength-${n}`}
-                            onClick={() => set(`${side}${n}`)}
-                            className={`flex h-12 flex-col items-center justify-center gap-0.5 rounded-lg border text-xs font-semibold transition ${
-                              active
-                                ? "gradient-eco text-primary-foreground border-transparent"
-                                : "bg-background hover:bg-accent/30"
-                            }`}
-                          >
-                            {n}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      );
+      return <PairwiseSaatyField q={q} value={value} onChange={onChange} lang={lang} />;
     }
     default:
       return null;

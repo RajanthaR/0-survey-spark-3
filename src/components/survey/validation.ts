@@ -1,5 +1,8 @@
 import type { Question } from "@/surveys/types";
 import { pickText, UI, type Lang } from "@/lib/i18n";
+import { pairwiseAllPairsComplete } from "@/lib/pairwise";
+
+export { pairwiseAllPairsComplete } from "@/lib/pairwise";
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const TEL_RE = /^[+()\-\s\d]{6,}$/;
@@ -28,28 +31,6 @@ export function formatValidationError(err: ValidationError, lang: Lang): string 
   }
 }
 
-/**
- * Pairwise (AHP / Saaty) answers are stored as `{ "A__B": code }` where a
- * *complete* pair is either `"eq"` (equally important) or a winner-plus-strength
- * code like `"a5"` / `"b3"`. A bare `"a"` / `"b"` means the respondent picked a
- * winner but has not yet rated how strongly — i.e. the second step the Word
- * questionnaire requires is still missing. This returns true only when every
- * possible criteria pair carries a complete code.
- */
-const PAIRWISE_COMPLETE_RE = /^(eq|[ab](3|5|7|9))$/;
-
-export function pairwiseAllPairsComplete(q: Question, value: unknown): boolean {
-  const crits = q.criteria ?? [];
-  const obj = (value ?? {}) as Record<string, unknown>;
-  for (let i = 0; i < crits.length; i++) {
-    for (let j = i + 1; j < crits.length; j++) {
-      const code = obj[`${crits[i].key}__${crits[j].key}`];
-      if (typeof code !== "string" || !PAIRWISE_COMPLETE_RE.test(code)) return false;
-    }
-  }
-  return true;
-}
-
 export function isAnswered(q: Question, answers: Answers): boolean {
   const v = answers[q.id];
   if (v == null) return false;
@@ -76,8 +57,8 @@ export function validateAnswerCode(q: Question, value: unknown): ValidationError
   }
   // Empty + required is handled separately (different message).
   if (!isAnswered(q, { [q.id]: value })) return null;
-  // Pairwise: once the respondent has engaged with the grid at all, every pair
-  // must be both decided AND rated (the two-step the questionnaire mandates).
+  // Pairwise: once the respondent has engaged with the comparison flow at all,
+  // every pair must be both decided AND rated from 1..9.
   if (q.type === "pairwise_saaty" && !pairwiseAllPairsComplete(q, value)) {
     return { code: "ratePairs" };
   }

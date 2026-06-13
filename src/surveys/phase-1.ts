@@ -804,9 +804,9 @@ export const phase1: Survey = {
       type: "pairwise_saaty",
       section: sec.f,
       label: {
-        en: "For each pair, choose the more important factor and rate the strength (1 = equal, 3 = moderate, 5 = strong, 7 = very strong, 9 = extreme).",
-        si: "සෑම යුගලයක් සඳහාම වඩා වැදගත් සාධකය තෝරා ලකුණු දෙන්න (1 = සමාන, 9 = අතිශය වැඩි).",
-        ta: "ஒவ்வொரு ஜோடிக்கும் முக்கியமான காரணியைத் தேர்ந்தெடுத்து மதிப்பிடுங்கள் (1 = சமம், 9 = மிக அதிகம்).",
+        en: "For each pair, choose the more important factor and rate how much more important it is (1 = slight, 9 = extreme).",
+        si: "සෑම යුගලයක් සඳහාම වඩා වැදගත් සාධකය තෝරා එය කොපමණ වැදගත්දැයි ලකුණු දෙන්න (1 = තරමක්, 9 = අතිශයින්ම).",
+        ta: "ஒவ்வொரு ஜோடிக்கும் முக்கியமான காரணியைத் தேர்ந்தெடுத்து அது எவ்வளவு முக்கியம் என்பதை மதிப்பிடுங்கள் (1 = சற்றே, 9 = மிக அதிகம்).",
       },
       criteria: [
         {

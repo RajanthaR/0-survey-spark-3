@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isVisible,
+  isValidCompletedResponse,
   progressFor,
   sectionBreakdown,
   visibilityAnswerSignature,
@@ -88,6 +89,28 @@ describe("progressFor", () => {
   it("hits 100 when all visible answered", () => {
     expect(progressFor(baseSurvey, { q1: "a", q2: "yes", q4: "ok" })).toBe(100);
   });
+
+  it("does not count an incomplete pairwise answer as progress", () => {
+    const pairwiseSurvey: Survey = {
+      ...baseSurvey,
+      questions: [
+        {
+          id: "ahp",
+          type: "pairwise_saaty",
+          section: txt("AHP"),
+          label: txt("Compare"),
+          required: true,
+          criteria: [
+            { key: "A", label: txt("Alpha") },
+            { key: "B", label: txt("Beta") },
+          ],
+        },
+      ],
+    };
+
+    expect(progressFor(pairwiseSurvey, { ahp: { A__B: "a" } })).toBe(0);
+    expect(progressFor(pairwiseSurvey, { ahp: { A__B: "a1" } })).toBe(100);
+  });
 });
 
 describe("visibleQuestions", () => {
@@ -115,5 +138,35 @@ describe("sectionBreakdown", () => {
     expect(followup.total).toBe(1);
     expect(followup.done).toBe(0);
     expect(followup.pct).toBe(0);
+  });
+});
+
+describe("isValidCompletedResponse", () => {
+  it("requires every pairwise comparison to include a forced side and 1..9 rating", () => {
+    const pairwiseSurvey: Survey = {
+      ...baseSurvey,
+      questions: [
+        {
+          id: "ahp",
+          type: "pairwise_saaty",
+          section: txt("AHP"),
+          label: txt("Compare"),
+          required: true,
+          criteria: [
+            { key: "A", label: txt("Alpha") },
+            { key: "B", label: txt("Beta") },
+            { key: "C", label: txt("Gamma") },
+          ],
+        },
+      ],
+    };
+
+    expect(isValidCompletedResponse(pairwiseSurvey, { ahp: { A__B: "a5" } })).toBe(false);
+    expect(isValidCompletedResponse(pairwiseSurvey, { ahp: { A__B: "eq" } })).toBe(false);
+    expect(
+      isValidCompletedResponse(pairwiseSurvey, {
+        ahp: { A__B: "a5", A__C: "b1", B__C: "a9" },
+      }),
+    ).toBe(true);
   });
 });

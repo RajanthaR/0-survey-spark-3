@@ -1,4 +1,5 @@
 import type { Question, Survey } from "@/surveys/types";
+import { pairwiseAllPairsComplete } from "@/lib/pairwise";
 
 type Answers = Record<string, unknown>;
 
@@ -64,6 +65,7 @@ export function isAnswered(q: Question, answers: Answers): boolean {
   const v = answers[q.id];
   if (v == null) return false;
   if (Array.isArray(v)) return v.length > 0;
+  if (q.type === "pairwise_saaty") return pairwiseAllPairsComplete(q, v);
   if (typeof v === "object") return Object.keys(v).length > 0;
   return String(v).trim().length > 0;
 }
@@ -84,6 +86,9 @@ export function isValidCompletedResponse(survey: Survey, answers: Answers): bool
       const arr = Array.isArray(v) ? v : [];
       const min = Math.max(q.minSelect ?? 0, q.required ? 1 : 0);
       if (arr.length < min) return false;
+    }
+    if (q.type === "pairwise_saaty" && !pairwiseAllPairsComplete(q, answers[q.id])) {
+      return false;
     }
   }
   return true;
