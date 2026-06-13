@@ -338,6 +338,47 @@ export const UI = {
     si: "කරුණාකර සඳහන් කරන්න",
     ta: "தயவுசெய்து குறிப்பிடவும்",
   },
+  // ── Pairwise (AHP / Saaty) two-step interaction ──
+  pairwiseChoosePrompt: {
+    en: "Which factor is more important?",
+    si: "වඩා වැදගත් සාධකය කුමක්ද?",
+    ta: "எந்த காரணி முக்கியமானது?",
+  },
+  pairwiseRatePrompt: {
+    en: "How much more important?",
+    si: "කොපමණ වැඩියෙන් වැදගත්ද?",
+    ta: "எவ்வளவு முக்கியமானது?",
+  },
+  pairwiseEqual: {
+    en: "Equally important",
+    si: "සමානව වැදගත්",
+    ta: "சமமாக முக்கியம்",
+  },
+  saatyModerate: {
+    en: "Moderately (3)",
+    si: "තරමක් (3)",
+    ta: "மிதமாக (3)",
+  },
+  saatyStrong: {
+    en: "Strongly (5)",
+    si: "දැඩි ලෙස (5)",
+    ta: "வலுவாக (5)",
+  },
+  saatyVeryStrong: {
+    en: "Very strongly (7)",
+    si: "ඉතා දැඩි ලෙස (7)",
+    ta: "மிக வலுவாக (7)",
+  },
+  saatyExtreme: {
+    en: "Extremely (9)",
+    si: "අතිශයින්ම (9)",
+    ta: "மிக அதிகமாக (9)",
+  },
+  ratePairs: {
+    en: "Please choose a winner and a strength for every pair.",
+    si: "සෑම යුගලයක් සඳහාම වඩා වැදගත් එක තෝරා ලකුණු දෙන්න.",
+    ta: "ஒவ்வொரு ஜோடிக்கும் முக்கியமானதைத் தேர்ந்து மதிப்பிடவும்.",
+  },
 } satisfies Record<string, LocalizedString | LocalizedString[]>;
 
 export function t(key: keyof typeof UI, lang: Lang): string {
