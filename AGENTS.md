@@ -70,6 +70,18 @@ All workflows declare `concurrency: cancel-in-progress: true` on `${{ github.wor
 - Dev-only hydration shim: `@tanstack/start-storage-context` constructs a Node `AsyncLocalStorage` at module scope; production client bundles tree-shake it, but `vite dev` does not, which used to crash the client entry before hydration. `clientAsyncHooksShimPlugin` in `vite.config.ts` resolves `node:async_hooks` to `src/lib/node-async-hooks.browser.ts` for non-SSR resolution, with `@tanstack/start-client-core` and `@tanstack/start-storage-context` excluded from `optimizeDeps`. Do not remove the plugin, the shim, or the excludes unless a TanStack upgrade demonstrably fixes dev hydration without them.
 - The Redis client in `src/lib/rate-limit.server.ts` is lazily constructed on first call and gated on `REDIS_URL`. Keep the in-memory `Map` path intact so vitest can run without Redis. The public API (`rateLimit`, `peekRateLimit`, `getClientIp`, `__resetRateLimitForTests`) is consumed by mocks in `responses.bypassRateLimit.test.ts` and `responses.turnstileGuard.test.ts` — preserve those exports.
 
+## Survey Model — Pairwise / AHP (Q28)
+
+- The AHP / Saaty question (`p1_q28_ahp`, `type: "pairwise_saaty"` in `src/surveys/phase-1.ts`) is the only multi-criteria question. Its UI is a deliberate **forced-choice, two-step, one-pair-at-a-time** flow, not a matrix and not a bipolar strip. Do not regress it back to rendering all pairs at once.
+  - Step 1: pick the more important criterion for the active pair. There is **no "equally important" option** — a forced choice between the two sides is required.
+  - Step 2: once a side is chosen, a 1–9 rating slider (with number ticks and live meaning text) sets the strength. Navigation to the next/previous comparison is gated until the current pair is rated.
+- All pairwise logic lives in `src/lib/pairwise.ts` — the single source of truth. Import from it; do not reimplement pair generation, key formatting, or code parsing inline.
+  - Stored answer shape: `{ "<A>__<B>": code }` where `code` is `a1..a9` / `b1..b9` only. Side-only codes (`"a"` / `"b"`) are a valid _intermediate_ (pending-rating) state but count as **incomplete**. The legacy `"eq"` code is **invalid** — do not reintroduce it.
+  - Pair keys are `${a}__${b}` from `pairwiseKey` / `buildPairwisePairs`; completeness matches `/^[ab][1-9]$/` via `isPairwiseCodeComplete`. `parsePairwiseCode`, `pairwiseAllPairsComplete`, and `countPairwiseCompletePairs` are the shared helpers.
+- Completeness is enforced in two places, both delegating to `pairwiseAllPairsComplete`: `validateAnswerCode` (`src/components/survey/validation.ts`, returns the `ratePairs` error code) and `isAnswered` (`src/lib/survey-logic.ts`, which drives admin validity/progress). A partially-filled grid is incomplete, not merely "object exists". Keep both call sites in sync if the encoding changes.
+- The stored shape is opaque to CSV export, the codebook, and `ReviewPanel` (they pass the object through / count comparisons), so encoding changes there are safe — but any code that _parses_ the values must go through `src/lib/pairwise.ts`.
+- All pairwise copy (choice prompt, rating prompt, per-rating meanings, navigation labels, progress, completion hint) is in `src/lib/i18n.tsx` (`pairwise*` keys + the `saatyRatingMeanings` array) and must stay populated in all three languages (en/si/ta) — the i18n parity tests enforce this.
+
 ## Verification Notes
 
 - Run focused tests near the changed behavior, then the strict tooling gate (`bun run typecheck && bun run lint -- --max-warnings 0 && bun run format:check && bun run test && bun run build`).
