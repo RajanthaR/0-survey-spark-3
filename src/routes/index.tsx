@@ -39,7 +39,17 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Take a short, anonymous trilingual research survey on sustainable industry.",
       },
+      { property: "og:image", content: "https://www.eipsurvey.online/og-image.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content:
+          "EIP Insight share image with a dawn landscape and the South Asia Eco-Industrial Park research headline.",
+      },
       { property: "og:url", content: "/" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://www.eipsurvey.online/og-image.png" },
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),

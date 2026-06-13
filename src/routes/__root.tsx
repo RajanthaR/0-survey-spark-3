@@ -128,8 +128,17 @@ export const Route = createRootRouteWithContext<RootRouteContext>()({
         content:
           "Help shape South Asia's first Eco-Industrial Park model — a short anonymous research survey.",
       },
+      { property: "og:image", content: "https://www.eipsurvey.online/og-image.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content:
+          "EIP Insight share image with a dawn landscape and the South Asia Eco-Industrial Park research headline.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://www.eipsurvey.online/og-image.png" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
