@@ -118,7 +118,7 @@ export const Route = createRootRouteWithContext<RootRouteContext>()({
       {
         name: "description",
         content:
-          "A short, anonymous trilingual research survey by the University of Sri Jayewardenepura informing Sri Lanka's first Eco-Industrial Park model.",
+          "A short, anonymous trilingual research survey by the University of Sri Jayewardenepura informing South Asia's first Eco-Industrial Park model.",
       },
       { name: "author", content: "University of Sri Jayewardenepura" },
       { property: "og:site_name", content: "EIP Insight" },
@@ -126,7 +126,7 @@ export const Route = createRootRouteWithContext<RootRouteContext>()({
       {
         property: "og:description",
         content:
-          "Help shape Sri Lanka's first Eco-Industrial Park model — a short anonymous research survey.",
+          "Help shape South Asia's first Eco-Industrial Park model — a short anonymous research survey.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

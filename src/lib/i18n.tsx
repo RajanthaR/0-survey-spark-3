@@ -60,9 +60,9 @@ export function pickText(s: LocalizedString | string | undefined, lang: Lang): s
 export const UI = {
   appName: { en: "EIP Insight", si: "EIP Insight", ta: "EIP Insight" },
   tagline: {
-    en: "Help shape Sri Lanka's first Eco-Industrial Park model",
-    si: "ශ්‍රී ලංකාවේ පළමු පරිසර කාර්මික උද්‍යාන මාදිලිය හැඩ ගැස්වීමට සහාය වන්න",
-    ta: "இலங்கையின் முதல் சுற்றுச்சூழல் தொழில் பூங்கா மாதிரியை வடிவமைக்க உதவுங்கள்",
+    en: "Help shape South Asia's first Eco-Industrial Park model",
+    si: "දකුණු ආසියාවේ පළමු පරිසර කාර්මික උද්‍යාන මාදිලිය හැඩ ගැස්වීමට සහාය වන්න",
+    ta: "தென் ஆசியாவில் முதல் சுற்றுச்சூழல் தொழில் பூங்கா மாதிரியை வடிவமைக்க உதவுங்கள்",
   },
   intro: {
     en: "A short, anonymous research survey by the University of Sri Jayewardenepura. Your input directly informs PhD research on sustainable industrial development across South Asia.",
