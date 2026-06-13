@@ -11,11 +11,12 @@ export const PAIRWISE_RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 const PAIRWISE_COMPLETE_RE = /^[ab][1-9]$/;
 
-export function buildPairwisePairs(criteria: PairwiseCriterion[] = []): PairwisePair[] {
+export function buildPairwisePairs(criteria?: PairwiseCriterion[] | null): PairwisePair[] {
+  const arr = criteria ?? [];
   const pairs: PairwisePair[] = [];
-  for (let i = 0; i < criteria.length; i++) {
-    for (let j = i + 1; j < criteria.length; j++) {
-      pairs.push({ a: criteria[i].key, b: criteria[j].key });
+  for (let i = 0; i < arr.length; i++) {
+    for (let j = i + 1; j < arr.length; j++) {
+      pairs.push({ a: arr[i].key, b: arr[j].key });
     }
   }
   return pairs;

@@ -87,9 +87,6 @@ export function isValidCompletedResponse(survey: Survey, answers: Answers): bool
       const min = Math.max(q.minSelect ?? 0, q.required ? 1 : 0);
       if (arr.length < min) return false;
     }
-    if (q.type === "pairwise_saaty" && !pairwiseAllPairsComplete(q, answers[q.id])) {
-      return false;
-    }
   }
   return true;
 }
