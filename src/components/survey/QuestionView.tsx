@@ -256,6 +256,7 @@ function PairwiseSaatyField({
 
   const activePair = pairs[activeIndex] ?? null;
   const activeKey = activePair ? pairwiseKey(activePair) : "";
+  const choicePromptId = `pair-${activeKey}-prompt`;
   const parsed = parsePairwiseCode(obj[activeKey]);
   const showChoiceStep = !parsed.side || choosingAgain;
 
@@ -334,10 +335,14 @@ function PairwiseSaatyField({
       <div className="rounded-xl border bg-card p-4" data-testid={`pair-${activeKey}`}>
         {showChoiceStep ? (
           <>
-            <p className="mb-3 text-sm font-medium text-muted-foreground">
+            <p id={choicePromptId} className="mb-3 text-sm font-medium text-muted-foreground">
               {pickText(UI.pairwiseChoosePrompt, lang)}
             </p>
-            <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
+            <div
+              className="grid gap-3 sm:grid-cols-2"
+              role="radiogroup"
+              aria-labelledby={choicePromptId}
+            >
               {choices.map((choice) => {
                 const active = parsed.side === choice.side;
                 return (
@@ -422,11 +427,13 @@ function PairwiseSaatyField({
               >
                 {PAIRWISE_RATINGS.map((rating) => {
                   const active = parsed.rating === rating;
+                  const meaning = pickText(UI.saatyRatingMeanings[rating - 1], lang);
                   return (
                     <button
                       key={rating}
                       type="button"
                       aria-pressed={active}
+                      aria-label={`${rating}: ${meaning}`}
                       data-testid={`pair-${activeKey}-rating-${rating}`}
                       onClick={() => setRating(rating)}
                       className={`h-10 rounded-md border text-sm font-semibold transition ${
@@ -765,7 +772,7 @@ function Field({
         />
       );
     case "pairwise_saaty": {
-      return <PairwiseSaatyField q={q} value={value} onChange={onChange} lang={lang} />;
+      return <PairwiseSaatyField key={q.id} q={q} value={value} onChange={onChange} lang={lang} />;
     }
     default:
       return null;
