@@ -4,7 +4,7 @@ import { AlertCircle, Check } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { pickText, useLang, UI, type Lang } from "@/lib/i18n";
+import { pickText, useLang, UI, type Lang, type LocalizedString } from "@/lib/i18n";
 import { type Question, YES_NO_OPTIONS } from "@/surveys/types";
 import { OptionVisual } from "@/components/survey/OptionVisual";
 import { questionHasVisuals } from "@/surveys/validate";
@@ -489,40 +489,103 @@ function Field({
       for (let i = 0; i < crits.length; i++) {
         for (let j = i + 1; j < crits.length; j++) pairs.push({ a: crits[i].key, b: crits[j].key });
       }
+      // Two-step "select then rate" per the Word questionnaire (Section F):
+      //   1. choose the more important criterion (or "equally important")
+      //   2. for a winner, rate the strength on the Saaty scale (3/5/7/9)
+      // Stored codes stay backwards-compatible: "eq" | "a3".."a9" | "b3".."b9".
+      // A bare winner ("a"/"b") is a valid intermediate state — the pair is
+      // not complete until a strength is also chosen (enforced in validation).
+      const STRENGTHS: { n: number; label: LocalizedString }[] = [
+        { n: 3, label: UI.saatyModerate },
+        { n: 5, label: UI.saatyStrong },
+        { n: 7, label: UI.saatyVeryStrong },
+        { n: 9, label: UI.saatyExtreme },
+      ];
       return (
         <div className="space-y-4">
           {pairs.map(({ a, b }) => {
             const k = `${a}__${b}`;
+            const code = obj[k] ?? "";
             const ca = crits.find((c) => c.key === a)!;
             const cb = crits.find((c) => c.key === b)!;
+            const side =
+              code === "eq" ? "eq" : code.startsWith("a") ? "a" : code.startsWith("b") ? "b" : "";
+            const strength = /^[ab](\d)$/.test(code) ? Number(code.slice(1)) : null;
+            const set = (next: string) => onChange({ ...obj, [k]: next });
+            const choices: { id: "a" | "eq" | "b"; label: string; active: boolean }[] = [
+              { id: "a", label: pickText(ca.label, lang), active: side === "a" },
+              { id: "eq", label: pickText(UI.pairwiseEqual, lang), active: side === "eq" },
+              { id: "b", label: pickText(cb.label, lang), active: side === "b" },
+            ];
             return (
-              <div key={k} className="rounded-2xl border bg-card p-3">
-                <div className="mb-2 flex justify-between text-sm">
-                  <span className="font-medium">{pickText(ca.label, lang)}</span>
-                  <span className="font-medium">{pickText(cb.label, lang)}</span>
-                </div>
-                <div className="grid grid-cols-9 gap-1">
-                  {[9, 7, 5, 3, 1, 3, 5, 7, 9].map((n, i) => {
-                    const sign = i < 4 ? "a" : i > 4 ? "b" : "eq";
-                    const id = sign === "eq" ? "eq" : `${sign}${n}`;
-                    const active = obj[k] === id;
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => onChange({ ...obj, [k]: id })}
-                        className={`grid h-10 place-items-center rounded-lg border text-xs font-semibold ${
-                          active
-                            ? "gradient-eco text-primary-foreground border-transparent"
-                            : "bg-background"
+              <div key={k} className="rounded-2xl border bg-card p-3" data-testid={`pair-${k}`}>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  {pickText(UI.pairwiseChoosePrompt, lang)}
+                </p>
+                <div className="grid gap-2" role="radiogroup">
+                  {choices.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={c.active}
+                      data-testid={`pair-${k}-choice-${c.id}`}
+                      onClick={() => {
+                        // Picking "equal" completes the pair; picking a winner
+                        // keeps any prior strength for that side, else leaves it
+                        // pending so the rating step is required next.
+                        if (c.id === "eq") set("eq");
+                        else if (side === c.id) return;
+                        else set(c.id);
+                      }}
+                      className={`flex min-h-12 items-center gap-3 rounded-2xl border p-3 text-left text-sm transition ${
+                        c.active
+                          ? "border-primary bg-primary/10 font-medium"
+                          : "border-border bg-background hover:bg-accent/30"
+                      }`}
+                    >
+                      <span
+                        className={`grid size-5 flex-none place-items-center rounded-full border ${
+                          c.active
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted-foreground/40"
                         }`}
                       >
-                        {n}
-                      </button>
-                    );
-                  })}
+                        {c.active && <Check className="size-3.5" />}
+                      </span>
+                      {c.label}
+                    </button>
+                  ))}
                 </div>
+                {(side === "a" || side === "b") && (
+                  <div className="mt-3" data-testid={`pair-${k}-strength`}>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">
+                      {pickText(UI.pairwiseRatePrompt, lang)}
+                    </p>
+                    <div className="grid grid-cols-4 gap-1">
+                      {STRENGTHS.map(({ n, label }) => {
+                        const active = strength === n;
+                        return (
+                          <button
+                            key={n}
+                            type="button"
+                            aria-pressed={active}
+                            aria-label={pickText(label, lang)}
+                            data-testid={`pair-${k}-strength-${n}`}
+                            onClick={() => set(`${side}${n}`)}
+                            className={`flex h-12 flex-col items-center justify-center gap-0.5 rounded-lg border text-xs font-semibold transition ${
+                              active
+                                ? "gradient-eco text-primary-foreground border-transparent"
+                                : "bg-background hover:bg-accent/30"
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
