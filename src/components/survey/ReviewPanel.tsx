@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { pickText, UI, type Lang } from "@/lib/i18n";
+import { buildPairwisePairs, countPairwiseCompletePairs } from "@/lib/pairwise";
 import { type Question, type Survey, YES_NO_OPTIONS } from "@/surveys/types";
 import { visibleQuestions } from "@/lib/survey-logic";
 import { isAnswered } from "./validation";
@@ -26,8 +27,9 @@ export function formatAnswer(q: Question, value: unknown, lang: Lang): string {
       .join(", ");
   }
   if (q.type === "pairwise_saaty") {
-    const obj = value as Record<string, string>;
-    return `${Object.keys(obj).length} comparisons`;
+    const total = buildPairwisePairs(q.criteria).length;
+    const done = countPairwiseCompletePairs(q, value);
+    return `${done}/${total} comparisons`;
   }
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "object") return JSON.stringify(value);
