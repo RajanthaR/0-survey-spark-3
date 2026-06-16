@@ -803,6 +803,7 @@ export const phase1: Survey = {
       id: "p1_q28_ahp",
       type: "pairwise_saaty",
       section: sec.f,
+      required: true,
       label: {
         en: "For each pair, choose the more important factor and rate how much more important it is (1 = slight, 9 = extreme).",
         si: "සෑම යුගලයක් සඳහාම වඩා වැදගත් සාධකය තෝරා එය කොපමණ වැදගත්දැයි ලකුණු දෙන්න (1 = තරමක්, 9 = අතිශයින්ම).",

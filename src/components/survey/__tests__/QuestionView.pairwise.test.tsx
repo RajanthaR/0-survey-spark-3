@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 import { I18nProvider } from "@/lib/i18n";
 import { QuestionView } from "@/components/survey/QuestionView";
 import { pairwiseAllPairsComplete, validateAnswerCode } from "@/components/survey/validation";
+import { expandSurveySteps, type SurveyStep } from "@/components/survey/runner-steps";
 import type { Question } from "@/surveys/types";
 
 vi.mock("framer-motion", async () => {
@@ -52,7 +53,7 @@ const Q_THREE_PAIRS: Question = {
   criteria: [...Q_ONE_PAIR.criteria!, { key: "C", label: { en: "Gamma", si: "ගැමා", ta: "காமா" } }],
 };
 
-function renderPairwise(value: unknown, onChange = () => {}, q = Q_ONE_PAIR) {
+function renderPairwise(value: unknown, onChange = () => {}, q: SurveyStep = Q_ONE_PAIR) {
   return render(
     <I18nProvider initialLang="en">
       <QuestionView q={q} value={value} onChange={onChange} error={null} />
@@ -60,7 +61,7 @@ function renderPairwise(value: unknown, onChange = () => {}, q = Q_ONE_PAIR) {
   );
 }
 
-function StatefulPairwise({ q = Q_ONE_PAIR, initial = {} }: { q?: Question; initial?: unknown }) {
+function StatefulPairwise({ q = Q_ONE_PAIR, initial = {} }: { q?: SurveyStep; initial?: unknown }) {
   const [value, setValue] = useState(initial);
   return (
     <I18nProvider initialLang="en">
@@ -77,6 +78,18 @@ describe("QuestionView pairwise (AHP) forced-choice two-step interaction", () =>
     expect(screen.getByTestId("pair-A__B")).toBeInTheDocument();
     expect(screen.queryByTestId("pair-A__C")).not.toBeInTheDocument();
     expect(screen.queryByTestId("pair-A__B-choice-eq")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Previous comparison" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next comparison" })).not.toBeInTheDocument();
+  });
+
+  it("renders the pair assigned by a synthetic runner step", () => {
+    const steps = expandSurveySteps([Q_THREE_PAIRS]);
+
+    renderPairwise({}, undefined, steps[1]);
+
+    expect(screen.getByText("Comparison 2 of 3")).toBeInTheDocument();
+    expect(screen.getByTestId("pair-A__C")).toBeInTheDocument();
+    expect(screen.queryByTestId("pair-A__B")).not.toBeInTheDocument();
   });
 
   it("step 1: choosing a winner records a pending (unrated) code and reveals the rating step", () => {
@@ -110,22 +123,11 @@ describe("QuestionView pairwise (AHP) forced-choice two-step interaction", () =>
     expect(screen.getByTestId("pair-A__B-rating-meaning")).toHaveTextContent("8: Very strong");
   });
 
-  it("gates moving to the next comparison until the current pair has a rating", async () => {
+  it("does not render in-card comparison navigation buttons", () => {
     render(<StatefulPairwise q={Q_THREE_PAIRS} />);
 
-    fireEvent.click(screen.getByTestId("pair-A__B-choice-a"));
-    const next = screen.getByRole("button", { name: "Next comparison" });
-    expect(next).toBeDisabled();
-
-    fireEvent.click(screen.getByTestId("pair-A__B-rating-5"));
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Next comparison" })).not.toBeDisabled(),
-    );
-
-    const readyNext = screen.getByRole("button", { name: "Next comparison" });
-    fireEvent.click(readyNext);
-    expect(screen.getByText("Comparison 2 of 3")).toBeInTheDocument();
-    expect(screen.getByTestId("pair-A__C")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Previous comparison" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next comparison" })).not.toBeInTheDocument();
   });
 });
 

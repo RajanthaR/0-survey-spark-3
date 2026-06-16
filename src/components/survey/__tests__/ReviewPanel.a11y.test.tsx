@@ -121,4 +121,45 @@ describe("ReviewPanel — a11y", () => {
     expect(btn).toBeDefined();
     expect(btn).toBeDisabled();
   });
+
+  it("summarizes a pairwise question once with completed comparison progress", () => {
+    const survey: Survey = {
+      ...SURVEY,
+      questions: [
+        {
+          id: "ahp",
+          type: "pairwise_saaty",
+          required: true,
+          section: { en: "Pairwise", si: "Pairwise", ta: "Pairwise" },
+          label: { en: "Compare priorities", si: "Compare priorities", ta: "Compare priorities" },
+          criteria: [
+            { key: "A", label: { en: "Alpha", si: "Alpha", ta: "Alpha" } },
+            { key: "B", label: { en: "Beta", si: "Beta", ta: "Beta" } },
+            { key: "C", label: { en: "Gamma", si: "Gamma", ta: "Gamma" } },
+          ],
+        },
+      ],
+    };
+
+    render(
+      <I18nProvider>
+        <ReviewPanel
+          survey={survey}
+          answers={{
+            ahp: {
+              A__B: "a5",
+              A__C: "b1",
+              B__C: "a9",
+            },
+          }}
+          lang="en"
+          onEdit={() => {}}
+          onContinue={() => {}}
+        />
+      </I18nProvider>,
+    );
+
+    expect(screen.getByText("3/3 comparisons")).toBeInTheDocument();
+    expect(screen.getAllByLabelText(pickText(UI.edit, "en"))).toHaveLength(1);
+  });
 });

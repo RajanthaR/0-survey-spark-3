@@ -5,6 +5,7 @@ import { render, screen } from "@testing-library/react";
 import { SurveyRunnerView } from "@/components/survey/SurveyRunnerView";
 import { I18nProvider } from "@/lib/i18n";
 import type { Question, Survey } from "@/surveys/types";
+import { answerValueForStep, expandSurveySteps } from "@/components/survey/runner-steps";
 
 vi.mock("framer-motion", async () => {
   const React = await import("react");
@@ -60,6 +61,8 @@ function Harness({
   const nextRef = useRef<HTMLButtonElement>(null);
   const backRef = useRef<HTMLButtonElement>(null);
   const survey: Survey = { ...SURVEY, questions: [question] };
+  const steps = expandSurveySteps(survey.questions);
+  const current = steps[0];
 
   return (
     <I18nProvider initialLang="en">
@@ -67,8 +70,10 @@ function Harness({
         survey={survey}
         lang="en"
         stage="questions"
-        visible={survey.questions}
-        current={question}
+        visible={steps}
+        reviewVisible={survey.questions}
+        current={current}
+        currentAnswerValue={current ? answerValueForStep(current, answers) : undefined}
         idx={0}
         pct={0}
         skippedCount={0}
@@ -110,18 +115,30 @@ describe("SurveyRunnerView pairwise footer", () => {
     window.localStorage.clear();
   });
 
-  it("hides the global Next button while the pairwise question is untouched", () => {
+  it("shows a blocked global Next button while the required pairwise step is untouched", () => {
     render(<Harness answers={{}} />);
 
-    expect(screen.queryByTestId("next-button")).not.toBeInTheDocument();
+    const next = screen.getByTestId("next-button");
+    expect(next).toHaveAttribute("aria-disabled", "true");
+    expect(next).toHaveAttribute("data-blocked", "true");
     expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save & exit" })).toBeInTheDocument();
   });
 
-  it("keeps the global Next button hidden until every pair is rated", () => {
+  it("keeps the global Next button blocked until the active pair is rated", () => {
+    render(<Harness answers={{ ahp: { A__B: "a" } }} />);
+
+    const next = screen.getByTestId("next-button");
+    expect(next).toHaveAttribute("aria-disabled", "true");
+    expect(next).toHaveAttribute("data-blocked", "true");
+  });
+
+  it("enables the global Next button once the active pair is rated", () => {
     render(<Harness answers={{ ahp: { A__B: "a5" } }} />);
 
-    expect(screen.queryByTestId("next-button")).not.toBeInTheDocument();
+    const next = screen.getByTestId("next-button");
+    expect(next).toHaveAttribute("aria-disabled", "false");
+    expect(next).not.toHaveAttribute("data-blocked");
   });
 
   it("shows the global Next button once every pair is rated", () => {
@@ -140,9 +157,11 @@ describe("SurveyRunnerView pairwise footer", () => {
     expect(screen.getByTestId("next-button")).toBeInTheDocument();
   });
 
-  it("shows the global Next button for an optional untouched pairwise question", () => {
+  it("leaves the global Next button unblocked for an optional untouched pairwise question", () => {
     render(<Harness answers={{}} question={{ ...PAIRWISE_QUESTION, required: false }} />);
 
-    expect(screen.getByTestId("next-button")).toBeInTheDocument();
+    const next = screen.getByTestId("next-button");
+    expect(next).toHaveAttribute("aria-disabled", "false");
+    expect(next).not.toHaveAttribute("data-blocked");
   });
 });
