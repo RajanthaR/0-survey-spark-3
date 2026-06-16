@@ -16,9 +16,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { pickText, UI, type Lang } from "@/lib/i18n";
-import { isAnswered as strictIsAnswered } from "@/lib/survey-logic";
 import type { Question, Survey } from "@/surveys/types";
-import { EMAIL_RE, isAnswered, validateAnswer } from "@/components/survey/validation";
+import { EMAIL_RE } from "@/components/survey/validation";
 import type { SurveyStage } from "@/components/survey/hooks/useStageMachine";
 import { OptionalConsentPanel } from "@/components/survey/OptionalConsentPanel";
 import { QuestionMap } from "@/components/survey/QuestionMap";
@@ -26,6 +25,11 @@ import { QuestionView, type AnswerInputMeta } from "@/components/survey/Question
 import { ResponseVisualSummary } from "@/components/survey/ResponseVisualSummary";
 import { ResumeStrip } from "@/components/survey/ResumeStrip";
 import { ReviewPanel } from "@/components/survey/ReviewPanel";
+import {
+  isSurveyStepAnswered,
+  validateSurveyStepCode,
+  type SurveyStep,
+} from "@/components/survey/runner-steps";
 
 type Answers = Record<string, unknown>;
 type Contact = { name: string; email: string; organization: string };
@@ -40,8 +44,10 @@ interface SurveyRunnerViewProps {
   survey: Survey;
   lang: Lang;
   stage: SurveyStage;
-  visible: Question[];
-  current?: Question;
+  visible: SurveyStep[];
+  reviewVisible: Question[];
+  current?: SurveyStep;
+  currentAnswerValue: unknown;
   idx: number;
   pct: number;
   skippedCount: number;
@@ -81,7 +87,9 @@ export function SurveyRunnerView({
   lang,
   stage,
   visible,
+  reviewVisible,
   current,
+  currentAnswerValue,
   idx,
   pct,
   skippedCount,
@@ -319,7 +327,7 @@ export function SurveyRunnerView({
               >
                 <QuestionView
                   q={current}
-                  value={answers[current.id]}
+                  value={currentAnswerValue}
                   direction={navDirection}
                   onChange={(v, meta) => {
                     onQuestionChange(v, meta);
@@ -339,7 +347,7 @@ export function SurveyRunnerView({
               <ReviewPanel
                 survey={survey}
                 answers={answers}
-                visible={visible}
+                visible={reviewVisible}
                 lang={lang}
                 onEdit={onEdit}
                 onContinue={onReviewContinue}
@@ -458,14 +466,9 @@ export function SurveyRunnerView({
                 <span className="ml-2 hidden sm:inline">{pickText(UI.saveExit, lang)}</span>
               </Button>
               {(() => {
-                const requiredEmpty = !!current.required && !isAnswered(current, answers);
-                const formatErr = validateAnswer(current, answers[current.id], lang) !== null;
+                const requiredEmpty = !!current.required && !isSurveyStepAnswered(current, answers);
+                const formatErr = validateSurveyStepCode(current, answers) !== null;
                 const blocked = requiredEmpty || formatErr;
-                const hidePairwiseNext =
-                  current.type === "pairwise_saaty" &&
-                  current.required &&
-                  !strictIsAnswered(current, answers);
-                if (hidePairwiseNext) return null;
                 return (
                   <Button
                     size="lg"

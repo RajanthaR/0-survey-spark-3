@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { AlertCircle, Check } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,9 +14,10 @@ import {
   PAIRWISE_RATINGS,
   type PairwiseSide,
 } from "@/lib/pairwise";
-import { type Question, YES_NO_OPTIONS } from "@/surveys/types";
+import { YES_NO_OPTIONS } from "@/surveys/types";
 import { OptionVisual } from "@/components/survey/OptionVisual";
 import { questionHasVisuals } from "@/surveys/validate";
+import { getPairwiseStepMeta, type SurveyStep } from "@/components/survey/runner-steps";
 
 export type AnswerInputMeta = { source: "keyboard" | "pointer" | "programmatic" };
 
@@ -48,7 +48,7 @@ export function QuestionView({
   error,
   direction = 1,
 }: {
-  q: Question;
+  q: SurveyStep;
   value: unknown;
   onChange: (v: unknown, meta?: AnswerInputMeta) => void;
   error: string | null;
@@ -232,7 +232,7 @@ function PairwiseSaatyField({
   onChange,
   lang,
 }: {
-  q: Question;
+  q: SurveyStep;
   value: unknown;
   onChange: (v: unknown, meta?: AnswerInputMeta) => void;
   lang: Lang;
@@ -240,7 +240,8 @@ function PairwiseSaatyField({
   const obj = asPairwiseAnswerObject(value);
   const criteria = q.criteria ?? [];
   const pairs = buildPairwisePairs(criteria);
-  const [activeIndex, setActiveIndex] = useState(() => {
+  const stepMeta = getPairwiseStepMeta(q);
+  const [fallbackIndex] = useState(() => {
     const firstIncomplete = pairs.findIndex(
       (pair) => !parsePairwiseCode(obj[pairwiseKey(pair)]).complete,
     );
@@ -250,11 +251,8 @@ function PairwiseSaatyField({
   const ratingWrapRef = useRef<HTMLDivElement | null>(null);
   const previousSideRef = useRef<PairwiseSide | null>(null);
 
-  useEffect(() => {
-    setActiveIndex((current) => Math.min(current, Math.max(pairs.length - 1, 0)));
-  }, [pairs.length]);
-
-  const activePair = pairs[activeIndex] ?? null;
+  const activeIndex = stepMeta?.index ?? Math.min(fallbackIndex, Math.max(pairs.length - 1, 0));
+  const activePair = stepMeta?.pair ?? pairs[activeIndex] ?? null;
   const activeKey = activePair ? pairwiseKey(activePair) : "";
   const choicePromptId = `pair-${activeKey}-prompt`;
   const parsed = parsePairwiseCode(obj[activeKey]);
@@ -293,7 +291,6 @@ function PairwiseSaatyField({
     ? pickText(UI.saatyRatingMeanings[parsed.rating - 1], lang)
     : pickText(UI.pairwiseRatingIdle, lang);
   const completeCount = countPairwiseCompletePairs(q, obj);
-  const currentComplete = parsed.complete;
 
   const setPairCode = (next: string) => onChange({ ...obj, [activeKey]: next });
   const chooseSide = (side: PairwiseSide) => {
@@ -451,42 +448,6 @@ function PairwiseSaatyField({
           </div>
         )}
       </div>
-
-      <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-auto min-h-16 w-full min-w-0 rounded-xl border-primary/30 bg-primary/5 px-3 py-3 text-sm font-semibold text-primary shadow-sm hover:bg-primary/10 sm:px-5 [&_svg]:size-5"
-            aria-label={pickText(UI.pairwisePreviousComparison, lang)}
-            disabled={activeIndex === 0}
-            onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}
-          >
-            <ArrowLeft className="size-5" aria-hidden="true" />
-            <span className="min-w-0 whitespace-normal leading-snug">
-              {pickText(UI.pairwisePreviousComparison, lang)}
-            </span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-auto min-h-16 w-full min-w-0 rounded-xl border-primary/30 bg-primary/5 px-3 py-3 text-sm font-semibold text-primary shadow-sm hover:bg-primary/10 sm:px-5 [&_svg]:size-5"
-            aria-label={pickText(UI.pairwiseNextComparison, lang)}
-            disabled={!currentComplete || activeIndex === pairs.length - 1}
-            onClick={() => setActiveIndex((index) => Math.min(pairs.length - 1, index + 1))}
-          >
-            <span className="min-w-0 whitespace-normal leading-snug">
-              {pickText(UI.pairwiseNextComparison, lang)}
-            </span>
-            <ArrowRight className="size-5" aria-hidden="true" />
-          </Button>
-        </div>
-        {currentComplete && activeIndex === pairs.length - 1 && completeCount === pairs.length && (
-          <p className="rounded-xl bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary">
-            {pickText(UI.pairwiseCompleteHint, lang)}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
@@ -497,7 +458,7 @@ function Field({
   onChange,
   lang,
 }: {
-  q: Question;
+  q: SurveyStep;
   value: unknown;
   onChange: (v: unknown, meta?: AnswerInputMeta) => void;
   lang: Lang;

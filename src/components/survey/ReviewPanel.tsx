@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { pickText, UI, type Lang } from "@/lib/i18n";
 import { buildPairwisePairs, countPairwiseCompletePairs } from "@/lib/pairwise";
 import { type Question, type Survey, YES_NO_OPTIONS } from "@/surveys/types";
-import { visibleQuestions } from "@/lib/survey-logic";
-import { isAnswered } from "./validation";
+import { isAnswered, visibleQuestions } from "@/lib/survey-logic";
 
 type Answers = Record<string, unknown>;
 
