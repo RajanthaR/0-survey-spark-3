@@ -50,18 +50,25 @@ const SURVEY: Survey = {
   questions: [PAIRWISE_QUESTION],
 };
 
-function Harness({ answers }: { answers: Record<string, unknown> }) {
+function Harness({
+  answers,
+  question = PAIRWISE_QUESTION,
+}: {
+  answers: Record<string, unknown>;
+  question?: Question;
+}) {
   const nextRef = useRef<HTMLButtonElement>(null);
   const backRef = useRef<HTMLButtonElement>(null);
+  const survey: Survey = { ...SURVEY, questions: [question] };
 
   return (
     <I18nProvider initialLang="en">
       <SurveyRunnerView
-        survey={SURVEY}
+        survey={survey}
         lang="en"
         stage="questions"
-        visible={SURVEY.questions}
-        current={PAIRWISE_QUESTION}
+        visible={survey.questions}
+        current={question}
         idx={0}
         pct={0}
         skippedCount={0}
@@ -129,6 +136,12 @@ describe("SurveyRunnerView pairwise footer", () => {
         }}
       />,
     );
+
+    expect(screen.getByTestId("next-button")).toBeInTheDocument();
+  });
+
+  it("shows the global Next button for an optional untouched pairwise question", () => {
+    render(<Harness answers={{}} question={{ ...PAIRWISE_QUESTION, required: false }} />);
 
     expect(screen.getByTestId("next-button")).toBeInTheDocument();
   });

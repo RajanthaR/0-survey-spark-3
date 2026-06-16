@@ -462,7 +462,9 @@ export function SurveyRunnerView({
                 const formatErr = validateAnswer(current, answers[current.id], lang) !== null;
                 const blocked = requiredEmpty || formatErr;
                 const hidePairwiseNext =
-                  current.type === "pairwise_saaty" && !strictIsAnswered(current, answers);
+                  current.type === "pairwise_saaty" &&
+                  current.required &&
+                  !strictIsAnswered(current, answers);
                 if (hidePairwiseNext) return null;
                 return (
                   <Button
