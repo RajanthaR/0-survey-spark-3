@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import { SurveyRunnerView } from "@/components/survey/SurveyRunnerView";
+import { answerValueForStep, expandSurveySteps } from "@/components/survey/runner-steps";
 import type { Survey } from "@/surveys/types";
 
 vi.mock("framer-motion", async () => {
@@ -41,14 +42,18 @@ const SURVEY: Survey = {
 function Harness({ onAutoAdvance }: { onAutoAdvance: () => void }) {
   const nextRef = useRef<HTMLButtonElement>(null);
   const backRef = useRef<HTMLButtonElement>(null);
+  const steps = expandSurveySteps(SURVEY.questions);
+  const current = steps[0];
 
   return (
     <SurveyRunnerView
       survey={SURVEY}
       lang="en"
       stage="questions"
-      visible={SURVEY.questions}
-      current={SURVEY.questions[0]}
+      visible={steps}
+      reviewVisible={SURVEY.questions}
+      current={current}
+      currentAnswerValue={current ? answerValueForStep(current, {}) : undefined}
       idx={0}
       pct={0}
       skippedCount={0}

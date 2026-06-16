@@ -11,9 +11,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { pickText, UI, type Lang } from "@/lib/i18n";
-import type { Question, Survey } from "@/surveys/types";
+import type { Survey } from "@/surveys/types";
 import { visibleQuestions } from "@/lib/survey-logic";
-import { isAnswered } from "./validation";
+import {
+  expandSurveySteps,
+  isSurveyStepAnswered,
+  type SurveyStep,
+} from "@/components/survey/runner-steps";
 
 type Answers = Record<string, unknown>;
 
@@ -27,25 +31,25 @@ export function QuestionMap({
 }: {
   survey: Survey;
   answers: Answers;
-  visible?: Question[];
+  visible?: SurveyStep[];
   lang: Lang;
   currentId: string | undefined;
   onJump: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const visible = useMemo(
-    () => providedVisible ?? visibleQuestions(survey, answers),
+    () => providedVisible ?? expandSurveySteps(visibleQuestions(survey, answers)),
     [answers, providedVisible, survey],
   );
 
   const answeredCount = useMemo(
-    () => visible.filter((q) => isAnswered(q, answers)).length,
+    () => visible.filter((q) => isSurveyStepAnswered(q, answers)).length,
     [visible, answers],
   );
 
   // Group by section preserving order.
   const groups = useMemo(() => {
-    const out: { section: string; questions: Question[] }[] = [];
+    const out: { section: string; questions: SurveyStep[] }[] = [];
     const idx = new Map<string, number>();
     for (const q of visible) {
       const s = pickText(q.section, lang);
@@ -58,7 +62,7 @@ export function QuestionMap({
     return out;
   }, [visible, lang]);
 
-  const firstUnanswered = visible.find((q) => !isAnswered(q, answers));
+  const firstUnanswered = visible.find((q) => !isSurveyStepAnswered(q, answers));
 
   function handleJump(id: string) {
     onJump(id);
@@ -102,7 +106,7 @@ export function QuestionMap({
                 </h3>
                 <ul className="space-y-1">
                   {g.questions.map((q) => {
-                    const answered = isAnswered(q, answers);
+                    const answered = isSurveyStepAnswered(q, answers);
                     const isCurrent = q.id === currentId;
                     const position = visible.findIndex((v) => v.id === q.id) + 1;
                     return (

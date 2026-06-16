@@ -6,12 +6,7 @@ import { toast } from "sonner";
 import { pickText, UI, useLang, type Lang } from "@/lib/i18n";
 import { startResponse, saveAnswers, completeResponse } from "@/lib/responses.functions";
 import type { Survey } from "@/surveys/types";
-import {
-  isAnswered,
-  validateAnswerCode,
-  formatValidationError,
-  type ValidationError,
-} from "@/components/survey/validation";
+import { formatValidationError, type ValidationError } from "@/components/survey/validation";
 import { prefetchUpcomingOptionImages } from "@/surveys/visuals/prefetch";
 import { SurveyRunnerView } from "@/components/survey/SurveyRunnerView";
 import { useAutoSave } from "@/components/survey/hooks/useAutoSave";
@@ -19,6 +14,13 @@ import { useKeyboardNav } from "@/components/survey/hooks/useKeyboardNav";
 import { useResumeToken } from "@/components/survey/hooks/useResumeToken";
 import { useStageMachine } from "@/components/survey/hooks/useStageMachine";
 import { useSwipeNav } from "@/components/survey/hooks/useSwipeNav";
+import {
+  answerIdForStep,
+  answerValueForStep,
+  isPairwiseStep,
+  isSurveyStepAnswered,
+  validateSurveyStepCode,
+} from "@/components/survey/runner-steps";
 
 type Answers = Record<string, unknown>;
 type Contact = { name: string; email: string; organization: string };
@@ -92,6 +94,7 @@ export function SurveyRunner({
     stage,
     setStage,
     visible,
+    baseVisible,
     pct,
     setCurrentId,
     idx,
@@ -222,11 +225,11 @@ export function SurveyRunner({
 
   const goNext = useCallback(() => {
     if (!current) return;
-    if (current.required && !isAnswered(current, answers)) {
-      setValidationErrorCode("required");
+    const err = validateSurveyStepCode(current, answers);
+    if (current.required && !isSurveyStepAnswered(current, answers)) {
+      setValidationErrorCode(isPairwiseStep(current) && err ? err : "required");
       return;
     }
-    const err = validateAnswerCode(current, answers[current.id]);
     if (err) {
       setValidationErrorCode(err);
       return;
@@ -304,7 +307,9 @@ export function SurveyRunner({
       lang={lang}
       stage={stage}
       visible={visible}
+      reviewVisible={baseVisible}
       current={current}
+      currentAnswerValue={current ? answerValueForStep(current, answers) : undefined}
       idx={idx}
       pct={pct}
       skippedCount={skippedCount}
@@ -342,7 +347,7 @@ export function SurveyRunner({
       }}
       onEdit={jumpToEdit}
       onQuestionChange={(value) => {
-        if (current) setAnswer(current.id, value);
+        if (current) setAnswer(answerIdForStep(current), value);
       }}
       onAutoAdvance={runLatestGoNext}
       onReviewContinue={() => setStage("contact")}
