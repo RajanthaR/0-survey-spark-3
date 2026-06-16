@@ -452,34 +452,40 @@ function PairwiseSaatyField({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-11 rounded-xl"
-          aria-label={pickText(UI.pairwisePreviousComparison, lang)}
-          disabled={activeIndex === 0}
-          onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          <span className="hidden sm:inline">{pickText(UI.pairwisePreviousComparison, lang)}</span>
-        </Button>
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto min-h-16 w-full min-w-0 rounded-xl border-primary/30 bg-primary/5 px-3 py-3 text-sm font-semibold text-primary shadow-sm hover:bg-primary/10 sm:px-5 [&_svg]:size-5"
+            aria-label={pickText(UI.pairwisePreviousComparison, lang)}
+            disabled={activeIndex === 0}
+            onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}
+          >
+            <ArrowLeft className="size-5" aria-hidden="true" />
+            <span className="min-w-0 whitespace-normal leading-snug">
+              {pickText(UI.pairwisePreviousComparison, lang)}
+            </span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto min-h-16 w-full min-w-0 rounded-xl border-primary/30 bg-primary/5 px-3 py-3 text-sm font-semibold text-primary shadow-sm hover:bg-primary/10 sm:px-5 [&_svg]:size-5"
+            aria-label={pickText(UI.pairwiseNextComparison, lang)}
+            disabled={!currentComplete || activeIndex === pairs.length - 1}
+            onClick={() => setActiveIndex((index) => Math.min(pairs.length - 1, index + 1))}
+          >
+            <span className="min-w-0 whitespace-normal leading-snug">
+              {pickText(UI.pairwiseNextComparison, lang)}
+            </span>
+            <ArrowRight className="size-5" aria-hidden="true" />
+          </Button>
+        </div>
         {currentComplete && activeIndex === pairs.length - 1 && completeCount === pairs.length && (
-          <p className="min-w-0 flex-1 text-center text-xs font-medium text-primary">
+          <p className="rounded-xl bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary">
             {pickText(UI.pairwiseCompleteHint, lang)}
           </p>
         )}
-        <Button
-          type="button"
-          variant="outline"
-          className="h-11 rounded-xl"
-          aria-label={pickText(UI.pairwiseNextComparison, lang)}
-          disabled={!currentComplete || activeIndex === pairs.length - 1}
-          onClick={() => setActiveIndex((index) => Math.min(pairs.length - 1, index + 1))}
-        >
-          <span className="hidden sm:inline">{pickText(UI.pairwiseNextComparison, lang)}</span>
-          <ArrowRight className="size-4" aria-hidden="true" />
-        </Button>
       </div>
     </div>
   );
