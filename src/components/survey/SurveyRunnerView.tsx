@@ -16,6 +16,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { pickText, UI, type Lang } from "@/lib/i18n";
+import { isAnswered as strictIsAnswered } from "@/lib/survey-logic";
 import type { Question, Survey } from "@/surveys/types";
 import { EMAIL_RE, isAnswered, validateAnswer } from "@/components/survey/validation";
 import type { SurveyStage } from "@/components/survey/hooks/useStageMachine";
@@ -460,6 +461,9 @@ export function SurveyRunnerView({
                 const requiredEmpty = !!current.required && !isAnswered(current, answers);
                 const formatErr = validateAnswer(current, answers[current.id], lang) !== null;
                 const blocked = requiredEmpty || formatErr;
+                const hidePairwiseNext =
+                  current.type === "pairwise_saaty" && !strictIsAnswered(current, answers);
+                if (hidePairwiseNext) return null;
                 return (
                   <Button
                     size="lg"
