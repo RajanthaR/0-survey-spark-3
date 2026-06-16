@@ -15,11 +15,27 @@ import type { Survey } from "@/surveys/types";
 import { visibleQuestions } from "@/lib/survey-logic";
 import {
   expandSurveySteps,
+  getPairwiseStepMeta,
   isSurveyStepAnswered,
   type SurveyStep,
 } from "@/components/survey/runner-steps";
 
 type Answers = Record<string, unknown>;
+
+function questionMapLabel(question: SurveyStep, lang: Lang): string {
+  const meta = getPairwiseStepMeta(question);
+  if (!meta) return pickText(question.label, lang);
+
+  const labelFor = (key: string) => {
+    const criterion = question.criteria?.find((c) => c.key === key);
+    return criterion ? pickText(criterion.label, lang) : key;
+  };
+  const progress = pickText(UI.pairwiseProgress, lang)
+    .replace("{current}", String(meta.index + 1))
+    .replace("{total}", String(meta.total));
+
+  return `${progress}: ${labelFor(meta.pair.a)} / ${labelFor(meta.pair.b)}`;
+}
 
 export function QuestionMap({
   survey,
@@ -109,6 +125,7 @@ export function QuestionMap({
                     const answered = isSurveyStepAnswered(q, answers);
                     const isCurrent = q.id === currentId;
                     const position = visible.findIndex((v) => v.id === q.id) + 1;
+                    const label = questionMapLabel(q, lang);
                     return (
                       <li key={q.id}>
                         <button
@@ -149,9 +166,7 @@ export function QuestionMap({
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="flex items-center gap-1.5">
-                              <span className="line-clamp-2 font-medium leading-snug">
-                                {pickText(q.label, lang)}
-                              </span>
+                              <span className="line-clamp-2 font-medium leading-snug">{label}</span>
                               {q.required && !answered && (
                                 <span aria-hidden="true" className="text-destructive">
                                   *

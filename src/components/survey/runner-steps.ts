@@ -62,11 +62,16 @@ export function expandSurveySteps(questions: readonly Question[]): SurveyStep[] 
   return steps;
 }
 
-export function getPairwiseStepMeta(question: Question | SurveyStep): PairwiseStepMeta | null {
-  return "pairwiseStep" in question && question.pairwiseStep ? question.pairwiseStep : null;
+export function getPairwiseStepMeta(
+  question: Question | SurveyStep | null | undefined,
+): PairwiseStepMeta | null {
+  if (!question || !("pairwiseStep" in question)) return null;
+  return question.pairwiseStep ?? null;
 }
 
-export function isPairwiseStep(question: Question | SurveyStep): question is SurveyStep & {
+export function isPairwiseStep(
+  question: Question | SurveyStep | null | undefined,
+): question is SurveyStep & {
   pairwiseStep: PairwiseStepMeta;
 } {
   return getPairwiseStepMeta(question) !== null;
