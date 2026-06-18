@@ -1,7 +1,9 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Leaf, Search } from "lucide-react";
 
+import { AboutGate } from "@/about/components/AboutGate";
+import { readAboutUnlocked } from "@/about/lib/access-code";
 import { ABOUT_UI, aboutLaneLabel } from "@/about/copy/ui";
 import { buildAboutBreadcrumbs } from "@/about/lib/navigation";
 import { ABOUT_SECTIONS, getAboutSectionForPath } from "@/about/lib/sections";
@@ -201,6 +203,22 @@ export function AboutLayout({ children }: { children: React.ReactNode }) {
   const showLanguageToggle =
     activeSection?.id !== "research" && activeSection?.id !== "engineering";
   const isPresentationRoute = activeSection?.id === "present";
+
+  // Soft, per-session access gate over the entire explorer. Server render and
+  // the first client render both start locked (no hydration mismatch); the
+  // effect then reveals content if this session already cleared the gate.
+  const [unlocked, setUnlocked] = useState(false);
+  useEffect(() => {
+    if (readAboutUnlocked()) setUnlocked(true);
+  }, []);
+
+  if (!unlocked) {
+    return (
+      <main id="main">
+        <AboutGate onUnlock={() => setUnlocked(true)} />
+      </main>
+    );
+  }
 
   if (isPresentationRoute) {
     return <main id="main">{children}</main>;

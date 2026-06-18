@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "@/lib/i18n";
+import { ABOUT_ACCESS_STORAGE_KEY } from "@/about/lib/access-code";
 
 const routeState = vi.hoisted(() => ({ pathname: "/about/study" }));
 
@@ -36,7 +37,25 @@ function renderLayout(pathname: string) {
   );
 }
 
+describe("AboutLayout access gate", () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+  });
+
+  it("shows the code gate and hides lane content until unlocked", () => {
+    renderLayout("/about/study");
+
+    expect(screen.getByRole("group", { name: /access code keypad/i })).toBeInTheDocument();
+    expect(screen.queryByText("Lane content")).not.toBeInTheDocument();
+  });
+});
+
 describe("AboutLayout", () => {
+  // These assertions are about the unlocked layout; clear the gate first.
+  beforeEach(() => {
+    window.sessionStorage.setItem(ABOUT_ACCESS_STORAGE_KEY, "1");
+  });
+
   it("keeps the language toggle on translated about lanes", () => {
     renderLayout("/about/study");
 
