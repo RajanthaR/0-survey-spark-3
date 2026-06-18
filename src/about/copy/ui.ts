@@ -19,6 +19,15 @@ export const ABOUT_UI_COPY_KEYS = [
   "hubTitle",
   "hubDescription",
   "openSection",
+  "gateEyebrow",
+  "gateTitle",
+  "gateDescription",
+  "gateSummaryHeading",
+  "gatePrompt",
+  "gateError",
+  "gateClearLabel",
+  "gateDeleteLabel",
+  "gateKeypadLabel",
 ] as const;
 
 export type AboutUiCopyKey = (typeof ABOUT_UI_COPY_KEYS)[number];
@@ -107,6 +116,51 @@ export const ABOUT_UI = {
     en: "Open {label}",
     si: "{label} විවෘත කරන්න",
     ta: "{label} திறக்க",
+  },
+  gateEyebrow: {
+    en: "Restricted area",
+    si: "සීමිත ප්‍රවේශ ප්‍රදේශය",
+    ta: "கட்டுப்படுத்தப்பட்ட பகுதி",
+  },
+  gateTitle: {
+    en: "Enter access code",
+    si: "ප්‍රවේශ කේතය ඇතුළත් කරන්න",
+    ta: "அணுகல் குறியீட்டை உள்ளிடவும்",
+  },
+  gateDescription: {
+    en: "This section is protected. Enter the 4-digit access code to open the research explorer.",
+    si: "මෙම කොටස ආරක්ෂිතයි. පර්යේෂණ ගවේෂකය විවෘත කිරීමට ඉලක්කම් 4ක ප්‍රවේශ කේතය ඇතුළත් කරන්න.",
+    ta: "இந்தப் பகுதி பாதுகாக்கப்பட்டது. ஆராய்ச்சி உலாவியைத் திறக்க 4 இலக்க அணுகல் குறியீட்டை உள்ளிடவும்.",
+  },
+  gateSummaryHeading: {
+    en: "What's inside",
+    si: "ඇතුළත ඇති දේ",
+    ta: "உள்ளே என்ன இருக்கிறது",
+  },
+  gatePrompt: {
+    en: "Enter the 4-digit code",
+    si: "ඉලක්කම් 4ක කේතය ඇතුළත් කරන්න",
+    ta: "4 இலக்க குறியீட்டை உள்ளிடவும்",
+  },
+  gateError: {
+    en: "Incorrect code. Please try again.",
+    si: "කේතය වැරදියි. නැවත උත්සාහ කරන්න.",
+    ta: "தவறான குறியீடு. மீண்டும் முயற்சிக்கவும்.",
+  },
+  gateClearLabel: {
+    en: "Clear",
+    si: "හිස් කරන්න",
+    ta: "அழி",
+  },
+  gateDeleteLabel: {
+    en: "Delete last digit",
+    si: "අවසන් ඉලක්කම මකන්න",
+    ta: "கடைசி இலக்கத்தை நீக்கு",
+  },
+  gateKeypadLabel: {
+    en: "Access code keypad",
+    si: "ප්‍රවේශ කේත යතුරුපුවරුව",
+    ta: "அணுகல் குறியீட்டு விசைப்பலகை",
   },
   sections: {
     study: {
